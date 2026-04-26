@@ -35,9 +35,9 @@ import { useAcademicOption } from '@/hooks/useAcademicOption';
 import CraftTable, { BulkAction, Column, RowAction } from '@/components/Table';
 import AttendanceDetailsModal from './add/__components/AttendanceDetailsModal';
 import { useRouter } from 'next/navigation';
-import { AttendanceRecord, MealAttendanceListProps, ClassItem } from '@/interface/meal';
+import { AttendanceRecord, ClassItem } from '@/interface/meal';
 
-const MealAttendanceList: React.FC<MealAttendanceListProps> = ({ academicYear = dayjs().year().toString() }) => {
+const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toString() }) => {
   const theme = useTheme();
   const { classData } = useAcademicOption();
   const [deleteAttendance] = useDeleteAttendanceMutation();
