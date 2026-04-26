@@ -8,10 +8,8 @@ const AuthRoutes = ["/", "/login", "/register"];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get token from cookies
   const accessToken = request.cookies.get("accessToken")?.value;
 
-  // Allow public routes
   if (AuthRoutes.includes(pathname)) {
     return NextResponse.next();
   }
@@ -34,7 +32,6 @@ export async function middleware(request: NextRequest) {
       super_visor: [/^\/dashboard(\/.*)?$/],
     };
 
-    // Check if the role has access to the requested route
     if (allowedRoutes[role]?.some((route) => route.test(pathname))) {
       return NextResponse.next();
     }

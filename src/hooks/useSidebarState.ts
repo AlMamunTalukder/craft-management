@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export const useSidebarState = () => {
-  const [open, setOpen] = useState(false); // collapsed by default
+  const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
 

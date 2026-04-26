@@ -66,7 +66,6 @@ export const SidebarHeader = ({
       }}
     >
       <Toolbar>
-        {/* Sidebar toggle button */}
         <IconButton
           color="inherit"
           onClick={isMobile ? onToggleMobile : onToggleDrawer}

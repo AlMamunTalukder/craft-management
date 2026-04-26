@@ -1,1327 +1,1632 @@
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-"use client"
+// src/components/mealAttendance/MealAttendanceManager.tsx
+'use client';
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    Paper,
-    Typography,
-    Box,
-    Card,
-    CardContent,
-    Grid,
-    Button,
-    Chip,
-    FormControl,
-    TextField,
-    Stack,
-    Avatar,
-    FormControlLabel,
-    InputLabel,
-    Select,
-    MenuItem,
-    Divider,
-    Snackbar,
-    Alert,
-    CircularProgress,
-    Switch,
-    Checkbox,
-    OutlinedInput,
-    ListItemText,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    IconButton,
-    Tooltip,
-    Tabs,
-    Tab,
-    LinearProgress,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-} from "@mui/material"
+  Box,
+  Paper,
+  Typography,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  IconButton,
+  Alert,
+  Snackbar,
+  CircularProgress,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Avatar,
+  Tooltip,
+  Stack,
+  Card,
+  CardContent,
+  TextField,
+  InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  FormControlLabel,
+  Menu,
+} from '@mui/material';
 import {
-    CalendarMonth,
-    Save,
-    RestaurantMenu,
-    ArrowBack,
-    CheckCircle,
-    Cancel,
-    Search,
-    FilterList,
-    AccessTime,
-    FreeBreakfast,
-    LunchDining,
-    DinnerDining,
-    Close,
-    Edit,
-    School,
-    Person,
-    PieChart,
-    LocalDining,
-} from "@mui/icons-material"
-import { useGetAllStudentsQuery } from "@/redux/api/studentApi"
-import { useGetAllTeachersQuery } from "@/redux/api/teacherApi"
-import { useCreateMealReportMutation, useGetSingleMealReportQuery } from "@/redux/api/mealReport"
-import { useRouter } from "next/navigation"
+  Save as SaveIcon,
+  Download as DownloadIcon,
+  Print as PrintIcon,
+  Refresh as RefreshIcon,
+  BreakfastDining as BreakfastIcon,
+  LunchDining as LunchIcon,
+  DinnerDining as DinnerIcon,
+  Person as PersonIcon,
+  Restaurant as FoodIcon,
+  BarChart as ChartIcon,
+  School as SchoolIcon,
+  EmojiEvents as TrophyIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
+  CalendarMonth as CalendarIcon,
+  DateRange as DateRangeIcon,
+  AddTask as AddTaskIcon,
+  EditCalendar as EditCalendarIcon,
+  Today as TodayIcon,
+  Weekend as WeekendIcon,
+  ViewWeek as ViewWeekIcon,
+} from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
+import dayjs, { Dayjs } from 'dayjs';
+import { 
+  useBulkCreateAttendanceMutation, 
+  useGetMonthlyAttendanceSheetQuery, 
+  useGetAttendanceByDateRangeQuery,
+  useGetAttendanceBySpecificDateQuery 
+} from '@/redux/api/mealAttendanceApi';
+import { useAcademicOption } from '@/hooks/useAcademicOption';
 
-// Define enum to match the validation schema
-enum MealType {
-    BREAKFAST = "BREAKFAST",
-    LUNCH = "LUNCH",
-    DINNER = "DINNER",
+
+
+interface Student {
+  _id: string;
+  studentId: string;
+  name: string;
+  nameBangla: string;
+  studentClassRoll: string;
+  studentType: string;
+  className: Array<{ _id: string; className: string; [key: string]: any }>;
+  admissionStatus: string;
+  email?: string;
+  mobile?: string;
+  gender?: string;
 }
 
-// Map UI-friendly meal types to enum values
-const mealTypeMapping = {
-    Breakfast: MealType.BREAKFAST,
-    Lunch: MealType.LUNCH,
-    Dinner: MealType.DINNER,
+interface ClassItem {
+  _id: string;
+  className: string;
+  section?: string;
+  [key: string]: any;
 }
 
-// Map enum values to UI-friendly meal types
-const reverseMealTypeMapping = {
-    [MealType.BREAKFAST]: "Breakfast",
-    [MealType.LUNCH]: "Lunch",
-    [MealType.DINNER]: "Dinner",
-}
+type ViewMode = 'monthly' | 'daterange' | 'specific';
 
-const mealTypes = ["Breakfast", "Lunch", "Dinner"]
-const mealTimeMap = {
-    Breakfast: "7:30 AM",
-    Lunch: "1:00 PM",
-    Dinner: "8:00 PM",
-}
-const mealIconMap = {
-    Breakfast: <FreeBreakfast sx={{ fontSize: 20 }} />,
-    Lunch: <LunchDining sx={{ fontSize: 20 }} />,
-    Dinner: <DinnerDining sx={{ fontSize: 20 }} />,
-}
-type PersonType = "student" | "teacher"
+type QuickRange = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom';
 
-interface PersonData {
-    id: string
-    displayId: string
-    name: string
-    designation?: string
-    avatar: string
-    type: PersonType
-    email?: string
-    className?: string
-    section?: string
-    department?: string
-    staffType?: string
-}
+// Helper function to get current academic year (4 digits)
+const getCurrentAcademicYear = (): string => {
+  return dayjs().year().toString();
+};
 
-interface MealCountStats {
-    oneMeal: number
-    twoMeals: number
-    threeMeals: number
-}
+const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademicYear() }) => {
+  // Hooks
+  const { classOptions, classData, studentData } = useAcademicOption();
+  const [bulkCreateAttendance, { isLoading: isSaving }] = useBulkCreateAttendanceMutation();
+  
+  // State
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs());
+  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().startOf('week'));
+  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs().endOf('week'));
+  const [specificDate, setSpecificDate] = useState<Dayjs | null>(dayjs());
+  const [viewMode, setViewMode] = useState<ViewMode>('daterange');
+  const [attendanceChanges, setAttendanceChanges] = useState<Record<string, any>>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' });
+  const [localAttendanceData, setLocalAttendanceData] = useState<Record<string, any>>({});
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [selectedDateForBulk, setSelectedDateForBulk] = useState<string | null>(null);
+  const [quickRangeAnchorEl, setQuickRangeAnchorEl] = useState<null | HTMLElement>(null);
+  
+  // Dialog states for specific date entry
+  const [openSpecificDateDialog, setOpenSpecificDateDialog] = useState(false);
+  const [selectedSpecificDate, setSelectedSpecificDate] = useState<Dayjs | null>(dayjs());
+  const [dateWiseAttendance, setDateWiseAttendance] = useState<Record<string, any>>({});
+  const [quickSelectAll, setQuickSelectAll] = useState({ breakfast: false, lunch: false, dinner: false });
 
+  // Extract students from nested data structure
+  const allStudents: Student[] = useMemo(() => {
+    let students: any[] = [];
+    
+    if (studentData?.data?.data) {
+      students = studentData.data.data;
+    } else if (studentData?.data) {
+      students = studentData.data;
+    } else if (Array.isArray(studentData)) {
+      students = studentData;
+    } else {
+      students = [];
+    }
+    
+    return students.filter((student: any) => student.admissionStatus === 'enrolled');
+  }, [studentData]);
 
+  // Extract classes from nested data structure
+  const allClasses = useMemo((): ClassItem[] => {
+    let classes: any[] = [];
+    
+    // Handle different possible data structures
+    if (classData?.data?.data?.classes) {
+      classes = classData.data.data.classes;
+    } else if (classData?.data?.classes) {
+      classes = classData.data.classes;
+    } else if (classData?.classes) {
+      classes = classData.classes;
+    } else if (classData?.data?.data) {
+      classes = classData.data.data;
+    } else if (classData?.data) {
+      classes = classData.data;
+    } else if (Array.isArray(classData)) {
+      classes = classData;
+    } else {
+      classes = [];
+    }
+    
+    return classes;
+  }, [classData]);
 
-export default function MealReportForm() {
+  // Get class options for dropdown
+  const classDropdownOptions = useMemo(() => {
+    if (!allClasses || allClasses.length === 0) return [];
+    return allClasses.map((cls: ClassItem) => ({
+      label: cls.className,
+      value: cls._id,
+    }));
+  }, [allClasses]);
 
-    const [date, setDate] = useState<Date | null>(new Date())
-    const [selectedMealTypes, setSelectedMealTypes] = useState<string[]>(mealTypes)
-    const [selectedPersons, setSelectedPersons] = useState<Record<string, boolean>>({})
-    const [personMeals, setPersonMeals] = useState<Record<string, string[]>>({})
-    const [searchQuery, setSearchQuery] = useState("")
-    const [selectAll, setSelectAll] = useState(true)
-    const [loading, setLoading] = useState(false)
-    const [success, setSuccess] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [filteredPersons, setFilteredPersons] = useState<PersonData[]>([])
-    const [filterDesignation, setFilterDesignation] = useState<string | null>(null)
-    const [filterType, setFilterType] = useState<PersonType | null>(null)
-    const [activeTab, setActiveTab] = useState<PersonType | "all">("all")
-    const [debugInfo, setDebugInfo] = useState<string | null>(null)
-    const [mealCountStats, setMealCountStats] = useState<MealCountStats>({ oneMeal: 0, twoMeals: 0, threeMeals: 0 })
-    const [showMealCountTable, setShowMealCountTable] = useState(false)
-    const router = useRouter()
-    // Dialog state
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [currentPerson, setCurrentPerson] = useState<string | null>(null)
-    const [tempSelectedMeals, setTempSelectedMeals] = useState<string[]>([])
+  // Set default class when classes are loaded
+  useEffect(() => {
+    if (!isInitialized && classDropdownOptions.length > 0 && !selectedClassId) {
+      const firstClass = classDropdownOptions[0];
+      setSelectedClassId(firstClass.value);
+      setIsInitialized(true);
+    }
+  }, [classDropdownOptions, selectedClassId, isInitialized]);
 
-    // API query params
-    const [page, setPage] = useState(0)
-    const [rowsPerPage, setRowsPerPage] = useState(50)
-    const [searchTerm, setSearchTerm] = useState("")
+  // Filter students by selected class
+  const studentsByClass = useMemo(() => {
+    if (!selectedClassId) return [];
+    
+    const filtered = allStudents.filter((student: Student) => {
+      if (student.className && Array.isArray(student.className)) {
+        return student.className.some((cls: any) => {
+          const classId = cls._id || cls;
+          return classId === selectedClassId;
+        });
+      }
+      return false;
+    });
+    
+    return filtered;
+  }, [allStudents, selectedClassId]);
 
-    // Fetch data from APIs
-    const { data: studentData, isLoading: isLoadingStudents } = useGetAllStudentsQuery({
-        limit: rowsPerPage,
-        page: page + 1,
-        searchTerm: searchTerm,
-    })
+  // Get selected class name for API
+  const selectedClassObj = allClasses.find((c: ClassItem) => c._id === selectedClassId);
+  const className = selectedClassObj?.className || '';
 
+  // Quick range selection handler
+  const handleQuickRangeSelect = (range: QuickRange) => {
+    const today = dayjs();
+    let newStartDate = dayjs();
+    let newEndDate = dayjs();
 
-    const { data: teacherData, isLoading: isLoadingTeachers } = useGetAllTeachersQuery({
-        limit: rowsPerPage,
-        page: page + 1,
-        searchTerm: searchTerm,
-    })
+    switch (range) {
+      case 'today':
+        newStartDate = today.startOf('day');
+        newEndDate = today.endOf('day');
+        break;
+      case 'yesterday':
+        newStartDate = today.subtract(1, 'day').startOf('day');
+        newEndDate = today.subtract(1, 'day').endOf('day');
+        break;
+      case 'thisWeek':
+        newStartDate = today.startOf('week');
+        newEndDate = today.endOf('week');
+        break;
+      case 'lastWeek':
+        newStartDate = today.subtract(1, 'week').startOf('week');
+        newEndDate = today.subtract(1, 'week').endOf('week');
+        break;
+      case 'thisMonth':
+        newStartDate = today.startOf('month');
+        newEndDate = today.endOf('month');
+        break;
+      case 'lastMonth':
+        newStartDate = today.subtract(1, 'month').startOf('month');
+        newEndDate = today.subtract(1, 'month').endOf('month');
+        break;
+      default:
+        return;
+    }
 
-    const [createMealReport, { isLoading: isSubmitting }] = useCreateMealReportMutation()
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+    setAttendanceChanges({});
+    setQuickRangeAnchorEl(null);
+    
+    setSnackbar({
+      open: true,
+      message: `Date range set to ${range}`,
+      severity: 'success',
+    });
+  };
 
-    // Combined persons data (students and teachers)
-    const [persons, setPersons] = useState<PersonData[]>([])
+  // Fetch monthly attendance data from API
+  const {
+    data: monthlyAttendanceData,
+    isLoading: isLoadingMonthly,
+    refetch: refetchMonthly,
+  } = useGetMonthlyAttendanceSheetQuery(
+    {
+      className: className,
+      month: selectedMonth?.format('YYYY-MM') || '',
+      academicYear,
+    },
+    { skip: viewMode !== 'monthly' || !className || !selectedMonth }
+  );
 
-    // Process API data and combine students and teachers
-    useEffect(() => {
-        const newPersons: PersonData[] = []
+  // Fetch date range attendance data from API
+  const {
+    data: dateRangeAttendanceData,
+    isLoading: isLoadingDateRange,
+    refetch: refetchDateRange,
+  } = useGetAttendanceByDateRangeQuery(
+    {
+      className: className,
+      startDate: startDate?.format('YYYY-MM-DD') || '',
+      endDate: endDate?.format('YYYY-MM-DD') || '',
+      academicYear,
+    },
+    { skip: viewMode !== 'daterange' || !className || !startDate || !endDate }
+  );
 
-        // Process student data
-        if (studentData?.data) {
-            studentData.data.forEach((student: any) => {
-                newPersons.push({
-                    id: student._id,
-                    displayId: student.studentId,
-                    name: student.name,
-                    designation: `${student.className || ""} ${student.section || ""}`.trim(),
-                    avatar: "/placeholder.svg?height=40&width=40",
-                    type: "student",
-                    email: student.email,
-                    className: student.className,
-                    section: student.section,
-                })
-            })
+  // Fetch specific date attendance data from API
+  const {
+    data: specificDateData,
+    isLoading: isLoadingSpecific,
+    refetch: refetchSpecific,
+  } = useGetAttendanceBySpecificDateQuery(
+    {
+      className: className,
+      date: specificDate?.format('YYYY-MM-DD') || '',
+      academicYear,
+    },
+    { skip: viewMode !== 'specific' || !className || !specificDate }
+  );
+
+  const isLoadingSheet = viewMode === 'monthly' 
+    ? isLoadingMonthly 
+    : viewMode === 'daterange' 
+    ? isLoadingDateRange 
+    : isLoadingSpecific;
+    
+  const attendanceSheetData = viewMode === 'monthly' 
+    ? monthlyAttendanceData 
+    : viewMode === 'daterange'
+    ? dateRangeAttendanceData
+    : specificDateData;
+
+  // Generate dates based on view mode
+  const dates = useMemo(() => {
+    if (attendanceSheetData?.dates && attendanceSheetData.dates.length > 0) {
+      return attendanceSheetData.dates;
+    }
+    
+    if (viewMode === 'monthly' && selectedMonth) {
+      const startOfMonth = selectedMonth.startOf('month');
+      const endOfMonth = selectedMonth.endOf('month');
+      const datesList = [];
+      let currentDate = startOfMonth;
+      while (currentDate.isBefore(endOfMonth) || currentDate.isSame(endOfMonth, 'day')) {
+        datesList.push(currentDate.format('YYYY-MM-DD'));
+        currentDate = currentDate.add(1, 'day');
+      }
+      return datesList;
+    }
+    
+    if (viewMode === 'daterange' && startDate && endDate) {
+      const datesList = [];
+      let currentDate = startDate.clone();
+      while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
+        datesList.push(currentDate.format('YYYY-MM-DD'));
+        currentDate = currentDate.add(1, 'day');
+      }
+      return datesList;
+    }
+    
+    if (viewMode === 'specific' && specificDate) {
+      return [specificDate.format('YYYY-MM-DD')];
+    }
+    
+    return [];
+  }, [attendanceSheetData, selectedMonth, startDate, endDate, viewMode, specificDate]);
+
+  // Initialize local attendance data
+  useEffect(() => {
+    if (studentsByClass.length > 0 && dates.length > 0) {
+      const initialData: Record<string, any> = {};
+      
+      if (attendanceSheetData?.students && attendanceSheetData.students.length > 0) {
+        attendanceSheetData.students.forEach((apiStudent: any) => {
+          if (apiStudent.attendance && Array.isArray(apiStudent.attendance)) {
+            apiStudent.attendance.forEach((att: any) => {
+              const key = `${apiStudent.student.id}_${att.date}`;
+              initialData[key] = {
+                breakfast: att.breakfast,
+                lunch: att.lunch,
+                dinner: att.dinner,
+              };
+            });
+          }
+        });
+      }
+      
+      studentsByClass.forEach((student: Student) => {
+        dates.forEach((date: string) => {
+          const key = `${student._id}_${date}`;
+          if (!initialData[key]) {
+            initialData[key] = {
+              breakfast: false,
+              lunch: false,
+              dinner: false,
+            };
+          }
+        });
+      });
+      
+      setLocalAttendanceData(initialData);
+      
+      // For specific date view, also populate dateWiseAttendance
+      if (viewMode === 'specific' && dates[0]) {
+        const dateAttendance: Record<string, any> = {};
+        studentsByClass.forEach((student: Student) => {
+          const key = `${student._id}_${dates[0]}`;
+          dateAttendance[student._id] = {
+            studentId: student._id,
+            studentName: student.name,
+            roll: student.studentClassRoll,
+            breakfast: initialData[key]?.breakfast || false,
+            lunch: initialData[key]?.lunch || false,
+            dinner: initialData[key]?.dinner || false,
+          };
+        });
+        setDateWiseAttendance(dateAttendance);
+      }
+    }
+  }, [attendanceSheetData, studentsByClass, dates, viewMode]);
+
+  // Get meal status
+  const getMealStatus = useCallback((studentId: string, date: string, mealType: string) => {
+    const changeKey = `${studentId}_${date}`;
+    if (attendanceChanges[changeKey] && mealType in attendanceChanges[changeKey]) {
+      return attendanceChanges[changeKey][mealType];
+    }
+    return localAttendanceData[`${studentId}_${date}`]?.[mealType] || false;
+  }, [attendanceChanges, localAttendanceData]);
+
+  // Get total meals for a day
+  const getTotalMealsForDay = useCallback((studentId: string, date: string) => {
+    let total = 0;
+    if (getMealStatus(studentId, date, 'breakfast')) total++;
+    if (getMealStatus(studentId, date, 'lunch')) total++;
+    if (getMealStatus(studentId, date, 'dinner')) total++;
+    return total;
+  }, [getMealStatus]);
+
+  // Get total meals for a student
+  const getTotalMealsForStudent = useCallback((studentId: string) => {
+    let total = 0;
+    dates.forEach((date:any) => { total += getTotalMealsForDay(studentId, date) });
+    return total;
+  }, [dates, getTotalMealsForDay]);
+
+  // Handle meal toggle
+  const handleMealToggle = (studentId: string, date: string, mealType: string) => {
+    const currentValue = getMealStatus(studentId, date, mealType);
+    const key = `${studentId}_${date}`;
+    
+    setAttendanceChanges(prev => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        studentId,
+        date,
+        [mealType]: !currentValue,
+      },
+    }));
+    
+    // Also update dateWiseAttendance for specific date view
+    if (viewMode === 'specific') {
+      setDateWiseAttendance(prev => ({
+        ...prev,
+        [studentId]: {
+          ...prev[studentId],
+          [mealType]: !currentValue,
         }
+      }));
+    }
+  };
 
-        // Process teacher data
-        if (teacherData?.data) {
-            teacherData.data.forEach((teacher: any) => {
-                newPersons.push({
-                    id: teacher._id,
-                    displayId: teacher.teacherId,
-                    name: teacher.name,
-                    designation: teacher.professionalInfo?.designation || "Teacher",
-                    avatar: "/placeholder.svg?height=40&width=40",
-                    type: "teacher",
-                    email: teacher.email,
-                    department: teacher.professionalInfo?.department,
-                    staffType: teacher.professionalInfo?.staffType,
-                })
-            })
+  // Handle quick select all for specific date
+  const handleQuickSelectAll = (mealType: string, value: boolean) => {
+    if (!dates[0]) return;
+    const date = dates[0];
+    
+    const newChanges = { ...attendanceChanges };
+    const newDateWise = { ...dateWiseAttendance };
+    
+    studentsByClass.forEach((student: Student) => {
+      const key = `${student._id}_${date}`;
+      if (!newChanges[key]) {
+        newChanges[key] = { studentId: student._id, date };
+      }
+      newChanges[key][mealType] = value;
+      
+      newDateWise[student._id] = {
+        ...newDateWise[student._id],
+        [mealType]: value,
+      };
+    });
+    
+    setAttendanceChanges(newChanges);
+    setDateWiseAttendance(newDateWise);
+    setQuickSelectAll({ ...quickSelectAll, [mealType]: value });
+    
+    setSnackbar({
+      open: true,
+      message: `${mealType === 'breakfast' ? 'Breakfast' : mealType === 'lunch' ? 'Lunch' : 'Dinner'} ${value ? 'added for everyone' : 'removed for everyone'}`,
+      severity: 'success',
+    });
+  };
+
+  // Handle open specific date dialog
+  const handleOpenSpecificDateDialog = () => {
+    setSelectedSpecificDate(specificDate);
+    setOpenSpecificDateDialog(true);
+  };
+
+  // Handle save from specific date dialog
+  const handleSaveSpecificDate = async () => {
+    const allAttendances = studentsByClass.map((student: Student) => ({
+      studentId: student._id,
+      date: dates[0],
+      breakfast: dateWiseAttendance[student._id]?.breakfast || false,
+      lunch: dateWiseAttendance[student._id]?.lunch || false,
+      dinner: dateWiseAttendance[student._id]?.dinner || false,
+    }));
+    
+    const payload = {
+      academicYear,
+      attendances: allAttendances,
+    };
+    
+    try {
+      const result = await bulkCreateAttendance(payload).unwrap();
+      
+      // Update local data
+      const newLocalData = { ...localAttendanceData };
+      allAttendances.forEach((att: any) => {
+        const key = `${att.studentId}_${att.date}`;
+        newLocalData[key] = {
+          breakfast: att.breakfast,
+          lunch: att.lunch,
+          dinner: att.dinner,
+        };
+      });
+      
+      setLocalAttendanceData(newLocalData);
+      setAttendanceChanges({});
+      
+      setSnackbar({
+        open: true,
+        message: `${result.totalProcessed || allAttendances.length} attendance records saved successfully`,
+        severity: 'success',
+      });
+      
+      refetchSpecific();
+      setOpenSpecificDateDialog(false);
+    } catch (error: any) {
+      console.error('Save error:', error);
+      setSnackbar({
+        open: true,
+        message: error?.data?.message || 'Failed to save',
+        severity: 'error',
+      });
+    }
+  };
+
+  // Handle bulk meal assignment for all students on a specific date
+  const assignMealToAllOnDate = (date: string, mealType: string, value: boolean) => {
+    const newChanges = { ...attendanceChanges };
+    
+    studentsByClass.forEach((student: Student) => {
+      const key = `${student._id}_${date}`;
+      if (!newChanges[key]) {
+        newChanges[key] = { studentId: student._id, date };
+      }
+      newChanges[key][mealType] = value;
+    });
+    
+    setAttendanceChanges(newChanges);
+    setSnackbar({
+      open: true,
+      message: `${mealType === 'breakfast' ? 'Breakfast' : mealType === 'lunch' ? 'Lunch' : 'Dinner'} ${value ? 'added for everyone' : 'removed for everyone'} on ${date}`,
+      severity: 'success',
+    });
+  };
+
+  // Handle bulk meal assignment for all students on ALL dates in the range
+  const assignMealToAllOnAllDates = (mealType: string, value: boolean) => {
+    const newChanges = { ...attendanceChanges };
+    
+    studentsByClass.forEach((student: Student) => {
+      dates.forEach((date: string) => {
+        const key = `${student._id}_${date}`;
+        if (!newChanges[key]) {
+          newChanges[key] = { studentId: student._id, date };
         }
+        newChanges[key][mealType] = value;
+      });
+    });
+    
+    setAttendanceChanges(newChanges);
+    setSnackbar({
+      open: true,
+      message: `${mealType === 'breakfast' ? 'Breakfast' : mealType === 'lunch' ? 'Lunch' : 'Dinner'} ${value ? 'added for everyone on all dates' : 'removed for everyone on all dates'}`,
+      severity: 'success',
+    });
+  };
 
-        setPersons(newPersons)
-    }, [studentData, teacherData])
+  // Assign all three meals to all students on a specific date
+  const assignFullDayMealToAllOnDate = (date: string, value: boolean) => {
+    const newChanges = { ...attendanceChanges };
+    
+    studentsByClass.forEach((student: Student) => {
+      const key = `${student._id}_${date}`;
+      if (!newChanges[key]) {
+        newChanges[key] = { studentId: student._id, date };
+      }
+      newChanges[key].breakfast = value;
+      newChanges[key].lunch = value;
+      newChanges[key].dinner = value;
+    });
+    
+    setAttendanceChanges(newChanges);
+    setSnackbar({
+      open: true,
+      message: `All meals ${value ? 'added' : 'removed'} for everyone on ${date}`,
+      severity: 'success',
+    });
+  };
 
-    // Initialize selected persons with all meals
-    useEffect(() => {
-        if (persons.length > 0) {
-            const initialSelection: Record<string, boolean> = {}
-            const initialMeals: Record<string, string[]> = {}
-
-            persons.forEach((person) => {
-                initialSelection[person.id] = true // All selected by default
-                initialMeals[person.id] = [...selectedMealTypes] // All meals selected by default
-            })
-
-            setSelectedPersons(initialSelection)
-            setPersonMeals(initialMeals)
-        }
-    }, [persons, selectedMealTypes])
-
-    // Calculate meal count statistics
-    useEffect(() => {
-        let oneMeal = 0
-        let twoMeals = 0
-        let threeMeals = 0
-
-        Object.keys(personMeals).forEach((personId) => {
-            if (selectedPersons[personId]) {
-                const mealCount = personMeals[personId]?.length || 0
-                if (mealCount === 1) oneMeal++
-                else if (mealCount === 2) twoMeals++
-                else if (mealCount === 3) threeMeals++
-            }
-        })
-
-        setMealCountStats({ oneMeal, twoMeals, threeMeals })
-    }, [personMeals, selectedPersons])
-
-    // Apply filters to persons
-    useEffect(() => {
-        let filtered = [...persons]
-
-        // Apply search filter
-        if (searchQuery) {
-            filtered = filtered.filter(
-                (person) =>
-                    person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    person.displayId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    (person.email && person.email.toLowerCase().includes(searchQuery.toLowerCase())),
-            )
-        }
-
-        // Apply designation filter
-        if (filterDesignation) {
-            filtered = filtered.filter((person) => person.designation === filterDesignation)
-        }
-
-        // Apply type filter (student/teacher)
-        if (filterType) {
-            filtered = filtered.filter((person) => person.type === filterType)
-        }
-
-        // Apply tab filter
-        if (activeTab !== "all") {
-            filtered = filtered.filter((person) => person.type === activeTab)
-        }
-
-        setFilteredPersons(filtered)
-    }, [searchQuery, filterDesignation, filterType, activeTab, persons])
-
-    // Toggle individual person selection
-    const togglePerson = (personId: string) => {
-        setSelectedPersons((prev) => {
-            const newState = {
-                ...prev,
-                [personId]: !prev[personId],
-            }
-
-            // If toggling to selected and no meals are selected, select all meals
-            if (newState[personId] && (!personMeals[personId] || personMeals[personId].length === 0)) {
-                setPersonMeals((prevMeals) => ({
-                    ...prevMeals,
-                    [personId]: [...selectedMealTypes],
-                }))
-            }
-
-            return newState
-        })
+  // Handle bulk save to API
+  const handleSaveAll = async () => {
+    const changesArray = Object.values(attendanceChanges);
+    if (changesArray.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'No changes to save',
+        severity: 'info',
+      });
+      return;
     }
 
-    // Open meal selection dialog for a person
-    const openMealDialog = (personId: string, event: React.MouseEvent) => {
-        event.stopPropagation() // Prevent toggling the person selection
-        setCurrentPerson(personId)
-        setTempSelectedMeals(personMeals[personId] || [])
-        setDialogOpen(true)
+    const payload = {
+      academicYear,
+      attendances: changesArray.map((change: any) => ({
+        studentId: change.studentId,
+        date: change.date,
+        breakfast: change.breakfast !== undefined ? change.breakfast : false,
+        lunch: change.lunch !== undefined ? change.lunch : false,
+        dinner: change.dinner !== undefined ? change.dinner : false,
+      })),
+    };
+
+    try {
+      const result = await bulkCreateAttendance(payload).unwrap();
+      
+      const newLocalData = { ...localAttendanceData };
+      changesArray.forEach((change: any) => {
+        const key = `${change.studentId}_${change.date}`;
+        newLocalData[key] = {
+          breakfast: change.breakfast !== undefined ? change.breakfast : (newLocalData[key]?.breakfast || false),
+          lunch: change.lunch !== undefined ? change.lunch : (newLocalData[key]?.lunch || false),
+          dinner: change.dinner !== undefined ? change.dinner : (newLocalData[key]?.dinner || false),
+        };
+      });
+      
+      setLocalAttendanceData(newLocalData);
+      setAttendanceChanges({});
+      
+      setSnackbar({
+        open: true,
+        message: `${result.totalProcessed || changesArray.length} attendance records saved successfully`,
+        severity: 'success',
+      });
+      
+      // Refetch based on view mode
+      if (viewMode === 'monthly') {
+        refetchMonthly();
+      } else if (viewMode === 'daterange') {
+        refetchDateRange();
+      } else {
+        refetchSpecific();
+      }
+    } catch (error: any) {
+      console.error('Save error:', error);
+      setSnackbar({
+        open: true,
+        message: error?.data?.message || 'Failed to save',
+        severity: 'error',
+      });
     }
+  };
 
-    // Close meal selection dialog
-    const closeMealDialog = () => {
-        setDialogOpen(false)
-        setCurrentPerson(null)
+  // Handle reset
+  const handleReset = () => {
+    setAttendanceChanges({});
+    setSnackbar({
+      open: true,
+      message: 'All changes cancelled',
+      severity: 'info',
+    });
+  };
+
+  // Handle refresh
+  const handleRefresh = () => {
+    setAttendanceChanges({});
+    if (viewMode === 'monthly') {
+      refetchMonthly();
+    } else if (viewMode === 'daterange') {
+      refetchDateRange();
+    } else {
+      refetchSpecific();
     }
+    setSnackbar({
+      open: true,
+      message: 'Data refreshed',
+      severity: 'success',
+    });
+  };
 
-    // Save meal selections from dialog
-    const saveMealSelections = () => {
-        if (currentPerson !== null) {
-            // Update person meals
-            setPersonMeals((prev) => ({
-                ...prev,
-                [currentPerson]: tempSelectedMeals,
-            }))
+  // Handle export
+  const handleExport = () => {
+    setSnackbar({
+      open: true,
+      message: 'Excel file download starting...',
+      severity: 'success',
+    });
+  };
 
-            // If no meals selected, deselect the person
-            if (tempSelectedMeals.length === 0) {
-                setSelectedPersons((prev) => ({
-                    ...prev,
-                    [currentPerson]: false,
-                }))
-            } else {
-                // Otherwise ensure the person is selected
-                setSelectedPersons((prev) => ({
-                    ...prev,
-                    [currentPerson]: true,
-                }))
-            }
+  // Handle print
+  const handlePrint = () => {
+    window.print();
+  };
 
-            closeMealDialog()
-        }
-    }
+  // Calculate statistics
+  const calculateStats = () => {
+    let totalMeals = 0;
+    let totalBreakfast = 0;
+    let totalLunch = 0;
+    let totalDinner = 0;
+    let totalPresent = 0;
 
-    // Toggle meal type in dialog
-    const toggleMealType = (mealType: string) => {
-        setTempSelectedMeals((prev) => {
-            if (prev.includes(mealType)) {
-                return prev.filter((type) => type !== mealType)
-            } else {
-                return [...prev, mealType]
-            }
-        })
-    }
+    studentsByClass.forEach((student: Student) => {
+      let studentMeals = 0;
+      dates.forEach((date: string) => {
+        const dayMeals = getTotalMealsForDay(student._id, date);
+        studentMeals += dayMeals;
+        if (getMealStatus(student._id, date, 'breakfast')) totalBreakfast++;
+        if (getMealStatus(student._id, date, 'lunch')) totalLunch++;
+        if (getMealStatus(student._id, date, 'dinner')) totalDinner++;
+      });
+      totalMeals += studentMeals;
+      if (studentMeals > 0) totalPresent++;
+    });
 
-    // Handle select all toggle
-    const handleSelectAll = () => {
-        const newSelectAll = !selectAll
-        setSelectAll(newSelectAll)
+    const mealRate = attendanceSheetData?.mealRate || 55;
 
-        const updatedSelection = { ...selectedPersons }
-        const updatedMeals = { ...personMeals }
+    return {
+      totalStudents: studentsByClass.length,
+      totalMeals,
+      totalBreakfast,
+      totalLunch,
+      totalDinner,
+      totalCost: totalMeals * mealRate,
+      totalPresent,
+      totalAbsent: studentsByClass.length - totalPresent,
+      averageMealsPerStudent: studentsByClass.length ? (totalMeals / studentsByClass.length).toFixed(1) : '0',
+      mealRate,
+      totalDays: dates.length,
+    };
+  };
 
-        filteredPersons.forEach((person) => {
-            updatedSelection[person.id] = newSelectAll
-            if (newSelectAll) {
-                updatedMeals[person.id] = [...selectedMealTypes]
-            } else {
-                updatedMeals[person.id] = []
-            }
-        })
+  const stats = calculateStats();
 
-        setSelectedPersons(updatedSelection)
-        setPersonMeals(updatedMeals)
-    }
+  // Filtered students based on search
+  const filteredStudents = studentsByClass.filter((student: Student) =>
+    student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.nameBangla?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.studentClassRoll?.toString().includes(searchTerm) ||
+    student.studentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    // Handle meal type selection for all persons
-    const handleMealTypeChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-        const value = event.target.value as string[]
-        setSelectedMealTypes(value)
-
-        // Update all selected persons to have these meal types
-        const updatedMeals = { ...personMeals }
-        Object.keys(selectedPersons).forEach((personId) => {
-            if (selectedPersons[personId]) {
-                updatedMeals[personId] = [...value]
-            }
-        })
-
-        setPersonMeals(updatedMeals)
-    }
-
-    // Count selected persons
-    const countSelected = () => {
-        return Object.values(selectedPersons).filter(Boolean).length
-    }
-
-    // Count total meals
-    const countTotalMeals = () => {
-        let total = 0
-        Object.keys(personMeals).forEach((personId) => {
-            if (selectedPersons[personId]) {
-                total += personMeals[personId].length
-            }
-        })
-        return total
-    }
-
-    // Get selected students and teachers with their meal data
-    const getSelectedPersonsWithMeals = (type: PersonType) => {
-        return persons
-            .filter((person) => person.type === type && selectedPersons[person.id])
-            .map((person) => ({
-                personId: person.id,
-                mealTypes: (personMeals[person.id] || []).map(
-                    (mealType) => mealTypeMapping[mealType as keyof typeof mealTypeMapping],
-                ),
-                mealCount: (personMeals[person.id] || []).length,
-            }))
-    }
-
-    // Handle save - Updated to match the new schema
-    const handleSave = async () => {
-        setLoading(true)
-        setError(null)
-        setDebugInfo(null)
-
-        if (!date) {
-            setError("Date is required")
-            setLoading(false)
-            return
-        }
-
-        // Get selected students and teachers with their meal data
-        const selectedStudents = getSelectedPersonsWithMeals("student")
-        const selectedTeachers = getSelectedPersonsWithMeals("teacher")
-
-        // Validate according to schema requirements
-        if (selectedStudents.length === 0) {
-            setError("At least one student is required")
-            setLoading(false)
-            return
-        }
-
-        if (selectedTeachers.length === 0) {
-            setError("At least one teacher is required")
-            setLoading(false)
-            return
-        }
-
-        try {
-
-            const mealReportData = {
-                date: date.toISOString().split("T")[0],
-                students: selectedStudents,
-                teachers: selectedTeachers,
-            }
-            const debugData = JSON.stringify(mealReportData, null, 2)
-            setDebugInfo(`Submitting: ${debugData}`)
-
-            const directResponse = await fetch(`https://server.craftinternationalinstitute.com/api/v1/meal-report`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(mealReportData),
-            })
-
-            const directResult = await directResponse.json()
-            if (!directResponse.ok) {
-                throw { data: directResult }
-            }
-
-            setSuccess(true)
-            setDebugInfo((prev) => `${prev}\n\nResponse: ${JSON.stringify(directResult, null, 2)}`)
-
-            // Reset form after successful save
-            setTimeout(() => {
-                setSuccess(false)
-                router.push("/dashboard/daily-meal-report/")
-            }, 3000)
-        } catch (err: any) {
-            console.error("Error creating meal report:", err)
-
-            // Handle structured validation errors from the backend
-            if (err.data?.errorSources) {
-                const errorMessages = err.data.errorSources.map((source: any) => `${source.path}: ${source.message}`).join(", ")
-                setError(errorMessages || err.data?.message || "Failed to create meal report")
-                setDebugInfo((prev) => `${prev}\n\nError: ${JSON.stringify(err.data, null, 2)}`)
-            } else {
-                setError(err.data?.message || "Failed to create meal report")
-                setDebugInfo((prev) => `${prev}\n\nError: ${JSON.stringify(err, null, 2)}`)
-            }
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    // Format date for display
-    const formatDate = (date: Date | null) => {
-        if (!date) return ""
-        const options: Intl.DateTimeFormatOptions = {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        }
-        return date.toLocaleDateString("en-US", options)
-    }
-
-    // Get unique designations for filter
-    const designations = Array.from(new Set(persons.map((p) => p.designation || "Unknown")))
-
-    // Render meal icons for a person
-    const renderPersonMealIcons = (personId: string) => {
-        const meals = personMeals[personId] || []
-
-        return (
-            <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
-                {meals.map((meal) => (
-                    <Tooltip key={meal} title={meal}>
-                        {mealIconMap[meal as keyof typeof mealIconMap]}
-                    </Tooltip>
-                ))}
-            </Stack>
-        )
-    }
-
-    // Handle tab change
-    const handleTabChange = (_event: React.SyntheticEvent, newValue: PersonType | "all") => {
-        setActiveTab(newValue)
-    }
-
-    // Get person type icon
-    const getPersonTypeIcon = (type: PersonType) => {
-        return type === "student" ? <School fontSize="small" /> : <Person fontSize="small" />
-    }
-
-    // Get person type color
-    const getPersonTypeColor = (type: PersonType) => {
-        return type === "student" ? "#e3f2fd" : "#e8f5e9"
-    }
-
-    // Get person type text color
-    const getPersonTypeTextColor = (type: PersonType) => {
-        return type === "student" ? "#1976d2" : "#2e7d32"
-    }
-
-    // Calculate percentage for meal count stats
-    const calculatePercentage = (count: number) => {
-        const total = countSelected()
-        return total > 0 ? Math.round((count / total) * 100) : 0
-    }
-
-    // Get persons grouped by meal count
-    const getPersonsByMealCount = () => {
-        const result = {
-            oneMeal: [] as PersonData[],
-            twoMeals: [] as PersonData[],
-            threeMeals: [] as PersonData[],
-        }
-
-        persons.forEach((person) => {
-            if (selectedPersons[person.id]) {
-                const mealCount = personMeals[person.id]?.length || 0
-                if (mealCount === 1) result.oneMeal.push(person)
-                else if (mealCount === 2) result.twoMeals.push(person)
-                else if (mealCount === 3) result.threeMeals.push(person)
-            }
-        })
-
-        return result
-    }
-
-    // Loading state
-    if (isLoadingStudents || isLoadingTeachers) {
-        return (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                <CircularProgress />
-                <Typography variant="h6" sx={{ ml: 2 }}>
-                    Loading data...
-                </Typography>
-            </Box>
-        )
-    }
-
+  // Loading state
+  if (classDropdownOptions.length === 0) {
     return (
-        <Box sx={{ p: 3, maxWidth: "100%" }}>
-            {/* Header Section */}
-            <Card elevation={3} sx={{ mb: 4, borderRadius: 2, overflow: "hidden" }}>
-                <Box
-                    sx={{
-                        p: 2,
-                        background: "linear-gradient(45deg, #3f51b5 30%, #2196f3 90%)",
-                        color: "white",
-                    }}
-                >
-                    <Grid container alignItems="center" justifyContent="space-between">
-                        <Grid item>
-                            <Typography variant="h4" fontWeight="bold">
-                                Craft International Institute
-                            </Typography>
-                            <Typography variant="subtitle1">Add Daily Meal Report</Typography>
-                        </Grid>
-                        <Grid item>
-                            <Button
-                                variant="contained"
-                                startIcon={<ArrowBack />}
-                                sx={{ bgcolor: "rgba(255,255,255,0.2)", "&:hover": { bgcolor: "rgba(255,255,255,0.3)" } }}
-                            >
-                                Back to Reports
-                            </Button>
-                        </Grid>
-                    </Grid>
-                </Box>
+      <Box sx={{ p: 4 }}>
+        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
+          <CircularProgress />
+          <Typography sx={{ mt: 2 }} color="text.secondary">
+            Loading class data...
+          </Typography>
+        </Paper>
+      </Box>
+    );
+  }
 
-                <CardContent>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={4}>
-                            <TextField
-                                label="Select Date"
-                                type="date"
-                                fullWidth
-                                variant="outlined"
-                                value={date ? date.toISOString().split("T")[0] : ""}
-                                onChange={(e) => {
-                                    const newDate = e.target.value ? new Date(e.target.value) : null
-                                    setDate(newDate)
-                                }}
-                                InputProps={{
-                                    startAdornment: <CalendarMonth sx={{ mr: 1, color: "text.secondary" }} />,
-                                }}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                                required
-                                error={error?.includes("Date")}
-                                helperText={error?.includes("Date") ? error : ""}
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <FormControl fullWidth variant="outlined" required error={error?.includes("Meal type")}>
-                                <InputLabel>Default Meal Types</InputLabel>
-                                <Select
-                                    multiple
-                                    value={selectedMealTypes}
-                                    onChange={(e) => handleMealTypeChange(e as any)}
-                                    input={<OutlinedInput label="Default Meal Types" />}
-                                    renderValue={(selected) => (
-                                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                                            {(selected as string[]).map((value) => (
-                                                <Chip
-                                                    key={value}
-                                                    label={value}
-                                                    size="small"
-                                                    icon={mealIconMap[value as keyof typeof mealIconMap]}
-                                                />
-                                            ))}
-                                        </Box>
-                                    )}
-                                    startAdornment={<RestaurantMenu sx={{ mr: 1, color: "text.secondary" }} />}
-                                >
-                                    {mealTypes.map((type) => (
-                                        <MenuItem key={type} value={type}>
-                                            <Checkbox checked={selectedMealTypes.indexOf(type) > -1} />
-                                            <ListItemText primary={type} />
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                {error?.includes("Meal type") && (
-                                    <Typography variant="caption" color="error">
-                                        {error}
-                                    </Typography>
-                                )}
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Paper elevation={2} sx={{ p: 2, borderRadius: 2, bgcolor: "#f5f5f5", height: "100%" }}>
-                                <Stack direction="row" spacing={2} alignItems="center">
-                                    <Avatar sx={{ bgcolor: "#3f51b5", width: 40, height: 40 }}>
-                                        <Typography variant="h6">{countSelected()}</Typography>
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="body2" color="textSecondary">
-                                            People Selected
-                                        </Typography>
-                                        <Typography variant="h5" fontWeight="bold">
-                                            {countSelected()} / {persons.length}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
-                                            Total Meals: {countTotalMeals()}
-                                        </Typography>
-                                    </Box>
-                                </Stack>
-                            </Paper>
-                        </Grid>
-                    </Grid>
-                </CardContent>
-            </Card>
-
-            {/* Meal Count Statistics */}
-            <Card elevation={3} sx={{ mb: 4, borderRadius: 2, overflow: "hidden" }}>
-                <Box sx={{ p: 2, bgcolor: "#673ab7", color: "white" }}>
-                    <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <PieChart />
-                            <Typography variant="h6">Meal Count Statistics</Typography>
-                        </Stack>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            onClick={() => setShowMealCountTable(!showMealCountTable)}
-                            sx={{ bgcolor: "rgba(255,255,255,0.2)", "&:hover": { bgcolor: "rgba(255,255,255,0.3)" } }}
-                        >
-                            {showMealCountTable ? "Hide Details" : "Show Details"}
-                        </Button>
-                    </Stack>
-                </Box>
-                <CardContent>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={4}>
-                            <Paper elevation={1} sx={{ p: 2, borderRadius: 2, bgcolor: "#f3e5f5" }}>
-                                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                                    <Avatar sx={{ bgcolor: "#9c27b0", width: 30, height: 30 }}>1</Avatar>
-                                    <Typography variant="subtitle1">One Meal</Typography>
-                                </Stack>
-                                <Typography variant="h4" fontWeight="bold">
-                                    {mealCountStats.oneMeal}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {calculatePercentage(mealCountStats.oneMeal)}% of selected people
-                                </Typography>
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={calculatePercentage(mealCountStats.oneMeal)}
-                                    sx={{ mt: 1, height: 8, borderRadius: 4, bgcolor: "#e1bee7" }}
-                                    color="secondary"
-                                />
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Paper elevation={1} sx={{ p: 2, borderRadius: 2, bgcolor: "#e8f5e9" }}>
-                                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                                    <Avatar sx={{ bgcolor: "#4caf50", width: 30, height: 30 }}>2</Avatar>
-                                    <Typography variant="subtitle1">Two Meals</Typography>
-                                </Stack>
-                                <Typography variant="h4" fontWeight="bold">
-                                    {mealCountStats.twoMeals}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {calculatePercentage(mealCountStats.twoMeals)}% of selected people
-                                </Typography>
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={calculatePercentage(mealCountStats.twoMeals)}
-                                    sx={{ mt: 1, height: 8, borderRadius: 4, bgcolor: "#c8e6c9" }}
-                                    color="success"
-                                />
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Paper elevation={1} sx={{ p: 2, borderRadius: 2, bgcolor: "#e3f2fd" }}>
-                                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                                    <Avatar sx={{ bgcolor: "#2196f3", width: 30, height: 30 }}>3</Avatar>
-                                    <Typography variant="subtitle1">Three Meals</Typography>
-                                </Stack>
-                                <Typography variant="h4" fontWeight="bold">
-                                    {mealCountStats.threeMeals}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {calculatePercentage(mealCountStats.threeMeals)}% of selected people
-                                </Typography>
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={calculatePercentage(mealCountStats.threeMeals)}
-                                    sx={{ mt: 1, height: 8, borderRadius: 4, bgcolor: "#bbdefb" }}
-                                    color="primary"
-                                />
-                            </Paper>
-                        </Grid>
-                    </Grid>
-
-                    {/* Detailed Meal Count Table */}
-                    {showMealCountTable && (
-                        <Box sx={{ mt: 3 }}>
-                            <Typography variant="h6" gutterBottom>
-                                Detailed Meal Count Breakdown
-                            </Typography>
-                            <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: "auto" }}>
-                                <Table stickyHeader size="small">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: "bold" }}>Meal Count</TableCell>
-                                            <TableCell sx={{ fontWeight: "bold" }}>Person</TableCell>
-                                            <TableCell sx={{ fontWeight: "bold" }}>Type</TableCell>
-                                            <TableCell sx={{ fontWeight: "bold" }}>ID</TableCell>
-                                            <TableCell sx={{ fontWeight: "bold" }}>Meals</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {getPersonsByMealCount().oneMeal.map((person) => (
-                                            <TableRow key={`one-${person.id}`}>
-                                                <TableCell>1</TableCell>
-                                                <TableCell>{person.name}</TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        icon={getPersonTypeIcon(person.type)}
-                                                        label={person.type === "student" ? "Student" : "Teacher"}
-                                                        size="small"
-                                                        sx={{
-                                                            bgcolor: getPersonTypeColor(person.type),
-                                                            color: getPersonTypeTextColor(person.type),
-                                                        }}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>{person.displayId}</TableCell>
-                                                <TableCell>
-                                                    <Stack direction="row" spacing={0.5}>
-                                                        {(personMeals[person.id] || []).map((meal) => (
-                                                            <Tooltip key={meal} title={meal}>
-                                                                {mealIconMap[meal as keyof typeof mealIconMap]}
-                                                            </Tooltip>
-                                                        ))}
-                                                    </Stack>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                        {getPersonsByMealCount().twoMeals.map((person) => (
-                                            <TableRow key={`two-${person.id}`}>
-                                                <TableCell>2</TableCell>
-                                                <TableCell>{person.name}</TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        icon={getPersonTypeIcon(person.type)}
-                                                        label={person.type === "student" ? "Student" : "Teacher"}
-                                                        size="small"
-                                                        sx={{
-                                                            bgcolor: getPersonTypeColor(person.type),
-                                                            color: getPersonTypeTextColor(person.type),
-                                                        }}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>{person.displayId}</TableCell>
-                                                <TableCell>
-                                                    <Stack direction="row" spacing={0.5}>
-                                                        {(personMeals[person.id] || []).map((meal) => (
-                                                            <Tooltip key={meal} title={meal}>
-                                                                {mealIconMap[meal as keyof typeof mealIconMap]}
-                                                            </Tooltip>
-                                                        ))}
-                                                    </Stack>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                        {getPersonsByMealCount().threeMeals.map((person) => (
-                                            <TableRow key={`three-${person.id}`}>
-                                                <TableCell>3</TableCell>
-                                                <TableCell>{person.name}</TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        icon={getPersonTypeIcon(person.type)}
-                                                        label={person.type === "student" ? "Student" : "Teacher"}
-                                                        size="small"
-                                                        sx={{
-                                                            bgcolor: getPersonTypeColor(person.type),
-                                                            color: getPersonTypeTextColor(person.type),
-                                                        }}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>{person.displayId}</TableCell>
-                                                <TableCell>
-                                                    <Stack direction="row" spacing={0.5}>
-                                                        {(personMeals[person.id] || []).map((meal) => (
-                                                            <Tooltip key={meal} title={meal}>
-                                                                {mealIconMap[meal as keyof typeof mealIconMap]}
-                                                            </Tooltip>
-                                                        ))}
-                                                    </Stack>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-                        </Box>
-                    )}
-                </CardContent>
-            </Card>
-
-
-
-            {/* Date and Meal Summary */}
-            <Card elevation={2} sx={{ mb: 4, borderRadius: 2, bgcolor: "#e8eaf6" }}>
-                <CardContent>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} md={4}>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                                <CalendarMonth sx={{ fontSize: 24, color: "#3f51b5" }} />
-                                <Typography variant="h6">{formatDate(date)}</Typography>
-                            </Stack>
-                        </Grid>
-                        <Grid item xs={12} md={8}>
-                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                                Default Meal Types:
-                            </Typography>
-                            <Stack direction="row" spacing={2} flexWrap="wrap">
-                                {selectedMealTypes.map((type) => (
-                                    <Chip
-                                        key={type}
-                                        label={type}
-                                        icon={mealIconMap[type as keyof typeof mealIconMap]}
-                                        sx={{ bgcolor: "#fff", mb: 1 }}
-                                    />
-                                ))}
-                            </Stack>
-                            <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 1 }}>
-                                {selectedMealTypes.map((type) => (
-                                    <Chip
-                                        key={`time-${type}`}
-                                        label={`${type}: ${mealTimeMap[type as keyof typeof mealTimeMap]}`}
-                                        size="small"
-                                        icon={<AccessTime sx={{ fontSize: 16 }} />}
-                                        sx={{ bgcolor: "#fff", mb: 1 }}
-                                    />
-                                ))}
-                            </Stack>
-                        </Grid>
-                    </Grid>
-                </CardContent>
-            </Card>
-
-            {/* Persistent Filter Bar */}
-            <Card elevation={3} sx={{ mb: 3, borderRadius: 2, overflow: "hidden" }}>
-                <Box sx={{ p: 2, bgcolor: "#f5f5f5" }}>
-                    <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} md={3}>
-                            <TextField
-                                placeholder="Search by name, ID or email..."
-                                variant="outlined"
-                                size="small"
-                                fullWidth
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                InputProps={{
-                                    startAdornment: <Search sx={{ mr: 1, color: "text.secondary" }} />,
-                                }}
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Filter by Designation</InputLabel>
-                                <Select
-                                    value={filterDesignation || ""}
-                                    onChange={(e) => setFilterDesignation(e.target.value || null)}
-                                    label="Filter by Designation"
-                                    startAdornment={<FilterList sx={{ mr: 1, color: "text.secondary" }} />}
-                                >
-                                    <MenuItem value="">All Designations</MenuItem>
-                                    {designations.map((designation) => (
-                                        <MenuItem key={designation} value={designation}>
-                                            {designation}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Meal Type Filter</InputLabel>
-                                <Select
-                                    multiple
-                                    value={selectedMealTypes}
-                                    onChange={(e) => handleMealTypeChange(e as any)}
-                                    input={<OutlinedInput label="Meal Type Filter" />}
-                                    renderValue={(selected) => (
-                                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                                            {(selected as string[]).map((value) => (
-                                                <Chip
-                                                    key={value}
-                                                    label={value}
-                                                    size="small"
-                                                    icon={mealIconMap[value as keyof typeof mealIconMap]}
-                                                />
-                                            ))}
-                                        </Box>
-                                    )}
-                                    startAdornment={<RestaurantMenu sx={{ mr: 1, color: "text.secondary" }} />}
-                                >
-                                    {mealTypes.map((type) => (
-                                        <MenuItem key={type} value={type}>
-                                            <Checkbox checked={selectedMealTypes.indexOf(type) > -1} />
-                                            <ListItemText primary={type} />
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                            <Stack direction="row" spacing={2} justifyContent="flex-end">
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    onClick={() => {
-                                        setSearchQuery("")
-                                        setFilterDesignation(null)
-                                        setSelectedMealTypes(mealTypes)
-                                        setActiveTab("all")
-                                    }}
-                                    startIcon={<Close />}
-                                    size="medium"
-                                >
-                                    Clear Filters
-                                </Button>
-                                <FormControlLabel
-                                    control={<Switch checked={selectAll} onChange={handleSelectAll} color="primary" />}
-                                    label="Select All"
-                                />
-                            </Stack>
-                        </Grid>
-                    </Grid>
-                </Box>
-            </Card>
-
-            {/* Filter Results Summary */}
-            {(searchQuery || filterDesignation || activeTab !== "all") && (
-                <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                    <FilterList fontSize="small" color="primary" />
-                    <Typography variant="body2" color="primary">
-                        Showing {filteredPersons.length} of {persons.length} people
-                        {searchQuery && <span> matching "{searchQuery}"</span>}
-                        {filterDesignation && <span> with designation "{filterDesignation}"</span>}
-                        {activeTab !== "all" && <span> of type "{activeTab}"</span>}
-                    </Typography>
-                </Box>
-            )}
-
-            {/* Person Selection Tabs */}
-            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
-                <Tabs value={activeTab} onChange={handleTabChange} aria-label="person type tabs">
-                    <Tab label="All" value="all" icon={<FilterList />} iconPosition="start" />
-                    <Tab label="Students" value="student" icon={<School />} iconPosition="start" />
-                    <Tab label="Teachers" value="teacher" icon={<Person />} iconPosition="start" />
-                </Tabs>
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
+        
+        {/* Header Section */}
+        <Paper sx={{ p: 3, mb: 3, borderRadius: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+            <Box>
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
+                <FoodIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Meal Attendance Management
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Track and manage daily meal attendance for students
+              </Typography>
             </Box>
-
-            {/* Validation Errors */}
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            )}
-
-            {/* Person List */}
-            <Card elevation={3} sx={{ borderRadius: 2, overflow: "hidden", mb: 4 }}>
-                <Box sx={{ p: 2, bgcolor: "#3f51b5", color: "white" }}>
-                    <Typography variant="h6">
-                        Person Selection
-                        <Typography component="span" variant="body2" sx={{ ml: 2 }}>
-                            (Click on a person to toggle selection, click edit icon to customize meals)
-                        </Typography>
-                    </Typography>
-                </Box>
-                <Divider />
-                <Box sx={{ maxHeight: "500px", overflow: "auto", p: 2 }}>
-                    <Grid container spacing={2}>
-                        {filteredPersons.length > 0 ? (
-                            filteredPersons.map((person) => (
-                                <Grid item xs={12} sm={6} md={4} lg={3} key={person.id}>
-                                    <Paper
-                                        elevation={1}
-                                        sx={{
-                                            p: 2,
-                                            borderRadius: 2,
-                                            cursor: "pointer",
-                                            border: selectedPersons[person.id] ? "2px solid #3f51b5" : "1px solid #e0e0e0",
-                                            bgcolor: selectedPersons[person.id] ? "rgba(63, 81, 181, 0.1)" : "white",
-                                            transition: "all 0.2s ease",
-                                            "&:hover": {
-                                                boxShadow: 3,
-                                                bgcolor: "rgba(63, 81, 181, 0.05)",
-                                            },
-                                            position: "relative",
-                                        }}
-                                        onClick={() => togglePerson(person.id)}
-                                    >
-                                        {/* Edit button for meal customization */}
-                                        <IconButton
-                                            size="small"
-                                            sx={{
-                                                position: "absolute",
-                                                top: 8,
-                                                right: 8,
-                                                bgcolor: "rgba(255,255,255,0.8)",
-                                                "&:hover": { bgcolor: "rgba(255,255,255,1)" },
-                                            }}
-                                            onClick={(e) => openMealDialog(person.id, e)}
-                                        >
-                                            <Edit fontSize="small" />
-                                        </IconButton>
-
-                                        <Stack direction="row" spacing={2} alignItems="center">
-                                            <Avatar src={person.avatar} sx={{ width: 50, height: 50 }} />
-                                            <Box sx={{ flexGrow: 1 }}>
-                                                <Typography variant="subtitle1" fontWeight="medium">
-                                                    {person.name}
-                                                </Typography>
-                                                <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                                                    <Chip
-                                                        icon={getPersonTypeIcon(person.type)}
-                                                        label={person.type === "student" ? "Student" : "Teacher"}
-                                                        size="small"
-                                                        sx={{
-                                                            bgcolor: getPersonTypeColor(person.type),
-                                                            color: getPersonTypeTextColor(person.type),
-                                                        }}
-                                                    />
-                                                    <Chip label={person.displayId} size="small" sx={{ bgcolor: "#f5f5f5" }} />
-                                                </Stack>
-                                                {person.designation && (
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        {person.designation}
-                                                    </Typography>
-                                                )}
-                                                {selectedPersons[person.id] && (
-                                                    <Box sx={{ mt: 1 }}>
-                                                        {renderPersonMealIcons(person.id)}
-                                                        <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                                                            {(personMeals[person.id] || []).length} meals
-                                                        </Typography>
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                            {selectedPersons[person.id] ? (
-                                                <CheckCircle sx={{ color: "#4caf50", fontSize: 24 }} />
-                                            ) : (
-                                                <Cancel sx={{ color: "#f44336", fontSize: 24 }} />
-                                            )}
-                                        </Stack>
-                                    </Paper>
-                                </Grid>
-                            ))
-                        ) : (
-                            <Grid item xs={12}>
-                                <Box sx={{ p: 4, textAlign: "center" }}>
-                                    <Typography variant="h6" color="text.secondary">
-                                        No people found matching your criteria
-                                    </Typography>
-                                    <Button
-                                        variant="text"
-                                        onClick={() => {
-                                            setSearchQuery("")
-                                            setFilterDesignation(null)
-                                            setActiveTab("all")
-                                        }}
-                                        sx={{ mt: 2 }}
-                                    >
-                                        Clear Filters
-                                    </Button>
-                                </Box>
-                            </Grid>
-                        )}
-                    </Grid>
-                </Box>
-            </Card>
-
-            {/* Action Buttons */}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 4 }}>
-                <Button
-                    variant="outlined"
-                    color="inherit"
-                    onClick={() => {
-                        // Reset form to default values (all selected)
-                        setDate(new Date())
-                        setSelectedMealTypes(mealTypes)
-                        const resetSelection: Record<string, boolean> = {}
-                        const resetMeals: Record<string, string[]> = {}
-                        persons.forEach((person) => {
-                            resetSelection[person.id] = true
-                            resetMeals[person.id] = [...mealTypes]
-                        })
-                        setSelectedPersons(resetSelection)
-                        setPersonMeals(resetMeals)
-                        setSelectAll(true)
-                        setActiveTab("all")
-                        setSearchQuery("")
-                        setFilterDesignation(null)
-                        setError(null)
-                        setDebugInfo(null)
-                    }}
-                >
-                    Reset
-                </Button>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Save />}
-                    onClick={handleSave}
-                    disabled={loading || countSelected() === 0}
-                    sx={{
-                        minWidth: 150,
-                        bgcolor: "#3f51b5",
-                        "&:hover": {
-                            bgcolor: "#303f9f",
-                        },
-                    }}
-                >
-                    {loading ? "Saving..." : "Save Report"}
-                </Button>
+            <Box mt={{ xs: 2, sm: 0 }}>
+              <Chip 
+                icon={<TrophyIcon />} 
+                label={`Academic Year: ${academicYear}`} 
+                sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+              />
+              {className && (
+                <Chip 
+                  label={`Class: ${className}`} 
+                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', ml: 1 }}
+                />
+              )}
             </Box>
+          </Box>
+        </Paper>
 
-            {/* Legend */}
-            <Box sx={{ mt: 3, display: "flex", justifyContent: "center", gap: 3, flexWrap: "wrap" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <CheckCircle sx={{ color: "#4caf50" }} />
-                    <Typography variant="body2">Selected</Typography>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Cancel sx={{ color: "#f44336" }} />
-                    <Typography variant="body2">Not Selected</Typography>
-                </Box>
-                {mealTypes.map((type) => (
-                    <Box key={type} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        {mealIconMap[type as keyof typeof mealIconMap]}
-                        <Typography variant="body2">{type}</Typography>
+        {/* Statistics Cards */}
+        {studentsByClass.length > 0 && (
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography color="text.secondary" variant="body2">Total Students</Typography>
+                      <Typography variant="h4" fontWeight="bold">{stats.totalStudents}</Typography>
+                      <Typography variant="caption" color="success.main">
+                        Present: {stats.totalPresent}
+                      </Typography>
                     </Box>
-                ))}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <School fontSize="small" />
-                    <Typography variant="body2">Student</Typography>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Person fontSize="small" />
-                    <Typography variant="body2">Teacher</Typography>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Edit fontSize="small" />
-                    <Typography variant="body2">Edit Meals</Typography>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <LocalDining fontSize="small" />
-                    <Typography variant="body2">Meal Count</Typography>
-                </Box>
-            </Box>
+                    <Avatar sx={{ bgcolor: '#2196f3', width: 48, height: 48 }}>
+                      <PersonIcon />
+                    </Avatar>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography color="text.secondary" variant="body2">Total Meals</Typography>
+                      <Typography variant="h4" fontWeight="bold" color="#4caf50">{stats.totalMeals}</Typography>
+                      <Typography variant="caption">
+                        Over {stats.totalDays} days
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: '#4caf50', width: 48, height: 48 }}>
+                      <FoodIcon />
+                    </Avatar>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography color="text.secondary" variant="body2">Breakfast</Typography>
+                      <Typography variant="h4" fontWeight="bold" color="#ff9800">{stats.totalBreakfast}</Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: '#ff9800', width: 48, height: 48 }}>
+                      <BreakfastIcon />
+                    </Avatar>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography color="text.secondary" variant="body2">Lunch</Typography>
+                      <Typography variant="h4" fontWeight="bold" color="#f44336">{stats.totalLunch}</Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: '#f44336', width: 48, height: 48 }}>
+                      <LunchIcon />
+                    </Avatar>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={2.4}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography color="text.secondary" variant="body2">Total Cost</Typography>
+                      <Typography variant="h5" fontWeight="bold" color="#9c27b0">৳{stats.totalCost}</Typography>
+                      <Typography variant="caption">
+                        Rate: ৳{stats.mealRate}/meal
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: '#9c27b0', width: 48, height: 48 }}>
+                      <ChartIcon />
+                    </Avatar>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        )}
 
-            {/* Footer */}
-            <Box sx={{ mt: 4, textAlign: "center" }}>
-                <Typography variant="body2" color="textSecondary">
-                    © {new Date().getFullYear()} Craft International Institute. All rights reserved.
+        {/* Main Content */}
+        <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+          {/* Toolbar */}
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'white' }}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} sm={2}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Select Class</InputLabel>
+                  <Select 
+                    value={selectedClassId} 
+                    label="Select Class" 
+                    onChange={(e) => {
+                      setSelectedClassId(e.target.value);
+                      setAttendanceChanges({});
+                    }}
+                  >
+                    {classDropdownOptions.map((option: any) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm="auto">
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={(_, newMode) => {
+                    if (newMode) {
+                      setViewMode(newMode);
+                      setAttendanceChanges({});
+                    }
+                  }}
+                  size="small"
+                >
+                  <ToggleButton value="monthly">
+                    <CalendarIcon sx={{ mr: 0.5 }} /> Monthly
+                  </ToggleButton>
+                  <ToggleButton value="daterange">
+                    <DateRangeIcon sx={{ mr: 0.5 }} /> Date Range
+                  </ToggleButton>
+                  <ToggleButton value="specific">
+                    <EditCalendarIcon sx={{ mr: 0.5 }} /> Specific Date
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Grid>
+              
+              {viewMode === 'monthly' ? (
+                <Grid item xs={12} sm={3}>
+                  <DatePicker
+                    label="Select Month"
+                    views={['year', 'month']}
+                    value={selectedMonth}
+                    onChange={(newValue) => {
+                      setSelectedMonth(newValue);
+                      setAttendanceChanges({});
+                    }}
+                    slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                  />
+                </Grid>
+              ) : viewMode === 'daterange' ? (
+                <>
+                  <Grid item xs={12} sm={4}>
+                    <Box display="flex" gap={1} alignItems="center">
+                      <DatePicker
+                        label="Start Date"
+                        value={startDate}
+                        onChange={(newValue) => {
+                          setStartDate(newValue);
+                          setAttendanceChanges({});
+                        }}
+                        slotProps={{ textField: { size: 'small', sx: { width: '100%' } } }}
+                      />
+                      <Typography variant="body2">to</Typography>
+                      <DatePicker
+                        label="End Date"
+                        value={endDate}
+                        onChange={(newValue) => {
+                          setEndDate(newValue);
+                          setAttendanceChanges({});
+                        }}
+                        slotProps={{ textField: { size: 'small', sx: { width: '100%' } } }}
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => setQuickRangeAnchorEl(e.currentTarget)}
+                        startIcon={<ViewWeekIcon />}
+                      >
+                        Quick Range
+                      </Button>
+                      <Menu
+                        anchorEl={quickRangeAnchorEl}
+                        open={Boolean(quickRangeAnchorEl)}
+                        onClose={() => setQuickRangeAnchorEl(null)}
+                      >
+                        <MenuItem onClick={() => handleQuickRangeSelect('today')}>
+                          <TodayIcon sx={{ mr: 1, fontSize: 20 }} /> Today
+                        </MenuItem>
+                        <MenuItem onClick={() => handleQuickRangeSelect('yesterday')}>
+                          <TodayIcon sx={{ mr: 1, fontSize: 20 }} /> Yesterday
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={() => handleQuickRangeSelect('thisWeek')}>
+                          <ViewWeekIcon sx={{ mr: 1, fontSize: 20 }} /> This Week
+                        </MenuItem>
+                        <MenuItem onClick={() => handleQuickRangeSelect('lastWeek')}>
+                          <WeekendIcon sx={{ mr: 1, fontSize: 20 }} /> Last Week
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={() => handleQuickRangeSelect('thisMonth')}>
+                          <CalendarIcon sx={{ mr: 1, fontSize: 20 }} /> This Month
+                        </MenuItem>
+                        <MenuItem onClick={() => handleQuickRangeSelect('lastMonth')}>
+                          <CalendarIcon sx={{ mr: 1, fontSize: 20 }} /> Last Month
+                        </MenuItem>
+                      </Menu>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={1}>
+                    <Chip 
+                      label={`${dates.length} day(s)`} 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined"
+                    />
+                  </Grid>
+                </>
+              ) : (
+                <Grid item xs={12} sm={3}>
+                  <Box display="flex" gap={1}>
+                    <MobileDatePicker
+                      label="Select Date"
+                      value={specificDate}
+                      onChange={(newValue) => {
+                        setSpecificDate(newValue);
+                        setAttendanceChanges({});
+                      }}
+                      slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                    />
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<EditCalendarIcon />}
+                      onClick={handleOpenSpecificDateDialog}
+                    >
+                      Entry
+                    </Button>
+                  </Box>
+                </Grid>
+              )}
+              
+              <Grid item xs={12} sm={viewMode === 'daterange' ? 1.5 : 2}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchTerm && (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setSearchTerm('')}>
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={viewMode === 'daterange' ? 1 : 1.5}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={handleRefresh}
+                  disabled={isLoadingSheet}
+                >
+                  Refresh
+                </Button>
+              </Grid>
+            </Grid>
+
+            {/* Show date range info */}
+            {viewMode === 'daterange' && startDate && endDate && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Showing attendance from <strong>{startDate.format('DD MMMM YYYY')}</strong> to <strong>{endDate.format('DD MMMM YYYY')}</strong> 
+                  {' '}({dates.length} days)
                 </Typography>
-            </Box>
+              </Box>
+            )}
 
-            {/* Success Notification */}
-            <Snackbar open={success} autoHideDuration={3000} onClose={() => setSuccess(false)}>
-                <Alert severity="success" sx={{ width: "100%" }}>
-                    Meal report successfully saved!
-                </Alert>
-            </Snackbar>
-
-            {/* Meal Selection Dialog */}
-            <Dialog open={dialogOpen} onClose={closeMealDialog} maxWidth="xs" fullWidth>
-                <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="h6">Edit Meals</Typography>
-                    <IconButton onClick={closeMealDialog} size="small">
-                        <Close fontSize="small" />
-                    </IconButton>
-                </DialogTitle>
-                <DialogContent>
-                    {currentPerson !== null && (
-                        <>
-                            <Typography variant="subtitle1" gutterBottom>
-                                {persons.find((p) => p.id === currentPerson)?.name}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary" gutterBottom>
-                                Select which meals this person will eat:
-                            </Typography>
-
-                            <Box sx={{ mt: 2 }}>
-                                {mealTypes.map((type) => (
-                                    <FormControlLabel
-                                        key={type}
-                                        control={
-                                            <Checkbox
-                                                checked={tempSelectedMeals.includes(type)}
-                                                onChange={() => toggleMealType(type)}
-                                                icon={<Box sx={{ opacity: 0.5 }}>{mealIconMap[type as keyof typeof mealIconMap]}</Box>}
-                                                checkedIcon={mealIconMap[type as keyof typeof mealIconMap]}
-                                            />
-                                        }
-                                        label={
-                                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                                                <Typography>{type}</Typography>
-                                                <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
-                                                    ({mealTimeMap[type as keyof typeof mealTimeMap]})
-                                                </Typography>
-                                            </Box>
-                                        }
-                                    />
-                                ))}
-                            </Box>
-
-                            <Box sx={{ mt: 2, p: 2, bgcolor: "#f5f5f5", borderRadius: 1 }}>
-                                <Typography variant="body2">
-                                    Selected meals: <strong>{tempSelectedMeals.length}</strong>
-                                </Typography>
-                                <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                                    {tempSelectedMeals.map((meal) => (
-                                        <Chip key={meal} label={meal} size="small" icon={mealIconMap[meal as keyof typeof mealIconMap]} />
-                                    ))}
-                                </Stack>
-                            </Box>
-                        </>
+            {/* Quick Actions - For Monthly and Date Range Views */}
+            {studentsByClass.length > 0 && dates.length > 0 && viewMode !== 'specific' && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                
+                {/* Date-wise Quick Actions */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom color="text.secondary">
+                    <DateRangeIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'middle' }} />
+                    Quick actions for specific date (click on any date in the table below):
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {dates.slice(0, 10).map((date:any) => (
+                      <Chip
+                        key={date}
+                        label={dayjs(date).format('DD MMM')}
+                        onClick={() => setSelectedDateForBulk(selectedDateForBulk === date ? null : date)}
+                        color={selectedDateForBulk === date ? 'primary' : 'default'}
+                        variant={selectedDateForBulk === date ? 'filled' : 'outlined'}
+                        size="small"
+                      />
+                    ))}
+                    {dates.length > 10 && (
+                      <Chip label={`+${dates.length - 10} more`} variant="outlined" size="small" />
                     )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={closeMealDialog} color="inherit">
+                  </Stack>
+                  
+                  {selectedDateForBulk && (
+                    <Box sx={{ mt: 1, p: 1, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+                      <Typography variant="caption" display="block" gutterBottom>
+                        <strong>{dayjs(selectedDateForBulk).format('DD MMMM YYYY')}</strong> - Actions for this date:
+                      </Typography>
+                      <Stack direction="row" spacing={1} flexWrap="wrap">
+                        <Button size="small" variant="contained" color="success" onClick={() => assignFullDayMealToAllOnDate(selectedDateForBulk, true)}>
+                          Give Full Day Meal
+                        </Button>
+                        <Button size="small" variant="outlined" color="error" onClick={() => assignFullDayMealToAllOnDate(selectedDateForBulk, false)}>
+                          Remove Full Day Meal
+                        </Button>
+                        <Divider orientation="vertical" flexItem />
+                        <Button size="small" variant="outlined" startIcon={<BreakfastIcon />} onClick={() => assignMealToAllOnDate(selectedDateForBulk, 'breakfast', true)}>
+                          Breakfast
+                        </Button>
+                        <Button size="small" variant="outlined" startIcon={<LunchIcon />} onClick={() => assignMealToAllOnDate(selectedDateForBulk, 'lunch', true)}>
+                          Lunch
+                        </Button>
+                        <Button size="small" variant="outlined" startIcon={<DinnerIcon />} onClick={() => assignMealToAllOnDate(selectedDateForBulk, 'dinner', true)}>
+                          Dinner
+                        </Button>
+                      </Stack>
+                    </Box>
+                  )}
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+                
+                {/* Global Quick Actions - For ALL dates in the range */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Stack direction="row" spacing={1}>
+                    <Tooltip title="Assign breakfast to all students on all dates">
+                      <Button size="small" variant="outlined" onClick={() => assignMealToAllOnAllDates('breakfast', true)}>
+                        <BreakfastIcon fontSize="small" sx={{ mr: 0.5 }} /> All Breakfast
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Assign lunch to all students on all dates">
+                      <Button size="small" variant="outlined" onClick={() => assignMealToAllOnAllDates('lunch', true)}>
+                        <LunchIcon fontSize="small" sx={{ mr: 0.5 }} /> All Lunch
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Assign dinner to all students on all dates">
+                      <Button size="small" variant="outlined" onClick={() => assignMealToAllOnAllDates('dinner', true)}>
+                        <DinnerIcon fontSize="small" sx={{ mr: 0.5 }} /> All Dinner
+                      </Button>
+                    </Tooltip>
+                  </Stack>
+                  
+                  <Stack direction="row" spacing={1}>
+                    <Tooltip title="Export to Excel">
+                      <Button size="small" startIcon={<DownloadIcon />} onClick={handleExport}>
+                        Export
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Print">
+                      <Button size="small" startIcon={<PrintIcon />} onClick={handlePrint}>
+                        Print
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Cancel all changes">
+                      <Button size="small" color="error" onClick={handleReset} disabled={Object.keys(attendanceChanges).length === 0}>
                         Cancel
+                      </Button>
+                    </Tooltip>
+                    <Button
+                      variant="contained"
+                      startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+                      onClick={handleSaveAll}
+                      disabled={isSaving || Object.keys(attendanceChanges).length === 0}
+                    >
+                      {Object.keys(attendanceChanges).length > 0 
+                        ? `Save (${Object.keys(attendanceChanges).length})` 
+                        : 'Save'}
                     </Button>
-                    <Button onClick={saveMealSelections} variant="contained" color="primary" disabled={currentPerson === null}>
-                        Save
+                  </Stack>
+                </Box>
+              </>
+            )}
+
+            {/* Specific Date Quick Actions */}
+            {viewMode === 'specific' && studentsByClass.length > 0 && dates.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Alert severity="info" icon={<AddTaskIcon />}>
+                  <Typography variant="body2" gutterBottom>
+                    <strong>{specificDate?.format('DD MMMM YYYY')}</strong> - Quick entry for this date:
+                  </Typography>
+                  <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={quickSelectAll.breakfast}
+                          onChange={(e) => handleQuickSelectAll('breakfast', e.target.checked)}
+                        />
+                      }
+                      label="All Breakfast"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={quickSelectAll.lunch}
+                          onChange={(e) => handleQuickSelectAll('lunch', e.target.checked)}
+                        />
+                      }
+                      label="All Lunch"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={quickSelectAll.dinner}
+                          onChange={(e) => handleQuickSelectAll('dinner', e.target.checked)}
+                        />
+                      }
+                      label="All Dinner"
+                    />
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<SaveIcon />}
+                      onClick={handleSaveSpecificDate}
+                    >
+                      Save
                     </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
-    )
-}
+                  </Stack>
+                </Alert>
+              </Box>
+            )}
+
+            {/* Pending Changes Alert */}
+            {Object.keys(attendanceChanges).length > 0 && viewMode !== 'specific' && (
+              <Alert severity="warning" sx={{ mt: 2 }} onClose={handleReset}>
+                <strong>{Object.keys(attendanceChanges).length} unsaved change(s)!</strong> Please save your changes.
+              </Alert>
+            )}
+          </Box>
+
+          {/* Loading State */}
+          {isLoadingSheet && dates.length === 0 && (
+            <Box sx={{ p: 8, textAlign: 'center' }}>
+              <CircularProgress />
+              <Typography sx={{ mt: 2 }} color="text.secondary">Loading attendance data...</Typography>
+            </Box>
+          )}
+
+          {/* No Students in Class */}
+          {!isLoadingSheet && selectedClassId && studentsByClass.length === 0 && (
+            <Box sx={{ p: 8, textAlign: 'center' }}>
+              <SchoolIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                No students in this class
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                No students found for class {className}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Attendance Table */}
+          {!isLoadingSheet && selectedClassId && filteredStudents.length > 0 && dates.length > 0 && (
+            <TableContainer sx={{ maxHeight: '70vh', overflow: 'auto' }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5', minWidth: 100, position: 'sticky', left: 0, zIndex: 2 }}>
+                      Roll No
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5', minWidth: 200, position: 'sticky', left: 100, zIndex: 2 }}>
+                      Student Name
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5', minWidth: 150 }}>
+                      Student ID
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5', minWidth: 120 }}>
+                      Type
+                    </TableCell>
+                    {dates.map((date: string) => (
+                      <TableCell
+                        key={date}
+                        align="center"
+                        sx={{
+                          fontWeight: 'bold',
+                          bgcolor: selectedDateForBulk === date ? '#e3f2fd' : '#f5f5f5',
+                          minWidth: 100,
+                          borderLeft: '1px solid #e0e0e0',
+                          cursor: viewMode !== 'specific' ? 'pointer' : 'default',
+                          '&:hover': { bgcolor: viewMode !== 'specific' ? '#bbdefb' : '#f5f5f5' },
+                        }}
+                        onClick={() => {
+                          if (viewMode !== 'specific') {
+                            setSelectedDateForBulk(selectedDateForBulk === date ? null : date);
+                          }
+                        }}
+                      >
+                        <Typography variant="caption" display="block" fontWeight="bold">
+                          {dayjs(date).format('DD MMM')}
+                        </Typography>
+                        <Typography variant="caption" display="block" color="text.secondary">
+                          {dayjs(date).format('ddd')}
+                        </Typography>
+                      </TableCell>
+                    ))}
+                    <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#e3f2fd', minWidth: 100 }}>
+                      Total Meals
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#e3f2fd', minWidth: 100 }}>
+                      Total Cost (৳)
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredStudents.map((student: Student) => {
+                    const totalMeals = getTotalMealsForStudent(student._id);
+                    const totalCost = totalMeals * (attendanceSheetData?.mealRate || 55);
+                    
+                    return (
+                      <TableRow hover key={student._id}>
+                        <TableCell sx={{ position: 'sticky', left: 0, bgcolor: 'white', zIndex: 1 }}>
+                          <Chip label={student.studentClassRoll || 'N/A'} size="small" variant="outlined" />
+                        </TableCell>
+                        <TableCell sx={{ position: 'sticky', left: 100, bgcolor: 'white', zIndex: 1 }}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Avatar sx={{ width: 32, height: 32, bgcolor: '#4caf50' }}>
+                              <PersonIcon fontSize="small" />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" fontWeight="medium">
+                                {student.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {student.nameBangla || student.name}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {student.studentId}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={student.studentType || 'Day Scholar'}
+                            size="small"
+                            color={student.studentType === 'Residential' || student.studentType === 'hostel' ? 'primary' : 'default'}
+                            variant={student.studentType === 'Residential' || student.studentType === 'hostel' ? 'filled' : 'outlined'}
+                          />
+                        </TableCell>
+                        {dates.map((date: string) => {
+                          const total = getTotalMealsForDay(student._id, date);
+                          
+                          return (
+                            <TableCell
+                              key={date}
+                              align="center"
+                              sx={{
+                                bgcolor: total > 0 ? '#e8f5e9' : '#ffebee',
+                                transition: 'all 0.2s',
+                                '&:hover': { bgcolor: '#e3f2fd' },
+                                borderLeft: selectedDateForBulk === date ? '2px solid #1976d2' : 'none',
+                                borderRight: selectedDateForBulk === date ? '2px solid #1976d2' : 'none',
+                              }}
+                            >
+                              <Box display="flex" justifyContent="center" gap={0.5}>
+                                <Tooltip title="Breakfast">
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMealToggle(student._id, date, 'breakfast');
+                                    }}
+                                    color={getMealStatus(student._id, date, 'breakfast') ? 'success' : 'default'}
+                                    sx={{ p: 0.5 }}
+                                  >
+                                    <BreakfastIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Lunch">
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMealToggle(student._id, date, 'lunch');
+                                    }}
+                                    color={getMealStatus(student._id, date, 'lunch') ? 'success' : 'default'}
+                                    sx={{ p: 0.5 }}
+                                  >
+                                    <LunchIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Dinner">
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMealToggle(student._id, date, 'dinner');
+                                    }}
+                                    color={getMealStatus(student._id, date, 'dinner') ? 'success' : 'default'}
+                                    sx={{ p: 0.5 }}
+                                  >
+                                    <DinnerIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                              {total > 0 && (
+                                <Chip
+                                  label={`${total}`}
+                                  size="small"
+                                  sx={{ mt: 0.5, height: 20, fontSize: '10px' }}
+                                  color="primary"
+                                  variant="outlined"
+                                />
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell align="center" sx={{ bgcolor: '#e3f2fd' }}>
+                          <Typography fontWeight="bold" color="primary">
+                            {totalMeals}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center" sx={{ bgcolor: '#e3f2fd' }}>
+                          <Typography fontWeight="bold">
+                            ৳{totalCost}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {/* No Dates State */}
+          {!isLoadingSheet && selectedClassId && filteredStudents.length > 0 && dates.length === 0 && (
+            <Box sx={{ p: 8, textAlign: 'center' }}>
+              <CalendarIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                No dates found
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Please {viewMode === 'monthly' ? 'select a month' : viewMode === 'daterange' ? 'select a valid date range' : 'select a date'}
+              </Typography>
+            </Box>
+          )}
+        </Paper>
+
+        {/* Specific Date Entry Dialog */}
+        <Dialog 
+          open={openSpecificDateDialog} 
+          onClose={() => setOpenSpecificDateDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box display="flex" alignItems="center" gap={1}>
+              <EditCalendarIcon color="primary" />
+              <Typography variant="h6">
+                Meal Entry for {selectedSpecificDate?.format('DD MMMM YYYY')}
+              </Typography>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <TableContainer sx={{ mt: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Roll No</TableCell>
+                    <TableCell>Student Name</TableCell>
+                    <TableCell align="center">Breakfast</TableCell>
+                    <TableCell align="center">Lunch</TableCell>
+                    <TableCell align="center">Dinner</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {studentsByClass.map((student) => (
+                    <TableRow key={student._id}>
+                      <TableCell>{student.studentClassRoll || 'N/A'}</TableCell>
+                      <TableCell>{student.name}</TableCell>
+                      <TableCell align="center">
+                        <Checkbox
+                          checked={dateWiseAttendance[student._id]?.breakfast || false}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setDateWiseAttendance(prev => ({
+                              ...prev,
+                              [student._id]: {
+                                ...prev[student._id],
+                                breakfast: newValue,
+                              }
+                            }));
+                            if (selectedSpecificDate) {
+                              const dateStr = selectedSpecificDate.format('YYYY-MM-DD');
+                              setAttendanceChanges(prev => ({
+                                ...prev,
+                                [`${student._id}_${dateStr}`]: {
+                                  studentId: student._id,
+                                  date: dateStr,
+                                  breakfast: newValue,
+                                  lunch: dateWiseAttendance[student._id]?.lunch || false,
+                                  dinner: dateWiseAttendance[student._id]?.dinner || false,
+                                }
+                              }));
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Checkbox
+                          checked={dateWiseAttendance[student._id]?.lunch || false}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setDateWiseAttendance(prev => ({
+                              ...prev,
+                              [student._id]: {
+                                ...prev[student._id],
+                                lunch: newValue,
+                              }
+                            }));
+                            if (selectedSpecificDate) {
+                              const dateStr = selectedSpecificDate.format('YYYY-MM-DD');
+                              setAttendanceChanges(prev => ({
+                                ...prev,
+                                [`${student._id}_${dateStr}`]: {
+                                  studentId: student._id,
+                                  date: dateStr,
+                                  breakfast: dateWiseAttendance[student._id]?.breakfast || false,
+                                  lunch: newValue,
+                                  dinner: dateWiseAttendance[student._id]?.dinner || false,
+                                }
+                              }));
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Checkbox
+                          checked={dateWiseAttendance[student._id]?.dinner || false}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setDateWiseAttendance(prev => ({
+                              ...prev,
+                              [student._id]: {
+                                ...prev[student._id],
+                                dinner: newValue,
+                              }
+                            }));
+                            if (selectedSpecificDate) {
+                              const dateStr = selectedSpecificDate.format('YYYY-MM-DD');
+                              setAttendanceChanges(prev => ({
+                                ...prev,
+                                [`${student._id}_${dateStr}`]: {
+                                  studentId: student._id,
+                                  date: dateStr,
+                                  breakfast: dateWiseAttendance[student._id]?.breakfast || false,
+                                  lunch: dateWiseAttendance[student._id]?.lunch || false,
+                                  dinner: newValue,
+                                }
+                              }));
+                            }
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenSpecificDateDialog(false)}>Cancel</Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSaveSpecificDate}
+              startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+              disabled={isSaving}
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar({ ...snackbar, open: false })}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </LocalizationProvider>
+  );
+};
+
+export default MealAttendanceManager;

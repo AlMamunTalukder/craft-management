@@ -17,7 +17,6 @@ export const joditConfig = {
     },
     isSuccess: (resp: any) => !resp.error,
     process: (resp: any) => {
-      // Cloudinary returns the URL in the secure_url field
       return {
         files: resp.secure_url ? [resp.secure_url] : [],
         path: resp.secure_url,
