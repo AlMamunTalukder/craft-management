@@ -5,37 +5,31 @@
 import { AccountingTab } from "@/components/dashboard/AccountingTab";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
 import { OverviewTab } from "@/components/dashboard/OverviewTab";
+import { FeeCollectionOverview } from "@/components/dashboard/FeeCollectionOverview";
+import { useGetClassWiseFeeSummaryQuery } from "@/redux/api/feesApi";
 import {
   useGetAccountingReportQuery,
   useGetAllMetaQuery,
+  useGetStudentByClassQuery,
 } from "@/redux/api/metaApi";
+import { GradientTypography } from "@/style/Typography";
 import {
   AccountBalanceWallet,
   AdminPanelSettings,
-  Apartment,
-  Assignment,
   AutoStories,
   Badge,
   Campaign,
   CollectionsBookmark,
   Dashboard as DashboardIcon,
   EditNote,
-  EmojiEvents,
-  EventNote,
-  FactCheck,
   ImportContacts,
-  LocalPrintshop,
   Menu as MenuIcon,
   Payment,
   PeopleAlt,
   Restaurant,
   School,
-  Settings,
-  Sms,
-  VolunteerActivism,
   Web,
   Work,
-  WorkspacePremium,
 } from "@mui/icons-material";
 import {
   alpha,
@@ -52,50 +46,28 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const GradientTypography = ({ variant, children, gradient, sx = {} }: any) => {
-  const theme = useTheme();
-  const gradientColors =
-    gradient ||
-    `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`;
-  return (
-    <Typography
-      variant={variant}
-      sx={{
-        background: gradientColors,
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        backgroundClip: "text",
-        textFillColor: "transparent",
-        display: "inline-block",
-        fontWeight: 700,
-        ...sx,
-      }}
-    >
-      {children}
-    </Typography>
-  );
-};
-
 export default function DashboardHome() {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isMd = useMediaQuery(theme.breakpoints.down("md"));
-
-  const [profileAnchorEl, setProfileAnchorEl] = useState(null);
+  const { data: classWiseFeeSummary, isLoading: feeSummaryLoading } =
+    useGetClassWiseFeeSummaryQuery({});
   const [sidebarOpen, setSidebarOpen] = useState(!isMd);
   const [activeTab, setActiveTab] = useState(0);
 
   const { data, isLoading } = useGetAllMetaQuery({});
   const { data: accountingData, isLoading: accountingLoading } =
     useGetAccountingReportQuery({});
+  const { data: classWiseData, isLoading: classWiseLoading } =
+    useGetStudentByClassQuery({});
+
   const metaData = data?.data;
   const accountingReport = accountingData?.data?.data;
+  const classWiseStudentData = classWiseData?.data || {};
+  const feeSummaryData = classWiseFeeSummary?.data;
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-  const handleProfileMenuOpen = (event: any) =>
-    setProfileAnchorEl(event.currentTarget);
-  const handleProfileMenuClose = () => setProfileAnchorEl(null);
   const handleTabChange = (_event: any, newValue: any) =>
     setActiveTab(newValue);
   const navigateToModule = (path: any) => router.push(path);
@@ -235,13 +207,6 @@ export default function DashboardHome() {
       path: "/dashboard/student/list",
     },
     {
-      title: "Attendance",
-      description: "Manage, Send SMS",
-      icon: <EventNote />,
-      color: "#FFA000",
-      path: "/dashboard/attendance",
-    },
-    {
       title: "Communications",
       description: "Notice, Feedback",
       icon: <Campaign />,
@@ -263,27 +228,6 @@ export default function DashboardHome() {
       path: "/dashboard/fees/list",
     },
     {
-      title: "Homework",
-      description: "Assign & Manage",
-      icon: <Assignment />,
-      color: "#FF9800",
-      path: "/dashboard/home-work",
-    },
-    {
-      title: "Examinations",
-      description: "Grading, Exams",
-      icon: <FactCheck />,
-      color: "#673AB7",
-      path: "/dashboard/exams",
-    },
-    {
-      title: "Results",
-      description: "View, Download",
-      icon: <EmojiEvents />,
-      color: "#0097A7",
-      path: "/dashboard/results",
-    },
-    {
       title: "Accounting",
       description: "Income, Expense",
       icon: <AccountBalanceWallet />,
@@ -291,60 +235,11 @@ export default function DashboardHome() {
       path: "/dashboard/accounting/income",
     },
     {
-      title: "Payroll",
-      description: "Salary Management",
-      icon: <Work />,
-      color: "#1565C0",
-      path: "/dashboard/payroll",
-    },
-    {
-      title: "Donation",
-      description: "Donor List",
-      icon: <VolunteerActivism />,
-      color: "#FF5722",
-      path: "/dashboard/donation",
-    },
-    {
-      title: "Certificate",
-      description: "Create, Update",
-      icon: <WorkspacePremium />,
-      color: "#FFC107",
-      path: "/dashboard/certificate",
-    },
-    {
-      title: "Print",
-      description: "ID Card, Admit Card",
-      icon: <LocalPrintshop />,
-      color: "#F44336",
-      path: "/dashboard/print",
-    },
-    {
-      title: "SMS",
-      description: "Send SMS",
-      icon: <Sms />,
-      color: "#3F51B5",
-      path: "/dashboard/sms",
-    },
-    {
-      title: "Department",
-      description: "Faculty & Dept",
-      icon: <Apartment />,
-      color: "#607D8B",
-      path: "/dashboard/department",
-    },
-    {
       title: "User Mgmt",
       description: "Users & Permissions",
       icon: <AdminPanelSettings />,
       color: "#546E7A",
       path: "/dashboard/user-management",
-    },
-    {
-      title: "Settings",
-      description: "Database, Security",
-      icon: <Settings />,
-      color: "#37474F",
-      path: "/dashboard/database-backup",
     },
   ];
 
@@ -357,39 +252,20 @@ export default function DashboardHome() {
 
   return (
     <Box
-      sx={{
-        minHeight: "100vh",
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.15)} 0%, ${alpha(theme.palette.background.default, 0.8)} 100%)`,
+      sx={(theme) => ({
+        background: `linear-gradient( 
+      135deg,
+      ${alpha(theme.palette.primary.light, theme.palette.mode === "dark" ? 0.25 : 0.15)} 0%,
+      ${alpha(theme.palette.background.default, theme.palette.mode === "dark" ? 0.95 : 0.8)} 100%
+    )`,
         borderRadius: { xs: 0, md: 6 },
         p: { xs: 1, sm: 2, md: 3 },
         position: "relative",
         overflow: "hidden",
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          width: { xs: "120px", md: "300px" },
-          height: { xs: "120px", md: "300px" },
-          top: "-60px",
-          right: "-60px",
-          borderRadius: "50%",
-          background: `radial-gradient(${alpha(theme.palette.primary.light, 0.2)} 0%, transparent 70%)`,
-          zIndex: 0,
-        },
-        "&::after": {
-          content: '""',
-          position: "absolute",
-          width: { xs: "100px", md: "200px" },
-          height: { xs: "100px", md: "200px" },
-          bottom: "-40px",
-          left: "-40px",
-          borderRadius: "50%",
-          background: `radial-gradient(${alpha(theme.palette.secondary.light, 0.2)} 0%, transparent 70%)`,
-          zIndex: 0,
-        },
-      }}
+      })}
     >
       <Box sx={{ position: "relative", zIndex: 2 }}>
-        {/* ── Header ── */}
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -400,7 +276,6 @@ export default function DashboardHome() {
             flexWrap: "nowrap",
           }}
         >
-          {/* Left: hamburger + title */}
           <Box
             sx={{ display: "flex", alignItems: "center", minWidth: 0, flex: 1 }}
           >
@@ -447,7 +322,15 @@ export default function DashboardHome() {
           </Box>
         </Box>
 
-        {/* ── Tabs ── */}
+        {/* Fee Collection Overview with Class-wise Data */}
+        <FeeCollectionOverview
+          feeSummaryData={feeSummaryData}
+          isLoading={feeSummaryLoading}
+          classWiseData={classWiseStudentData}
+          showClassWise={true}
+        />
+
+        {/* Tabs */}
         <Paper
           sx={{ borderRadius: 3, mb: { xs: 2, sm: 3 }, overflow: "hidden" }}
         >
@@ -465,9 +348,6 @@ export default function DashboardHome() {
                 fontSize: { xs: "0.72rem", sm: "0.85rem" },
                 px: { xs: 1.5, sm: 2.5 },
                 gap: { xs: 0.5, sm: 1 },
-                "& .MuiTab-iconWrapper": {
-                  fontSize: { xs: "1rem", sm: "1.25rem" },
-                },
               },
               "& .Mui-selected": { color: theme.palette.primary.main },
             }}
@@ -485,8 +365,14 @@ export default function DashboardHome() {
           </Tabs>
         </Paper>
 
-        {/* ── Tab Panels ── */}
-        {activeTab === 0 && <OverviewTab stats={stats} isLoading={isLoading} />}
+        {/* Tab Panels */}
+        {activeTab === 0 && (
+          <OverviewTab
+            stats={stats}
+            isLoading={isLoading}
+            classWiseData={classWiseStudentData}
+          />
+        )}
         {activeTab === 1 && (
           <AccountingTab
             accountingStats={accountingStats}
@@ -494,7 +380,7 @@ export default function DashboardHome() {
           />
         )}
 
-        {/* ── Quick Access Modules ── */}
+        {/* Quick Access Modules */}
         <Box sx={{ mb: 2 }}>
           <GradientTypography
             variant="h4"
@@ -514,7 +400,6 @@ export default function DashboardHome() {
             Quick Access Modules
           </GradientTypography>
 
-          {/* xs=6 → 2 cols mobile | sm=4 → 3 cols tablet | md=3 → 4 cols desktop */}
           <Grid container spacing={{ xs: 1, sm: 1.5, md: 2 }}>
             {modules.map((module, index) => (
               <Grid item xs={6} sm={4} md={3} lg={2} key={index}>

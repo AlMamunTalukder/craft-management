@@ -36,6 +36,7 @@ import DueStudentFee from "./DueStudentFee";
 import PaidStudentFee from "./PaidStudentFee";
 import { PageProps, TabPanelProps } from "@/interface/student";
 import { LoadingState } from "@/components/common/LoadingState";
+import StudentMealAttendance from "./StudentMealAttendance";
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
@@ -61,10 +62,11 @@ const StudentProfile = ({ params }: PageProps) => {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
-  console.log("Fetched student data:", singleStudent);
   if (isLoading) {
     return <LoadingState />;
   }
+
+  console.log('meal atttendance', singleStudent)
   return (
     <Container maxWidth="xl" sx={{ p: { xs: "4px" } }}>
       <Card sx={{ mb: 3, overflow: "visible" }}>
@@ -217,6 +219,7 @@ const StudentProfile = ({ params }: PageProps) => {
             <Tab icon={<Payment />} label="Paid Fees" />
             <Tab icon={<Payment />} label="Due Fees" />
             <Tab icon={<Payment />} label="Payment History" />
+              <Tab icon={<Payment />} label="Meal Attendance" />
           </Tabs>
         </Box>
         <TabPanel value={tabValue} index={0}>
@@ -243,6 +246,9 @@ const StudentProfile = ({ params }: PageProps) => {
         </TabPanel>
         <TabPanel value={tabValue} index={4}>
           <PaymentHistory singleStudent={singleStudent} />
+        </TabPanel>
+           <TabPanel value={tabValue} index={5}>
+          <StudentMealAttendance singleStudent={singleStudent} />
         </TabPanel>
       </Card>
     </Container>

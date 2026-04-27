@@ -180,17 +180,17 @@ export const classOrder = [
   "Hifz",
   "Sunani",
 ];
+
 export const designations = [
-  "Principal",
-  "Vice Principal",
+  "Superintendent",
+  "Assistant Superintendent ",
+  "In-Charge ",
   "Head of Department",
   "Senior Teacher",
   "Teacher",
   "Assistant Teacher",
-  "Lab Assistant",
-  "Librarian",
-  "Counselor",
-  "Administrative Staff",
+  "Lab Assistant / Librarian",
+  "Administrative Staff"
 ];
 export const maritalStatuses = [
   "Single",

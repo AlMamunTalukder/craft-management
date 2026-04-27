@@ -16,8 +16,8 @@ import {
   Person,
   Phone,
   School,
-  Psychology, // Added icon for behavior
-  Home, // Added icon for family environment
+  Psychology, 
+  Home,
 } from "@mui/icons-material";
 import {
   Avatar,

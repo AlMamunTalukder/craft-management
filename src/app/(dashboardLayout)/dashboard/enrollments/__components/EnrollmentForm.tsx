@@ -5,27 +5,6 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// IMPORTANT CHANGES vs original:
-//
-// 1. `transformEnrollmentDataToForm` now marks each feeItem with:
-//      isPaid: boolean  (true if paidAmount > 0 on the DB fee)
-//      paidAmount: number
-//
-// 2. `DynamicFeeFields / fee item row`:
-//    - Paid items show a lock icon + green "Paid ৳X" badge
-//    - Amount / Discount / FeeType inputs are DISABLED for paid items
-//    - Delete button is DISABLED for paid items (shows tooltip explaining why)
-//
-// 3. `handleSubmit`: skips validation/processing for paid items — they are
-//    still sent in the payload so the backend can see them, but flagged
-//    `isSelected: true` and unchanged so the backend ignores them.
-//
-// 4. Backend `updateEnrollment` (separate file):
-//    - Any fee with paidAmount > 0 is treated as immutable (locked).
-//    - Only unpaid fee documents are deleted and recreated.
-//    - If the user tries to lower the amount below what was paid → throws error.
-// ─────────────────────────────────────────────────────────────────────────────
 
 import CraftIntAutoCompleteWithIcon from "@/components/Forms/AutocompleteWithIcon";
 import CraftForm from "@/components/Forms/Form";
@@ -139,7 +118,7 @@ const getFirstIncompleteStep = (formData: any): number => {
   return 4;
 };
 
-// ─── Paid Fee Badge ───────────────────────────────────────────────────────────
+
 const PaidBadge = ({ amount }: { amount: number }) => (
   <Chip
     icon={<Lock sx={{ fontSize: "14px !important" }} />}
@@ -151,7 +130,7 @@ const PaidBadge = ({ amount }: { amount: number }) => (
   />
 );
 
-// ─── AdmissionApplicationSelector (unchanged) ────────────────────────────────
+
 const AdmissionApplicationSelector = ({
   onSelect,
 }: {
@@ -261,7 +240,6 @@ const AdmissionApplicationSelector = ({
   );
 };
 
-// ─── FeeAmountHandler (unchanged) ────────────────────────────────────────────
 const FeeAmountHandler = ({
   feeIndex,
   feeCategoryData,
@@ -345,7 +323,6 @@ const FeeAmountHandler = ({
   return null;
 };
 
-// ─── DynamicFeeFields ─────────────────────────────────────────────────────────
 const DynamicFeeFields = ({
   classOptions,
   feeCategoryData,
@@ -1465,7 +1442,6 @@ const DynamicFeeFields = ({
   );
 };
 
-// ─── All Step Components (unchanged) ────────────────────────────────────────
 const StudentInformationStep = () => (
   <Box sx={{ ...fadeInSlideUp }}>
     <Grid container spacing={3}>
@@ -2420,8 +2396,6 @@ const FeeStep = ({ classOptions, feeCategoryData, studentData }: any) => {
     { label: "Bank", value: "bank" },
     { label: "Online", value: "online" },
   ];
-
-  // Only count unpaid (new) items in the totals — paid items are already settled
   const calculateTotals = () => {
     const fees = watch("fees") || [];
     let totalUnpaid = 0;
@@ -2670,7 +2644,7 @@ const FeeStep = ({ classOptions, feeCategoryData, studentData }: any) => {
   );
 };
 
-// ─── transformApplicationToFormData (unchanged) ──────────────────────────────
+
 const transformApplicationToFormData = (
   application: any,
   classOptions: any[],
@@ -2812,8 +2786,6 @@ const transformApplicationToFormData = (
   };
 };
 
-// ─── transformEnrollmentDataToForm ────────────────────────────────────────────
-// KEY CHANGE: each feeItem now carries isPaid + paidAmount from the DB
 const transformEnrollmentDataToForm = (
   enrollmentData: any,
   classOptions: any[],
@@ -3125,8 +3097,6 @@ const transformEnrollmentDataToForm = (
     advanceBalance: data.advanceBalance || data.student?.advanceBalance || 0,
   };
 };
-
-// ─── EnrollmentForm ───────────────────────────────────────────────────────────
 const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
   const theme = useTheme();
   const limit = 200;
@@ -3141,7 +3111,7 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [enrolledStudentData, setEnrolledStudentData] = useState<any>(null);
   const [isApplicationLoading, setIsApplicationLoading] = useState(false);
-
+console.log('admissionApplications', admissionApplications)
   const { classOptions, feeCategoryData } = useAcademicOption();
   const [createEnrollment] = useCreateEnrollmentMutation();
   const [updateEnrollment] = useUpdateEnrollmentMutation();
