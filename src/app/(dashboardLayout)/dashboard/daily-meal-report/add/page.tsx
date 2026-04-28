@@ -1,4 +1,4 @@
-// src/components/mealAttendance/MealAttendanceManager.tsx
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -99,22 +99,16 @@ interface ClassItem {
   section?: string;
   [key: string]: any;
 }
-
 type ViewMode = 'monthly' | 'daterange' | 'specific';
-
 type QuickRange = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom';
-
-// Helper function to get current academic year (4 digits)
 const getCurrentAcademicYear = (): string => {
   return dayjs().year().toString();
 };
 
 const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademicYear() }) => {
-  // Hooks
   const { classOptions, classData, studentData } = useAcademicOption();
   const [bulkCreateAttendance, { isLoading: isSaving }] = useBulkCreateAttendanceMutation();
   
-  // State
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs());
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().startOf('week'));
@@ -128,14 +122,11 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
   const [isInitialized, setIsInitialized] = useState(false);
   const [selectedDateForBulk, setSelectedDateForBulk] = useState<string | null>(null);
   const [quickRangeAnchorEl, setQuickRangeAnchorEl] = useState<null | HTMLElement>(null);
-  
-  // Dialog states for specific date entry
   const [openSpecificDateDialog, setOpenSpecificDateDialog] = useState(false);
   const [selectedSpecificDate, setSelectedSpecificDate] = useState<Dayjs | null>(dayjs());
   const [dateWiseAttendance, setDateWiseAttendance] = useState<Record<string, any>>({});
   const [quickSelectAll, setQuickSelectAll] = useState({ breakfast: false, lunch: false, dinner: false });
 
-  // Extract students from nested data structure
   const allStudents: Student[] = useMemo(() => {
     let students: any[] = [];
     
@@ -152,11 +143,9 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
     return students.filter((student: any) => student.admissionStatus === 'enrolled');
   }, [studentData]);
 
-  // Extract classes from nested data structure
   const allClasses = useMemo((): ClassItem[] => {
     let classes: any[] = [];
     
-    // Handle different possible data structures
     if (classData?.data?.data?.classes) {
       classes = classData.data.data.classes;
     } else if (classData?.data?.classes) {
@@ -175,8 +164,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
     
     return classes;
   }, [classData]);
-
-  // Get class options for dropdown
   const classDropdownOptions = useMemo(() => {
     if (!allClasses || allClasses.length === 0) return [];
     return allClasses.map((cls: ClassItem) => ({
@@ -184,8 +171,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
       value: cls._id,
     }));
   }, [allClasses]);
-
-  // Set default class when classes are loaded
   useEffect(() => {
     if (!isInitialized && classDropdownOptions.length > 0 && !selectedClassId) {
       const firstClass = classDropdownOptions[0];
@@ -194,7 +179,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
     }
   }, [classDropdownOptions, selectedClassId, isInitialized]);
 
-  // Filter students by selected class
   const studentsByClass = useMemo(() => {
     if (!selectedClassId) return [];
     
@@ -215,7 +199,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
   const selectedClassObj = allClasses.find((c: ClassItem) => c._id === selectedClassId);
   const className = selectedClassObj?.className || '';
 
-  // Quick range selection handler
   const handleQuickRangeSelect = (range: QuickRange) => {
     const today = dayjs();
     let newStartDate = dayjs();
@@ -262,7 +245,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
     });
   };
 
-  // Fetch monthly attendance data from API
   const {
     data: monthlyAttendanceData,
     isLoading: isLoadingMonthly,
@@ -276,7 +258,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
     { skip: viewMode !== 'monthly' || !className || !selectedMonth }
   );
 
-  // Fetch date range attendance data from API
   const {
     data: dateRangeAttendanceData,
     isLoading: isLoadingDateRange,
@@ -291,7 +272,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
     { skip: viewMode !== 'daterange' || !className || !startDate || !endDate }
   );
 
-  // Fetch specific date attendance data from API
   const {
     data: specificDateData,
     isLoading: isLoadingSpecific,
@@ -317,7 +297,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
     ? dateRangeAttendanceData
     : specificDateData;
 
-  // Generate dates based on view mode
   const dates = useMemo(() => {
     if (attendanceSheetData?.dates && attendanceSheetData.dates.length > 0) {
       return attendanceSheetData.dates;
@@ -352,7 +331,6 @@ const MealAttendanceManager: React.FC<any> = ({ academicYear = getCurrentAcademi
     return [];
   }, [attendanceSheetData, selectedMonth, startDate, endDate, viewMode, specificDate]);
 
-  // Initialize local attendance data
   useEffect(() => {
     if (studentsByClass.length > 0 && dates.length > 0) {
       const initialData: Record<string, any> = {};
