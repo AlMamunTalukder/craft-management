@@ -22,6 +22,7 @@ import {
 import {
   Delete as DeleteIcon,
   Visibility as ViewIcon,
+  Edit as EditIcon,
   Restaurant as FoodIcon,
   Person as PersonIcon,
   School as SchoolIcon,
@@ -56,7 +57,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
   const allClasses = useMemo((): { classes: ClassItem[] } => {
 
     const defaultReturn = { classes: [] };
-    
+
     try {
 
       if (classData?.data?.data?.classes) {
@@ -87,7 +88,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
     if (!classIds || !classIds.length || !allClasses.classes || allClasses.classes.length === 0) {
       return 'N/A';
     }
-    
+
     if (Array.isArray(classIds) && classIds.length > 0) {
       const classObj = allClasses.classes.find((c: ClassItem) => c._id === classIds[0]);
       return classObj?.className || 'N/A';
@@ -95,7 +96,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
     if (typeof classIds === 'string') {
       return classIds;
     }
-    
+
     return 'N/A';
   }, [allClasses]);
 
@@ -130,6 +131,11 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
     setSelectedRecord(row);
     setViewModalOpen(true);
   }, []);
+
+  const handleEdit = useCallback((row: AttendanceRecord) => {
+    // Navigate to update page with attendance ID as query parameter
+    router.push(`/dashboard/daily-meal-report/update?id=${row._id}`);
+  }, [router]);
 
   const handleAdd = useCallback(() => {
     router.push('/dashboard/daily-meal-report/add');
@@ -264,7 +270,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
         const total = [row.breakfast, row.lunch, row.dinner].filter(Boolean).length;
         let status = 'absent';
         let color: 'success' | 'warning' | 'error' = 'error';
-        
+
         if (total === 3) {
           status = 'full day';
           color = 'success';
@@ -278,7 +284,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
           status = 'absent';
           color = 'error';
         }
-        
+
         return (
           <Chip
             label={`${status} (${total})`}
@@ -301,6 +307,14 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       inMenu: false,
     },
     {
+      label: 'Edit',
+      icon: <EditIcon fontSize="small" />,
+      onClick: handleEdit,
+      color: 'warning',
+      tooltip: 'Edit Record',
+      inMenu: false,
+    },
+    {
       label: 'Delete',
       icon: <DeleteIcon fontSize="small" />,
       onClick: handleDelete,
@@ -308,7 +322,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       tooltip: 'Delete Record',
       inMenu: true,
     },
-  ], [handleView, handleDelete]);
+  ], [handleView, handleEdit, handleDelete]);
 
   const bulkActions: BulkAction[] = useMemo(() => [
     {
@@ -409,7 +423,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
@@ -427,7 +441,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
@@ -445,7 +459,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
@@ -465,7 +479,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
             </Grid>
           </Grid>
         )}
-        
+
         {(selectedClassId || selectedDate || selectedMonth) && (
           <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: 'white' }}>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -473,30 +487,30 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
                 Active Filters:
               </Typography>
               {selectedClassId && (
-                <Chip 
-                  label={`Class: ${selectedClassId}`} 
-                  size="small" 
+                <Chip
+                  label={`Class: ${selectedClassId}`}
+                  size="small"
                   onDelete={() => setSelectedClassId('')}
                 />
               )}
               {selectedDate && (
-                <Chip 
-                  label={`Date: ${selectedDate.format('DD MMM YYYY')}`} 
-                  size="small" 
+                <Chip
+                  label={`Date: ${selectedDate.format('DD MMM YYYY')}`}
+                  size="small"
                   onDelete={() => setSelectedDate(null)}
                 />
               )}
               {selectedMonth && (
-                <Chip 
-                  label={`Month: ${selectedMonth.format('MMMM YYYY')}`} 
-                  size="small" 
+                <Chip
+                  label={`Month: ${selectedMonth.format('MMMM YYYY')}`}
+                  size="small"
                   onDelete={() => setSelectedMonth(null)}
                 />
               )}
             </Box>
           </Paper>
         )}
-        
+
         <CraftTable
           columns={columns}
           data={records}
@@ -529,7 +543,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
           showToolbar={true}
           showRowNumbers={true}
           rowNumberHeader="SL"
-          actionColumnWidth={120}
+          actionColumnWidth={150}
           actionMenuLabel="Actions"
           elevation={0}
           borderRadius={3}

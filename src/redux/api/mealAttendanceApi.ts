@@ -23,9 +23,17 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             invalidatesTags: ["mealAttendance"],
         }),
 
-        // Get all attendance records with pagination (NEW)
-        // src/redux/api/mealAttendanceApi.ts - getAllAttendanceRecords আপডেট করুন
+        // Update single attendance
+        updateAttendance: build.mutation({
+            query: ({ id, data }) => ({
+                url: `/meal-attendance/${id}`,
+                method: "PUT",
+                data,
+            }),
+            invalidatesTags: ["mealAttendance"],
+        }),
 
+        // Get all attendance records with pagination
         getAllAttendanceRecords: build.query({
             query: ({ page = 1, limit = 10, search = "", className = "", date = "", month = "", academicYear, sortColumn = "date", sortDirection = "desc" }) => ({
                 url: "/meal-attendance/all",
@@ -44,6 +52,16 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             }),
             providesTags: ["mealAttendance"],
         }),
+
+        // Get attendance by ID
+        getAttendanceById: build.query({
+            query: (id) => ({
+                url: `/meal-attendance/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "mealAttendance", id }],
+        }),
+
         // Get monthly attendance sheet by class
         getMonthlyAttendanceSheet: build.query({
             query: ({ className, month, academicYear }) => ({
@@ -109,7 +127,9 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
 export const {
     useBulkCreateAttendanceMutation,
     useCreateAttendanceMutation,
+    useUpdateAttendanceMutation,
     useGetAllAttendanceRecordsQuery,
+    useGetAttendanceByIdQuery,
     useGetMonthlyAttendanceSheetQuery,
     useGetMonthlySummaryQuery,
     useGetAttendanceByDateRangeQuery,

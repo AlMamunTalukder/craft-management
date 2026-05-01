@@ -45,7 +45,8 @@ export const tagTypesList = [
   "admissionApplication",
   "lateFees",
   "lateFeeConfig",
-  'mealAttendance'
+  'mealAttendance',
+  "mealAttendances"
 ] as const;
 
 export type TagType = (typeof tagTypesList)[number];

@@ -742,6 +742,10 @@ export const navigationItems: NavigationItem[] = [
     ],
   },
   // Fees Management
+  // src/constants/navigationItems.ts (আপনার সাইডবার ফাইলে যোগ করুন)
+  // Fees Management এর children এ যোগ করুন:
+
+  // src/constants/navigationItems.ts - সম্পূর্ণ আপডেটেড Fees Management সেকশন
   {
     title: "Fees Management",
     icon: (
@@ -749,47 +753,43 @@ export const navigationItems: NavigationItem[] = [
         <Payment />
       </ColorfulIcon>
     ),
-    roles: ["admin", "super_admin"],
+    roles: ["admin", "super_admin", "accountant"],
     children: [
       {
         path: "/dashboard/fees/list",
-        title: "All Fee",
-        icon: (
-          <ColorfulIcon color="#009688">
-            <Category />
-          </ColorfulIcon>
-        ),
-        roles: ["admin", "teacher", "student", "super_admin", "class_teacher"],
+        title: "📋 All Fees",
+        icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
+        roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/summary",
-        title: "Fees Summary",
-        icon: (
-          <ColorfulIcon color="#009688">
-            <Category />
-          </ColorfulIcon>
-        ),
-        roles: ["admin", "teacher", "student", "super_admin", "class_teacher"],
+        title: "📊 Fee Summary",
+        icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
+        roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/category",
-        title: "Fee Category",
-        icon: (
-          <ColorfulIcon color="#009688">
-            <Category />
-          </ColorfulIcon>
-        ),
-        roles: ["admin", "teacher", "student", "super_admin", "class_teacher"],
+        title: "🏷️ Fee Categories",
+        icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
+        roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/fee-collection",
-        title: "Fee Collection",
-        icon: (
-          <ColorfulIcon color="#009688">
-            <Payment />
-          </ColorfulIcon>
-        ),
-        roles: ["admin", "teacher", "student", "super_admin", "class_teacher"],
+        title: "💰 Fee Collection",
+        icon: <ColorfulIcon color="#009688"><Payment /></ColorfulIcon>,
+        roles: ["admin", "super_admin", "accountant"],
+      },
+      {
+        path: "/dashboard/fees/generate",
+        title: "📅 Generate Fees",
+        icon: <ColorfulIcon color="#FF9800"><Calculate /></ColorfulIcon>,
+        roles: ["admin", "super_admin", "accountant"],
+      },
+      {
+        path: "/dashboard/fees/meal-balance",
+        title: "🍽️ Meal Balance",
+        icon: <ColorfulIcon color="#E91E63"><Restaurant /></ColorfulIcon>,
+        roles: ["admin", "super_admin", "accountant"],
       },
     ],
   },

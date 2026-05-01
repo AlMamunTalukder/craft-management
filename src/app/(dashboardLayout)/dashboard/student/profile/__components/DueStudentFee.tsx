@@ -10,9 +10,10 @@ import {
   Visibility,
   Warning as WarningIcon,
   History,
+  Info as InfoIcon,
 } from "@mui/icons-material";
-import { Box, Button, Chip, Typography, Tooltip } from "@mui/material";
-import { useEffect, useState } from "react";
+import { Box, Button, Chip, Typography, Tooltip, Alert } from "@mui/material";
+import { JSX, useEffect, useState } from "react";
 import AddFeeModal from "./AddFeeModal";
 import PaymentModal from "./PaymentModal";
 import BulkPaymentModal from "./BulkPaymentModal";
@@ -36,6 +37,7 @@ const DueStudentFee = ({
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
   const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState<any>(null);
+  // 🔴 পরিবর্তন: unpaid এবং partial উভয় স্ট্যাটাসের ফি ফিল্টার করুন
   const [filteredFees, setFilteredFees] = useState<any[]>([]);
   const [bulkPaymentModalOpen, setBulkPaymentModalOpen] = useState(false);
   const [lateFeeSummary, setLateFeeSummary] = useState({
@@ -54,14 +56,15 @@ const DueStudentFee = ({
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
 
-  // Filter only unpaid fees
+  // 🔴 পরিবর্তন: unpaid এবং partial উভয় স্ট্যাটাস ফিল্টার করুন
   useEffect(() => {
-    const unpaidFees =
-      studentFees?.filter((fee) => fee?.status === "unpaid") || [];
-    setFilteredFees(unpaidFees);
+    // unpaid এবং partial উভয় স্ট্যাটাসের ফি নিন
+    const dueFees =
+      studentFees?.filter((fee) => fee?.status === "unpaid" || fee?.status === "partial") || [];
+    setFilteredFees(dueFees);
 
-    if (unpaidFees?.length) {
-      const summary = unpaidFees.reduce(
+    if (dueFees?.length) {
+      const summary = dueFees.reduce(
         (acc, fee) => {
           if (fee.lateFeeAmount > 0) {
             acc.totalLateFees += fee.lateFeeAmount;
@@ -182,26 +185,26 @@ const DueStudentFee = ({
   };
 
   const calculateSummary = () => {
-    const unpaidFees =
-      studentFees?.filter((fee) => fee?.status === "unpaid") || [];
+    // 🔴 পরিবর্তন: unpaid এবং partial উভয় স্ট্যাটাসের ফি এর সামারি ক্যালকুলেট করুন
+    const dueFees = studentFees?.filter((fee) => fee?.status === "unpaid" || fee?.status === "partial") || [];
 
-    const totalFees = unpaidFees?.reduce(
+    const totalFees = dueFees?.reduce(
       (sum, fee) => sum + (fee.amount || 0),
       0,
     );
-    const totalPaid = unpaidFees?.reduce(
+    const totalPaid = dueFees?.reduce(
       (sum, fee) => sum + (fee.paidAmount || 0),
       0,
     );
-    const totalDue = unpaidFees?.reduce(
+    const totalDue = dueFees?.reduce(
       (sum, fee) => sum + (fee.dueAmount || 0),
       0,
     );
-    const totalDiscount = unpaidFees?.reduce(
+    const totalDiscount = dueFees?.reduce(
       (sum, fee) => sum + (fee.discount || 0),
       0,
     );
-    const totalWaiver = unpaidFees?.reduce(
+    const totalWaiver = dueFees?.reduce(
       (sum, fee) => sum + (fee.waiver || 0),
       0,
     );
@@ -219,7 +222,7 @@ const DueStudentFee = ({
 
   const summary = calculateSummary();
 
-  // Define columns for fee table (unchanged)
+  // Define columns for fee table
   const columns: Column[] = [
     {
       id: "feeType",
@@ -228,7 +231,13 @@ const DueStudentFee = ({
       sortable: true,
       filterable: true,
     },
-
+    {
+      id: "month",
+      label: "Month",
+      minWidth: 100,
+      sortable: true,
+      filterable: true,
+    },
     {
       id: "amount",
       label: "Total Amount",
@@ -257,7 +266,6 @@ const DueStudentFee = ({
         </Typography>
       ),
     },
-
     {
       id: "netAmount",
       label: "Net Amount",
@@ -299,7 +307,6 @@ const DueStudentFee = ({
         </Typography>
       ),
     },
-
     {
       id: "status",
       label: "Status",
@@ -312,10 +319,11 @@ const DueStudentFee = ({
           [key: string]: {
             color: "success" | "warning" | "error" | "default";
             label: string;
+            icon?: JSX.Element;
           };
         } = {
           paid: { color: "success", label: "Paid" },
-          partial: { color: "warning", label: "Partial" },
+          partial: { color: "warning", label: "Partial", icon: <InfoIcon fontSize="small" /> },
           unpaid: { color: "error", label: "Unpaid" },
         };
         const config = statusConfig[row.status] || {
@@ -331,7 +339,7 @@ const DueStudentFee = ({
               label={config.label}
               color={config.color}
               size="small"
-              variant="outlined"
+              variant="filled"
             />
             {hasAdjustments && <Discount fontSize="small" color="success" />}
           </Box>
@@ -354,7 +362,7 @@ const DueStudentFee = ({
     },
   ];
 
-  // Define row actions (unchanged)
+  // Define row actions
   const rowActions: RowAction[] = [
     {
       label: "View Details",
@@ -414,6 +422,16 @@ const DueStudentFee = ({
         Due Student Fee Management
       </Typography>
 
+      {/* 🔴 নতুন: Partial Payment Alert */}
+      {filteredFees.some(fee => fee.status === "partial") && (
+        <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+          <Typography variant="body2">
+            <strong>ℹ️ তথ্য:</strong> কিছু ফি আংশিক পরিশোধিত (Partial) হয়েছে।
+            বাকি টাকা পরিশোধ করতে "Payment Now" বাটনে ক্লিক করুন।
+          </Typography>
+        </Alert>
+      )}
+
       <FeeSummaryCards
         type="due"
         summary={summary}
@@ -422,7 +440,7 @@ const DueStudentFee = ({
 
       <CraftTable
         title="Due Fee Records"
-        subtitle={`Total ${filteredFees?.length || 0} unpaid fee records found`}
+        subtitle={`Total ${filteredFees?.length || 0} pending fee records found (Unpaid + Partial)`}
         columns={columns}
         data={filteredFees}
         loading={loading}
@@ -433,7 +451,7 @@ const DueStudentFee = ({
         sortable={true}
         pagination={true}
         idField="_id"
-        emptyStateMessage="No unpaid fee records found"
+        emptyStateMessage="No pending fee records found. All fees are paid."
         height="auto"
         maxHeight="60vh"
         stickyHeader={true}
@@ -444,7 +462,7 @@ const DueStudentFee = ({
         showRowNumbers={true}
         rowNumberHeader="#"
         onRefresh={refetch}
-        onExport={() => {}}
+        onExport={() => { }}
         onAdd={handleAddFeeClick}
         customToolbar={
           <Box sx={{ display: "flex", gap: 1 }}>
@@ -486,12 +504,12 @@ const DueStudentFee = ({
           {
             label: "Export Selected",
             icon: <Download fontSize="small" />,
-            onClick: (selectedRows) => {},
+            onClick: (selectedRows) => { },
           },
           {
             label: "Delete Selected",
             icon: <Delete fontSize="small" />,
-            onClick: (selectedRows) => {},
+            onClick: (selectedRows) => { },
             color: "error",
           },
         ]}
@@ -534,7 +552,6 @@ const DueStudentFee = ({
         onClose={() => setBulkPaymentModalOpen(false)}
         student={{
           ...student,
-          // Ensure className is a string
           className:
             typeof student?.className === "object"
               ? student.className?.className || student.className?.name || ""

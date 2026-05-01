@@ -1,35 +1,70 @@
+
 import { baseApi } from "./baseApi";
 
 export const feesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    createFee: build.mutation({
-      query: ({ studentId, ...data }) => ({
-        url: `/fees/students/${studentId}/fees`,
+    generateCurrentMonthFees: build.mutation({
+      query: () => ({
+        url: "/fees/generate",
         method: "POST",
-        data,
+        data: {},
       }),
       invalidatesTags: ["fees", "students"],
     }),
-    payFee: build.mutation({
-      query: (data) => ({
-        url: "/fees/pay",
+    generateSpecificMonthFees: build.mutation({
+      query: ({ month, year }) => ({
+        url: "/fees/generate",
         method: "POST",
-        data,
+        data: { month, year },
       }),
-      invalidatesTags: ["fees"],
+      invalidatesTags: ["fees", "students"],
+    }),
+    calculateCurrentMonthMealBalance: build.mutation({
+      query: () => ({
+        url: "/meal-attendance/meal-balance/calculate",
+        method: "POST",
+        data: {},
+      }),
+      invalidatesTags: ["fees", "students", "mealAttendances"],
+    }),
+    calculateSpecificMonthMealBalance: build.mutation({
+      query: ({ month, year }) => ({
+        url: "/meal-attendance/meal-balance/calculate",
+        method: "POST",
+        data: { month, year },
+      }),
+      invalidatesTags: ["fees", "students", "mealAttendances"],
     }),
 
-    getAllFees: build.query({
+    getFeeGenerationStatus: build.query({
+      query: () => ({
+        url: "/fees/status",
+        method: "GET",
+      }),
+      providesTags: ["fees"],
+    }),
+
+    getStudentMealBalance: build.query({
+      query: ({ studentId, month, year }) => ({
+        url: `/meal-balance/student/${studentId}`,
+        method: "GET",
+        params: { month, year },
+      }),
+      providesTags: ["mealAttendances"],
+    }),
+
+    getDueFees: build.query({
       query: ({ limit, page, searchTerm }) => ({
-        url: "/fees",
+        url: "/fees/due",
         method: "GET",
         params: { page, limit, searchTerm },
       }),
       providesTags: ["fees"],
     }),
-    getDueFees: build.query({
+
+    getAllFees: build.query({
       query: ({ limit, page, searchTerm }) => ({
-        url: "/fees/due",
+        url: "/fees",
         method: "GET",
         params: { page, limit, searchTerm },
       }),
@@ -52,14 +87,7 @@ export const feesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["fees"],
     }),
-    getClassWiseFeeSummary: build.query({
-      query: ({ academicYear }) => ({
-        url: "/fees/class-summary",
-        method: "GET",
-        params: { academicYear }, // This will be a number now
-      }),
-      providesTags: ["fees"],
-    }),
+
     deleteFee: build.mutation({
       query: (id) => ({
         url: `/fees/${id}`,
@@ -67,16 +95,49 @@ export const feesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["fees"],
     }),
+
+    payFee: build.mutation({
+      query: (data) => ({
+        url: "/fees/pay",
+        method: "POST",
+        data,
+      }),
+      invalidatesTags: ["fees"],
+    }),
+
+    createFee: build.mutation({
+      query: ({ studentId, ...data }) => ({
+        url: `/fees/students/${studentId}/fees`,
+        method: "POST",
+        data,
+      }),
+      invalidatesTags: ["fees", "students"],
+    }),
+
+    getClassWiseFeeSummary: build.query({
+      query: ({ academicYear }) => ({
+        url: "/fees/class-summary",
+        method: "GET",
+        params: { academicYear },
+      }),
+      providesTags: ["fees"],
+    }),
   }),
 });
 
 export const {
-  useCreateFeeMutation,
+  useGenerateCurrentMonthFeesMutation,
+  useGenerateSpecificMonthFeesMutation,
+  useCalculateCurrentMonthMealBalanceMutation,
+  useCalculateSpecificMonthMealBalanceMutation,
+  useGetFeeGenerationStatusQuery,
+  useGetStudentMealBalanceQuery,
+  useGetDueFeesQuery,
   useGetAllFeesQuery,
   useGetSingleFeeQuery,
   useUpdateFeeMutation,
   useDeleteFeeMutation,
-  useGetDueFeesQuery,
   usePayFeeMutation,
-  useGetClassWiseFeeSummaryQuery
+  useCreateFeeMutation,
+  useGetClassWiseFeeSummaryQuery,
 } = feesApi;
