@@ -101,3 +101,37 @@ export interface ClientFilters {
   sortBy: string;
   sortDir: "asc" | "desc";
 }
+
+export interface Fee {
+  _id: string;
+  feeType: string;
+  month: string;
+  class: string;
+  amount: number;
+  paidAmount: number;
+  dueAmount: number;
+  status: string;
+  academicYear?: string;
+  isCurrentMonth?: boolean;
+  advanceUsed?: number;
+  discount?: number;
+  waiver?: number;
+  computedDue?: number;
+}
+
+export interface BulkPaymentModalProps {
+  open: boolean;
+  onClose: () => void;
+  student: {
+    _id: string;
+    name: string;
+    studentId: string;
+    className?: string | any;
+    roll?: string;
+    section?: string;
+    jamatGroup?: string;
+  };
+  fees: Fee[];
+  refetch?: () => void;
+  onPaymentCompleted?: (receiptData: any) => void;
+}

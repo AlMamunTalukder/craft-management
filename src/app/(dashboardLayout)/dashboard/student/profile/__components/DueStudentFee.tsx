@@ -37,7 +37,6 @@ const DueStudentFee = ({
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
   const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState<any>(null);
-  // 🔴 পরিবর্তন: unpaid এবং partial উভয় স্ট্যাটাসের ফি ফিল্টার করুন
   const [filteredFees, setFilteredFees] = useState<any[]>([]);
   const [bulkPaymentModalOpen, setBulkPaymentModalOpen] = useState(false);
   const [lateFeeSummary, setLateFeeSummary] = useState({
@@ -56,7 +55,6 @@ const DueStudentFee = ({
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
 
-  // 🔴 পরিবর্তন: unpaid এবং partial উভয় স্ট্যাটাস ফিল্টার করুন
   useEffect(() => {
     // unpaid এবং partial উভয় স্ট্যাটাসের ফি নিন
     const dueFees =
