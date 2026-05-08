@@ -153,9 +153,68 @@ const FeeCollection = () => {
   }, [data, error]);
 
   useEffect(() => {
-    refetch?.();
-  }, [year, classFilter, refetch]);
+    if (data?.success) {
+      // The data is in data.data.students based on your response format
+      const studentsData = data?.data?.students || [];
+      const summaryData = data?.data?.summary || {
+        totalStudents: 0,
+        totalFees: 0,
+        totalDueAmount: 0,
+        totalPaidAmount: 0,
+        totalAmount: 0,
+      };
 
+      // Transform the data to match the StudentWithFees type expected by your component
+      const transformedStudents = studentsData.map((student: any) => ({
+        student: {
+          _id: student.student?._id || "",
+          studentId: student.student?.studentId || "",
+          name: student.student?.name || "",
+          mobile: student.student?.mobile || "",
+        },
+        enrollment: student.enrollment || {
+          _id: student.student?._id || "",
+          rollNumber: "",
+          className: student.fees?.[0]?.class || "",
+        },
+        fees: student.fees?.map((fee: any) => ({
+          _id: fee._id || "",
+          feeType: fee.feeType || "",
+          month: fee.month || "",
+          class: fee.class || "",
+          amount: fee.amount || 0,
+          paidAmount: fee.paidAmount || 0,
+          dueAmount: fee.dueAmount || fee.computedDue || 0,
+          status: fee.status || "",
+          academicYear: fee.academicYear || "",
+          isCurrentMonth: fee.isCurrentMonth || false,
+          advanceUsed: fee.advanceUsed || 0,
+          discount: fee.discount || 0,
+          waiver: fee.waiver || 0,
+          computedDue: fee.computedDue || fee.dueAmount || 0,
+        })) || [],
+        totalDue: student.totalDue || 0,
+        totalPaid: student.totalPaid || 0,
+        totalAmount: student.totalAmount || 0,
+        feesCount: student.feesCount || 0,
+      }));
+
+      setDueFeesData(transformedStudents);
+      setSummary({
+        totalStudents: summaryData.totalStudents || 0,
+        totalFees: summaryData.totalFees || 0,
+        totalDueAmount: summaryData.totalDueAmount || 0,
+        totalPaidAmount: summaryData.totalPaidAmount || 0,
+        totalAmount: summaryData.totalAmount || 0,
+      });
+      setLoading(false);
+    } else if (error) {
+      console.error("Error fetching due fees:", error);
+      toast.error("Error fetching due fees");
+      setLoading(false);
+      setDueFeesData([]);
+    }
+  }, [data, error]);
   const getStudentOverallStatus = (fees: Fee[]): string => {
     if (!fees?.length) return "unknown";
     if (fees?.every((f) => f?.status === "paid")) return "paid";
@@ -400,11 +459,9 @@ const FeeCollection = () => {
 
   return (
     <>
-      <Typography variant="h4" gutterBottom fontWeight="bold">
-        Due Fees Collection
-      </Typography>
 
-      <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, height: "100%", width: "100%" }}>
+
+      <Box sx={{ p: { xs: 1, sm: 2 }, height: "100%", width: "100%" }}>
         {studentTableData?.length > 0 ? (
           <CraftTable
             title="Due Fees (Student Wise)"
@@ -432,7 +489,7 @@ const FeeCollection = () => {
           />
         ) : (
           <Card>
-            <CardContent sx={{ textAlign: "center", py: 8 }}>
+            <CardContent sx={{ textAlign: "center", py: 2 }}>
               <Typography variant="h5" color="text.secondary" gutterBottom>
                 No Due Fees Found
               </Typography>
@@ -479,11 +536,11 @@ const FeeCollection = () => {
         open={printModalOpen}
         setOpen={handleClosePrintModal}
         receipt={selectedReceipt}
-        onClose={() => {
-          setTimeout(() => {
-            window.location.href = "/dashboard/student/list";
-          }, 100);
-        }}
+      // onClose={() => {
+      //   setTimeout(() => {
+      //     window.location.href = "/dashboard/student/list";
+      //   }, 100);
+      // }}
       />
       <PaymentModal
         open={paymentModalOpen}
