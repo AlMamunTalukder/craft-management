@@ -54,6 +54,8 @@ import {
   Snackbar,
   Switch,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -65,22 +67,27 @@ interface StudentFormProps {
 }
 
 const StudentForm = ({ id }: StudentFormProps) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+
   const [createStudents] = useCreateStudentsMutation();
   const [updateStudent] = useUpdateStudentMutation();
+
   const { data, isLoading } = useGetSingleStudentQuery(
     { id },
     {
       skip: !id,
       refetchOnMountOrArgChange: true,
-    },
+    }
   );
+
+  console.log('single student ', data);
 
   const router = useRouter();
 
   const [formData, setFormData] = useState({
     sameAsPermanent: false,
-    sendAdmissionSMS: false,
-    sendAttendanceSMS: false,
   });
 
   const [defaultValues, setDefaultValues] = useState<any>({});
@@ -89,75 +96,126 @@ const StudentForm = ({ id }: StudentFormProps) => {
     if (data?.data) {
       const studentData = data.data;
 
+      console.log('Original Documents from API:', studentData.documents); // Debug log
+
       setFormData({
         sameAsPermanent: studentData.sameAsPermanent || false,
-        sendAdmissionSMS: studentData.sendAdmissionSMS || false,
-        sendAttendanceSMS: studentData.sendAttendanceSMS || false,
       });
 
-      // Process class data for autocomplete
+      // Handle class mapping
       const classArray = studentData.className || [];
-      const mappedClasses = classArray.map((cls: any) => ({
-        label: cls?.className || "",
-        value: cls?._id || "",
-      }));
+      const mappedClasses = Array.isArray(classArray)
+        ? classArray.map((cls: any) => ({
+          label: cls?.className || cls,
+          value: cls?._id || cls,
+        }))
+        : [];
 
-      // Process section data for autocomplete
+      // Handle section mapping
       const sectionArray = studentData.section || [];
-      const mappedSections = sectionArray.map((sec: any) => ({
-        label: sec?.name || "",
-        value: sec?._id || "",
-      }));
+      const mappedSections = Array.isArray(sectionArray)
+        ? sectionArray.map((sec: any) => ({
+          label: sec?.name || sec,
+          value: sec?._id || sec,
+        }))
+        : [];
 
-      // Process session data for autocomplete
+      // Handle session mapping
       const sessionArray = studentData.activeSession || [];
-      const mappedSessions = sessionArray.map((ses: any) => ({
-        label: ses?.sessionName || "",
-        value: ses?._id || "",
-      }));
+      const mappedSessions = Array.isArray(sessionArray)
+        ? sessionArray.map((ses: any) => ({
+          label: ses?.sessionName || ses,
+          value: ses?._id || ses,
+        }))
+        : [];
+
+      // Get address data
+      const permanentAddress = studentData.permanentAddress || {};
+      const presentAddress = studentData.presentAddress || {};
+
+      // Get parent info
+      const parentInfo = studentData.parentInfo || {};
+      const fatherInfo = parentInfo.father || {};
+      const motherInfo = parentInfo.mother || {};
+      const guardianInfo = parentInfo.guardian || {};
+
+      // Get behavior skills
+      const behaviorSkills = studentData.behaviorSkills || {};
+
+      // Get family environment
+      const familyEnvironment = studentData.familyEnvironment || {};
+
+      // Get previous school
+      const previousSchool = studentData.previousSchool || {};
+
+      // Get documents - Ensure proper boolean conversion
+      const documents = studentData.documents || {};
+
+      // CRITICAL FIX: Explicitly convert to boolean
+      const birthCertificate = documents.birthCertificate === true;
+      const transferCertificate = documents.transferCertificate === true;
+      const markSheet = documents.markSheet === true;
+      const characterCertificate = documents.characterCertificate === true;
+      const photographs = documents.photographs === true;
+
+      console.log('Processed Documents values:', {
+        birthCertificate,
+        transferCertificate,
+        markSheet,
+        characterCertificate,
+        photographs
+      });
 
       const formDefaultValues = {
-        // Basic Information
+        // Personal Information
         name: studentData.name || "",
         nameBangla: studentData.nameBangla || "",
         smartIdCard: studentData.smartIdCard || "",
         email: studentData.email || "",
-        studentDepartment: studentData.studentDepartment || "",
+        studentDepartment: studentData.studentDepartment || studentData.department || "",
         mobile: studentData.mobile || "",
-        birthDate: studentData.birthDate || "",
+        birthDate: studentData.birthDate ? studentData.birthDate.split('T')[0] : "",
         birthRegistrationNo: studentData.birthRegistrationNo || "",
         bloodGroup: studentData.bloodGroup || "",
         gender: studentData.gender || "",
+        nationality: studentData.nationality || "Bangladeshi",
         studentPhoto: studentData.studentPhoto || "",
 
-        // Father Information
-        fatherName: studentData.fatherName || "",
-        fatherMobile: studentData.fatherMobile || "",
-        fatherProfession: studentData.fatherProfession || "",
+        // Father's Information
+        fatherName: fatherInfo.nameEnglish || fatherInfo.nameBangla || "",
+        fatherMobile: fatherInfo.mobile || "",
+        fatherProfession: fatherInfo.profession || "",
+        fatherEducation: fatherInfo.education || "",
+        fatherWhatsapp: fatherInfo.whatsapp || "",
 
-        // Mother Information
-        motherName: studentData.motherName || "",
-        motherMobile: studentData.motherMobile || "",
-        motherProfession: studentData.motherProfession || "",
+        // Mother's Information
+        motherName: motherInfo.nameEnglish || motherInfo.nameBangla || "",
+        motherMobile: motherInfo.mobile || "",
+        motherProfession: motherInfo.profession || "",
+        motherEducation: motherInfo.education || "",
+        motherWhatsapp: motherInfo.whatsapp || "",
 
-        // Guardian Information
-        "guardianInfo.guardianName": studentData.guardianName || "",
-        "guardianInfo.guardianMobile": studentData.guardianMobile || "",
-        "guardianInfo.relation": studentData.relation || "",
-        "guardianInfo.address": studentData.guardianAddress || "",
+        // Guardian's Information
+        guardianName: guardianInfo.nameEnglish || guardianInfo.nameBangla || "",
+        guardianMobile: guardianInfo.mobile || "",
+        guardianRelation: guardianInfo.relation || "",
+        guardianProfession: guardianInfo.profession || "",
+        guardianAddress: guardianInfo.address || "",
+        guardianWhatsapp: guardianInfo.whatsapp || "",
 
-        // Address Information
-        "permanentAddress.village": studentData.permanentAddress || "",
-        "permanentAddress.postOffice": studentData.permanentPostOffice || "",
-        "permanentAddress.postCode": studentData.permanentPostCode || "",
-        "permanentAddress.policeStation": studentData.permanentThana || "",
-        "permanentAddress.district": studentData.permanentDistrict || "",
+        // Permanent Address
+        permanentVillage: permanentAddress.village || "",
+        permanentPostOffice: permanentAddress.postOffice || "",
+        permanentPostCode: permanentAddress.postCode || "",
+        permanentPoliceStation: permanentAddress.policeStation || "",
+        permanentDistrict: permanentAddress.district || "",
 
-        "presentAddress.village": studentData.presentAddress || "",
-        "presentAddress.postOffice": studentData.presentPostOffice || "",
-        "presentAddress.postCode": studentData.presentPostCode || "",
-        "presentAddress.policeStation": studentData.presentThana || "",
-        "presentAddress.district": studentData.presentDistrict || "",
+        // Present Address
+        presentVillage: presentAddress.village || "",
+        presentPostOffice: presentAddress.postOffice || "",
+        presentPostCode: presentAddress.postCode || "",
+        presentPoliceStation: presentAddress.policeStation || "",
+        presentDistrict: presentAddress.district || "",
 
         // Academic Information
         className: mappedClasses,
@@ -166,10 +224,42 @@ const StudentForm = ({ id }: StudentFormProps) => {
         section: mappedSections,
         activeSession: mappedSessions,
         status: studentData.status || "",
-        studentType: studentData.studentType || "",
+        studentType: studentData.studentType || studentData.category || "",
+        academicYear: studentData.academicYear || "",
+        session: studentData.session || "",
         additionalNote: studentData.additionalNote || "",
-        previousDues: studentData.previousDues || 0,
+
+        // Behavior Skills
+        generalBehavior: behaviorSkills.generalBehavior || "",
+        elderBehavior: behaviorSkills.elderBehavior || "",
+        youngerBehavior: behaviorSkills.youngerBehavior || "",
+        obedience: behaviorSkills.obedience || "",
+        angerControl: behaviorSkills.angerControl || "",
+        lyingStubbornness: behaviorSkills.lyingStubbornness || "",
+        studyInterest: behaviorSkills.studyInterest || "",
+        religiousInterest: behaviorSkills.religiousInterest || "",
+        mobileUsage: behaviorSkills.mobileUsage || "",
+
+        // Family Environment
+        parentsPrayer: familyEnvironment.parentsPrayer || "",
+        purdah: familyEnvironment.purdah || "",
+        quranRecitation: familyEnvironment.quranRecitation || "",
+        halalIncome: familyEnvironment.halalIncome || "",
+        addiction: familyEnvironment.addiction || "",
+        tv: familyEnvironment.tv || "",
+
+        // Previous School
+        previousInstitution: previousSchool.institution || "",
+        previousAddress: previousSchool.address || "",
+
+        // Documents - Use the explicitly converted boolean values
+        birthCertificate: birthCertificate,
+        transferCertificate: transferCertificate,
+        markSheet: markSheet,
+        characterCertificate: characterCertificate,
+        photographs: photographs,
       };
+
       setDefaultValues(formDefaultValues);
     }
   }, [data]);
@@ -233,7 +323,6 @@ const StudentForm = ({ id }: StudentFormProps) => {
   };
 
   const handleSubmit = async (data: FieldValues) => {
-    // Validation
     if (!data.name) {
       toast.error("Student name is required!");
       return;
@@ -243,7 +332,6 @@ const StudentForm = ({ id }: StudentFormProps) => {
       return;
     }
 
-    // Process arrays for autocomplete fields
     const classArray = Array.isArray(data.className)
       ? data.className.map((item: any) => item.value || item)
       : data.className
@@ -263,28 +351,27 @@ const StudentForm = ({ id }: StudentFormProps) => {
         : [];
 
     const permanentAddress = {
-      village: data["permanentAddress.village"] || "",
-      postOffice: data["permanentAddress.postOffice"] || "",
-      postCode: data["permanentAddress.postCode"] || "",
-      policeStation: data["permanentAddress.policeStation"] || "",
-      district: data["permanentAddress.district"] || "",
+      village: data.permanentVillage || "",
+      postOffice: data.permanentPostOffice || "",
+      postCode: data.permanentPostCode || "",
+      policeStation: data.permanentPoliceStation || "",
+      district: data.permanentDistrict || "",
     };
 
     let presentAddress = {
-      village: data["presentAddress.village"] || "",
-      postOffice: data["presentAddress.postOffice"] || "",
-      postCode: data["presentAddress.postCode"] || "",
-      policeStation: data["presentAddress.policeStation"] || "",
-      district: data["presentAddress.district"] || "",
+      village: data.presentVillage || "",
+      postOffice: data.presentPostOffice || "",
+      postCode: data.presentPostCode || "",
+      policeStation: data.presentPoliceStation || "",
+      district: data.presentDistrict || "",
     };
 
-    // Handle sameAsPermanent
     if (formData.sameAsPermanent) {
       presentAddress = { ...permanentAddress };
     }
 
-    // Build submission data
     const submissionData = {
+      // Personal Information
       name: data.name,
       nameBangla: data.nameBangla || "",
       smartIdCard: data.smartIdCard || "",
@@ -295,37 +382,38 @@ const StudentForm = ({ id }: StudentFormProps) => {
       birthRegistrationNo: data.birthRegistrationNo || "",
       bloodGroup: data.bloodGroup || "",
       gender: data.gender || "",
+      nationality: data.nationality || "Bangladeshi",
       studentPhoto: data.studentPhoto || "",
 
-      // Father Information
-      fatherName: data.fatherName || "",
-      fatherMobile: data.fatherMobile || "",
-      fatherProfession: data.fatherProfession || "",
-
-      // Mother Information
-      motherName: data.motherName || "",
-      motherMobile: data.motherMobile || "",
-      motherProfession: data.motherProfession || "",
-
-      // Guardian Information (flat structure)
-      guardianName: data["guardianInfo.guardianName"] || "",
-      guardianMobile: data["guardianInfo.guardianMobile"] || "",
-      relation: data["guardianInfo.relation"] || "",
-      guardianAddress: data["guardianInfo.address"] || "",
+      // Parent Information
+      parentInfo: {
+        father: {
+          nameEnglish: data.fatherName || "",
+          mobile: data.fatherMobile || "",
+          profession: data.fatherProfession || "",
+          education: data.fatherEducation || "",
+          whatsapp: data.fatherWhatsapp || "",
+        },
+        mother: {
+          nameEnglish: data.motherName || "",
+          mobile: data.motherMobile || "",
+          profession: data.motherProfession || "",
+          education: data.motherEducation || "",
+          whatsapp: data.motherWhatsapp || "",
+        },
+        guardian: {
+          nameEnglish: data.guardianName || "",
+          mobile: data.guardianMobile || "",
+          relation: data.guardianRelation || "",
+          profession: data.guardianProfession || "",
+          address: data.guardianAddress || "",
+          whatsapp: data.guardianWhatsapp || "",
+        },
+      },
 
       // Address Information
-      permanentAddress: data["permanentAddress.village"] || "",
-      permanentPostOffice: data["permanentAddress.postOffice"] || "",
-      permanentPostCode: data["permanentAddress.postCode"] || "",
-      permanentThana: data["permanentAddress.policeStation"] || "",
-      permanentDistrict: data["permanentAddress.district"] || "",
-
-      presentAddress: data["presentAddress.village"] || "",
-      presentPostOffice: data["presentAddress.postOffice"] || "",
-      presentPostCode: data["presentAddress.postCode"] || "",
-      presentThana: data["presentAddress.policeStation"] || "",
-      presentDistrict: data["presentAddress.district"] || "",
-
+      permanentAddress: permanentAddress,
+      presentAddress: presentAddress,
       sameAsPermanent: formData.sameAsPermanent,
 
       // Academic Information
@@ -336,7 +424,47 @@ const StudentForm = ({ id }: StudentFormProps) => {
       activeSession: sessionArray,
       status: data.status || "",
       studentType: data.studentType || "",
+      academicYear: data.academicYear || "",
+      session: data.session || "",
       additionalNote: data.additionalNote || "",
+
+      // Behavior Skills
+      behaviorSkills: {
+        generalBehavior: data.generalBehavior || "",
+        elderBehavior: data.elderBehavior || "",
+        youngerBehavior: data.youngerBehavior || "",
+        obedience: data.obedience || "",
+        angerControl: data.angerControl || "",
+        lyingStubbornness: data.lyingStubbornness || "",
+        studyInterest: data.studyInterest || "",
+        religiousInterest: data.religiousInterest || "",
+        mobileUsage: data.mobileUsage || "",
+      },
+
+      // Family Environment
+      familyEnvironment: {
+        parentsPrayer: data.parentsPrayer || "",
+        purdah: data.purdah || "",
+        quranRecitation: data.quranRecitation || "",
+        halalIncome: data.halalIncome || "",
+        addiction: data.addiction || "",
+        tv: data.tv || "",
+      },
+
+      // Previous School
+      previousSchool: {
+        institution: data.previousInstitution || "",
+        address: data.previousAddress || "",
+      },
+
+      // Documents
+      documents: {
+        birthCertificate: data.birthCertificate || false,
+        transferCertificate: data.transferCertificate || false,
+        markSheet: data.markSheet || false,
+        characterCertificate: data.characterCertificate || false,
+        photographs: data.photographs || false,
+      },
     };
 
     try {
@@ -363,7 +491,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
     } catch (error: any) {
       console.error("Submission error:", error);
       toast.error(
-        error.data?.message || "An error occurred while submitting the form",
+        error.data?.message || "An error occurred while submitting the form"
       );
     }
   };
@@ -383,23 +511,30 @@ const StudentForm = ({ id }: StudentFormProps) => {
     <Box
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(to bottom, #f9f9f9, #f0f0f0)",
-        pt: 2,
-        pb: 8,
+        background: "primary",
+        pt: { xs: 1, sm: 2, md: 3 },
+        pb: { xs: 4, sm: 6, md: 8 },
+        px: { xs: 1, sm: 2, md: 3 },
       }}
     >
-      <Box>
-        <Container maxWidth="xl" sx={{ p: { xs: "4px" } }}>
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-            <Person sx={{ fontSize: 40, mr: 2 }} />
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
-              {id ? "Edit Student" : "New Student Registration"}
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
+      <Container maxWidth="xl" disableGutters={isMobile}>
+        <Box sx={{ display: "flex", justifyContent: "center", mb: { xs: 2, sm: 3, md: 4 } }}>
+          <Person sx={{ fontSize: { xs: 30, sm: 35, md: 40 }, mr: 2, color: "primary.main" }} />
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{
+              fontWeight: 700,
+              fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" },
+              color: "primary.main"
+            }}
+          >
+            {id ? "Edit Student" : "New Student Registration"}
+          </Typography>
+        </Box>
+      </Container>
 
-      <Container maxWidth="xl" sx={{ p: { xs: "4px" } }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
         <CraftForm
           onSubmit={handleSubmit}
           defaultValues={defaultValues}
@@ -412,29 +547,30 @@ const StudentForm = ({ id }: StudentFormProps) => {
           <Paper
             elevation={3}
             sx={{
-              borderRadius: 4,
+              borderRadius: { xs: 2, sm: 3, md: 4 },
               overflow: "hidden",
               boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-              mb: 4,
+              mb: { xs: 2, sm: 3, md: 4 },
             }}
           >
-            <Box sx={{ p: { xs: 2, md: 4 } }}>
+            <Box sx={{ p: { xs: 1.5, sm: 2, md: 4 } }}>
               {/* Personal Information Section */}
-              <Box sx={{ mb: 4 }}>
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
                 <Typography
                   variant="h5"
                   sx={{
-                    mb: 3,
+                    mb: { xs: 2, sm: 3 },
                     fontWeight: 600,
                     display: "flex",
                     alignItems: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
                   }}
                 >
                   <Person sx={{ mr: 2, color: "primary.main" }} />
                   Personal Information
                 </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="name"
@@ -454,7 +590,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="nameBangla"
@@ -470,7 +606,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftSelectWithIcon
                       name="studentDepartment"
                       size="medium"
@@ -485,7 +621,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       adornment={<Person color="action" />}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="smartIdCard"
@@ -499,7 +635,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftSelectWithIcon
                       name="gender"
                       size="medium"
@@ -509,7 +645,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       adornment={<Person color="action" />}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="mobile"
@@ -523,7 +659,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftSelectWithIcon
                       name="bloodGroup"
                       size="medium"
@@ -533,7 +669,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       adornment={<Bloodtype color="action" />}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="birthDate"
@@ -547,7 +683,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="birthRegistrationNo"
@@ -561,7 +697,21 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="nationality"
+                      label="Nationality"
+                      placeholder="e.g., Bangladeshi"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <Person sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="email"
@@ -586,33 +736,34 @@ const StudentForm = ({ id }: StudentFormProps) => {
                 </Grid>
               </Box>
 
-              <Divider sx={{ my: 4 }} />
+              <Divider sx={{ my: { xs: 3, sm: 4 } }} />
 
               {/* Family Information Section */}
-              <Box sx={{ mb: 4 }}>
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
                 <Typography
                   variant="h5"
                   sx={{
-                    mb: 3,
+                    mb: { xs: 2, sm: 3 },
                     fontWeight: 600,
                     display: "flex",
                     alignItems: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
                   }}
                 >
                   <People sx={{ mr: 2, color: "primary.main" }} />
                   Family Information
                 </Typography>
-                <Grid container spacing={3}>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
                   <Grid item xs={12}>
                     <Typography
                       variant="subtitle1"
                       gutterBottom
-                      sx={{ fontWeight: 500 }}
+                      sx={{ fontWeight: 500, fontSize: { xs: "0.9rem", sm: "1rem" } }}
                     >
                       Father's Information
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="fatherName"
@@ -626,7 +777,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="fatherMobile"
@@ -640,7 +791,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="fatherProfession"
@@ -654,16 +805,45 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="fatherEducation"
+                      label="Father's Education"
+                      placeholder="Father's Education"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <School sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="fatherWhatsapp"
+                      label="Father's WhatsApp"
+                      placeholder="Father's WhatsApp"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <Phone sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+
                   <Grid item xs={12}>
                     <Typography
                       variant="subtitle1"
                       gutterBottom
-                      sx={{ fontWeight: 500 }}
+                      sx={{ fontWeight: 500, fontSize: { xs: "0.9rem", sm: "1rem" }, mt: { xs: 1, sm: 2 } }}
                     >
                       Mother's Information
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="motherName"
@@ -677,7 +857,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="motherMobile"
@@ -691,7 +871,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="motherProfession"
@@ -705,19 +885,48 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="motherEducation"
+                      label="Mother's Education"
+                      placeholder="Mother's Education"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <School sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="motherWhatsapp"
+                      label="Mother's WhatsApp"
+                      placeholder="Mother's WhatsApp"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <Phone sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+
                   <Grid item xs={12}>
                     <Typography
                       variant="subtitle1"
                       gutterBottom
-                      sx={{ fontWeight: 500 }}
+                      sx={{ fontWeight: 500, fontSize: { xs: "0.9rem", sm: "1rem" }, mt: { xs: 1, sm: 2 } }}
                     >
                       Guardian's Information
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
-                      name="guardianInfo.guardianName"
+                      name="guardianName"
                       label="Guardian's Name"
                       placeholder="Guardian's Name"
                       size="medium"
@@ -728,10 +937,10 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
-                      name="guardianInfo.guardianMobile"
+                      name="guardianMobile"
                       label="Guardian's Mobile"
                       placeholder="Guardian's Mobile"
                       size="medium"
@@ -744,10 +953,10 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
-                      name="guardianInfo.relation"
+                      name="guardianRelation"
                       label="Relation with Guardian"
                       placeholder="e.g., Father, Mother, Uncle"
                       size="medium"
@@ -758,10 +967,24 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
-                      name="guardianInfo.address"
+                      name="guardianProfession"
+                      label="Guardian's Profession"
+                      placeholder="Guardian's Profession"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <Person sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="guardianAddress"
                       label="Guardian's Address"
                       placeholder="Guardian's Address"
                       size="medium"
@@ -772,41 +995,56 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       }}
                     />
                   </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="guardianWhatsapp"
+                      label="Guardian's WhatsApp"
+                      placeholder="Guardian's WhatsApp"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <Phone sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
                 </Grid>
               </Box>
 
-              <Divider sx={{ my: 4 }} />
+              <Divider sx={{ my: { xs: 3, sm: 4 } }} />
 
               {/* Address Information Section */}
-              <Box sx={{ mb: 4 }}>
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
                 <Typography
                   variant="h5"
                   sx={{
-                    mb: 3,
+                    mb: { xs: 2, sm: 3 },
                     fontWeight: 600,
                     display: "flex",
                     alignItems: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
                   }}
                 >
                   <Home sx={{ mr: 2, color: "primary.main" }} />
                   Address Information
                 </Typography>
-                <Grid container spacing={3}>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
                   <Grid item xs={12} md={6}>
                     <Typography
                       variant="subtitle1"
                       gutterBottom
-                      sx={{ fontWeight: 500 }}
+                      sx={{ fontWeight: 500, fontSize: { xs: "0.9rem", sm: "1rem" } }}
                     >
                       Permanent Address
                     </Typography>
-                    <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                      <Grid container spacing={2}>
+                    <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}>
+                      <Grid container spacing={{ xs: 2, sm: 2 }}>
                         <Grid item xs={12}>
                           <CraftInputWithIcon
                             fullWidth
                             label="Village"
-                            name="permanentAddress.village"
+                            name="permanentVillage"
                             placeholder="Village"
                             size="medium"
                             InputProps={{
@@ -821,7 +1059,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                         <Grid item xs={12}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="permanentAddress.postOffice"
+                            name="permanentPostOffice"
                             label="Post Office"
                             placeholder="Post Office"
                             size="medium"
@@ -834,10 +1072,10 @@ const StudentForm = ({ id }: StudentFormProps) => {
                             }}
                           />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12} sm={6}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="permanentAddress.postCode"
+                            name="permanentPostCode"
                             label="Post Code"
                             placeholder="Post Code"
                             size="medium"
@@ -850,10 +1088,10 @@ const StudentForm = ({ id }: StudentFormProps) => {
                             }}
                           />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12} sm={6}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="permanentAddress.policeStation"
+                            name="permanentPoliceStation"
                             label="Police Station"
                             placeholder="Police Station"
                             size="medium"
@@ -869,7 +1107,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                         <Grid item xs={12}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="permanentAddress.district"
+                            name="permanentDistrict"
                             label="District"
                             placeholder="District"
                             size="medium"
@@ -893,9 +1131,11 @@ const StudentForm = ({ id }: StudentFormProps) => {
                         justifyContent: "space-between",
                         alignItems: "center",
                         mb: 1,
+                        flexWrap: "wrap",
+                        gap: 1,
                       }}
                     >
-                      <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 500, fontSize: { xs: "0.9rem", sm: "1rem" } }}>
                         Present Address
                       </Typography>
                       <FormControlLabel
@@ -908,21 +1148,22 @@ const StudentForm = ({ id }: StudentFormProps) => {
                           />
                         }
                         label="Same as Permanent"
+                        sx={{ mr: 0 }}
                       />
                     </Box>
                     <Card
                       variant="outlined"
                       sx={{
-                        p: 2,
+                        p: { xs: 1.5, sm: 2 },
                         borderRadius: 2,
                         opacity: formData.sameAsPermanent ? 0.7 : 1,
                       }}
                     >
-                      <Grid container spacing={2}>
+                      <Grid container spacing={{ xs: 2, sm: 2 }}>
                         <Grid item xs={12}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="presentAddress.village"
+                            name="presentVillage"
                             label="Village"
                             placeholder="Village"
                             size="medium"
@@ -939,7 +1180,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                         <Grid item xs={12}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="presentAddress.postOffice"
+                            name="presentPostOffice"
                             label="Post Office"
                             placeholder="Post Office"
                             size="medium"
@@ -953,10 +1194,10 @@ const StudentForm = ({ id }: StudentFormProps) => {
                             }}
                           />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12} sm={6}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="presentAddress.postCode"
+                            name="presentPostCode"
                             label="Post Code"
                             placeholder="Post Code"
                             size="medium"
@@ -970,10 +1211,10 @@ const StudentForm = ({ id }: StudentFormProps) => {
                             }}
                           />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid item xs={12} sm={6}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="presentAddress.policeStation"
+                            name="presentPoliceStation"
                             label="Police Station"
                             placeholder="Police Station"
                             size="medium"
@@ -990,7 +1231,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                         <Grid item xs={12}>
                           <CraftInputWithIcon
                             fullWidth
-                            name="presentAddress.district"
+                            name="presentDistrict"
                             label="District"
                             placeholder="District"
                             size="medium"
@@ -1010,24 +1251,25 @@ const StudentForm = ({ id }: StudentFormProps) => {
                 </Grid>
               </Box>
 
-              <Divider sx={{ my: 4 }} />
+              <Divider sx={{ my: { xs: 3, sm: 4 } }} />
 
               {/* Academic Information Section */}
-              <Box sx={{ mb: 4 }}>
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
                 <Typography
                   variant="h5"
                   sx={{
-                    mb: 3,
+                    mb: { xs: 2, sm: 3 },
                     fontWeight: 600,
                     display: "flex",
                     alignItems: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
                   }}
                 >
                   <School sx={{ mr: 2, color: "primary.main" }} />
                   Academic Information
                 </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  <Grid item xs={12} sm={3}>
                     <CraftIntAutoCompleteWithIcon
                       name="className"
                       label="Class"
@@ -1039,7 +1281,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftInputWithIcon
                       fullWidth
                       name="studentClassRoll"
@@ -1054,7 +1296,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftSelectWithIcon
                       name="batch"
                       size="medium"
@@ -1065,7 +1307,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftIntAutoCompleteWithIcon
                       name="section"
                       size="medium"
@@ -1078,7 +1320,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftIntAutoCompleteWithIcon
                       name="activeSession"
                       size="medium"
@@ -1091,25 +1333,59 @@ const StudentForm = ({ id }: StudentFormProps) => {
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftSelectWithIcon
                       name="status"
                       size="medium"
                       label="Status"
                       placeholder="Select Status"
-                      items={["Active", "Inactive", "Graduated"]}
+                      items={["active", "inactive", "graduated"]}
                       adornment={<CheckCircle color="action" />}
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={3}>
                     <CraftSelectWithIcon
                       name="studentType"
                       size="medium"
-                      label="Student Type"
+                      label="Category"
                       placeholder="Select Student Type"
-                      items={["Residential", "Non-residential", "Day-care"]}
+                      items={['Residential',
+                        'Non-Residential',
+                        'Day Care',
+                        'Non-Residential One Meal',
+                        'Day Care One Meal',]}
                       adornment={<Person color="action" />}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="academicYear"
+                      label="Academic Year"
+                      placeholder="e.g., 2026-2027"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <CalendarMonth sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={3}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="session"
+                      label="Session"
+                      placeholder="e.g., 2026"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <CalendarMonth sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
                     />
                   </Grid>
 
@@ -1139,27 +1415,392 @@ const StudentForm = ({ id }: StudentFormProps) => {
                 </Grid>
               </Box>
 
-              <Divider sx={{ my: 4 }} />
+              <Divider sx={{ my: { xs: 3, sm: 4 } }} />
+
+              {/* Behavior Skills Section */}
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    mb: { xs: 2, sm: 3 },
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
+                  }}
+                >
+                  <People sx={{ mr: 2, color: "primary.main" }} />
+                  Behavior & Skills
+                </Typography>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  <Grid item xs={12} sm={4}>
+                    <CraftSelectWithIcon
+                      name="generalBehavior"
+                      size="medium"
+                      label="General Behavior"
+                      placeholder="Select"
+                      items={["Very Good", "Good", "Average", "Needs Improvement"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <CraftSelectWithIcon
+                      name="elderBehavior"
+                      size="medium"
+                      label="Behavior with Elders"
+                      placeholder="Select"
+                      items={["Very Good", "Good", "Average", "Needs Improvement"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <CraftSelectWithIcon
+                      name="youngerBehavior"
+                      size="medium"
+                      label="Behavior with Younger"
+                      placeholder="Select"
+                      items={["Very Good", "Good", "Average", "Needs Improvement"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <CraftSelectWithIcon
+                      name="obedience"
+                      size="medium"
+                      label="Obedience"
+                      placeholder="Select"
+                      items={["Always", "Somewhat", "Sometimes", "Rarely"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <CraftSelectWithIcon
+                      name="angerControl"
+                      size="medium"
+                      label="Anger Control"
+                      placeholder="Select"
+                      items={["Excellent", "Good", "Needs Improvement", "Poor"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <CraftSelectWithIcon
+                      name="lyingStubbornness"
+                      size="medium"
+                      label="Lying / Stubbornness"
+                      placeholder="Select"
+                      items={["Never", "Rarely", "Sometimes", "Often"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <CraftSelectWithIcon
+                      name="studyInterest"
+                      size="medium"
+                      label="Study Interest"
+                      placeholder="Select"
+                      items={["High", "Moderate", "Low", "Very Low"]}
+                      adornment={<School color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <CraftSelectWithIcon
+                      name="religiousInterest"
+                      size="medium"
+                      label="Religious Interest"
+                      placeholder="Select"
+                      items={["High", "Moderate", "Low", "Very Low"]}
+                      adornment={<School color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="mobileUsage"
+                      label="Mobile Usage (Daily)"
+                      placeholder="e.g., ৫ মিনিট"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <Phone sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider sx={{ my: { xs: 3, sm: 4 } }} />
+
+              {/* Family Environment Section */}
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    mb: { xs: 2, sm: 3 },
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
+                  }}
+                >
+                  <Home sx={{ mr: 2, color: "primary.main" }} />
+                  Family Environment
+                </Typography>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  <Grid item xs={12} sm={3}>
+                    <CraftSelectWithIcon
+                      name="parentsPrayer"
+                      size="medium"
+                      label="Parents Prayer"
+                      placeholder="Select"
+                      items={["Yes", "No", "Sometimes"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftSelectWithIcon
+                      name="purdah"
+                      size="medium"
+                      label="Purdah"
+                      placeholder="Select"
+                      items={["Yes", "No", "Sometimes"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftSelectWithIcon
+                      name="quranRecitation"
+                      size="medium"
+                      label="Quran Recitation"
+                      placeholder="Select"
+                      items={["Regularly", "Sometimes", "Rarely", "Never"]}
+                      adornment={<School color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftSelectWithIcon
+                      name="halalIncome"
+                      size="medium"
+                      label="Halal Income"
+                      placeholder="Select"
+                      items={["Yes", "No", "Partially"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftSelectWithIcon
+                      name="addiction"
+                      size="medium"
+                      label="Addiction"
+                      placeholder="Select"
+                      items={["Yes", "No"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <CraftSelectWithIcon
+                      name="tv"
+                      size="medium"
+                      label="TV at Home"
+                      placeholder="Select"
+                      items={["Yes", "No"]}
+                      adornment={<Person color="action" />}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider sx={{ my: { xs: 3, sm: 4 } }} />
+
+              {/* Previous School Section */}
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    mb: { xs: 2, sm: 3 },
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
+                  }}
+                >
+                  <School sx={{ mr: 2, color: "primary.main" }} />
+                  Previous School Information
+                </Typography>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  <Grid item xs={12} sm={6}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="previousInstitution"
+                      label="Previous Institution"
+                      placeholder="Previous School/Madrasa Name"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <School sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <CraftInputWithIcon
+                      fullWidth
+                      name="previousAddress"
+                      label="Previous Institution Address"
+                      placeholder="Address"
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <LocationOn sx={{ color: "text.secondary", mr: 1 }} />
+                        ),
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider sx={{ my: { xs: 3, sm: 4 } }} />
+
+              {/* Documents Section */}
+              <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    mb: { xs: 2, sm: 3 },
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: { xs: "1.25rem", sm: "1.5rem" },
+                  }}
+                >
+                  <Description sx={{ mr: 2, color: "primary.main" }} />
+                  Documents
+                </Typography>
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  <Grid item xs={12} sm={3}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="birthCertificate"
+                          color="primary"
+                          checked={defaultValues?.birthCertificate || false}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setDefaultValues((prev: any) => ({
+                              ...prev,
+                              birthCertificate: newValue
+                            }));
+                          }}
+                        />
+                      }
+                      label="Birth Certificate"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="transferCertificate"
+                          color="primary"
+                          checked={defaultValues?.transferCertificate || false}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setDefaultValues((prev: any) => ({
+                              ...prev,
+                              transferCertificate: newValue
+                            }));
+                          }}
+                        />
+                      }
+                      label="Transfer Certificate"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="markSheet"
+                          color="primary"
+                          checked={defaultValues?.markSheet || false}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setDefaultValues((prev: any) => ({
+                              ...prev,
+                              markSheet: newValue
+                            }));
+                          }}
+                        />
+                      }
+                      label="Mark Sheet"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="characterCertificate"
+                          color="primary"
+                          checked={defaultValues?.characterCertificate || false}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setDefaultValues((prev: any) => ({
+                              ...prev,
+                              characterCertificate: newValue
+                            }));
+                          }}
+                        />
+                      }
+                      label="Character Certificate"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="photographs"
+                          color="primary"
+                          checked={defaultValues?.photographs || false}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setDefaultValues((prev: any) => ({
+                              ...prev,
+                              photographs: newValue
+                            }));
+                          }}
+                        />
+                      }
+                      label="Photographs"
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              <Divider sx={{ my: { xs: 3, sm: 4 } }} />
 
               {/* Form Actions */}
               <Box
                 sx={{
-                  mt: 4,
+                  mt: { xs: 3, sm: 4 },
                   display: "flex",
                   gap: 2,
                   justifyContent: "flex-end",
+                  flexDirection: { xs: "column", sm: "row" },
                 }}
               >
                 <Button
                   variant="contained"
                   type="submit"
                   startIcon={<Save />}
+                  fullWidth={isMobile}
                   sx={{
                     borderRadius: 100,
                     background:
                       "linear-gradient(135deg, #1976d2 0%, #2196f3 100%)",
                     boxShadow: "0 4px 10px rgba(33, 150, 243, 0.3)",
-                    px: 3,
+                    px: { xs: 2, sm: 3 },
+                    py: { xs: 1, sm: 1.5 },
+                    fontSize: { xs: "0.875rem", sm: "1rem" },
                   }}
                 >
                   {id ? "Update Student" : "Register Student"}

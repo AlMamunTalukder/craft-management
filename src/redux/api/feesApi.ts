@@ -19,22 +19,15 @@ export const feesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["fees", "students"],
     }),
-    calculateCurrentMonthMealBalance: build.mutation({
-      query: () => ({
-        url: "/meal-attendance/meal-balance/calculate",
+    generateMealBalance: build.mutation({
+      query: ({ month, year, mealRate }) => ({
+        url: "/meal-fee/generate-all",
         method: "POST",
-        data: {},
+        data: { month, year, mealRate },
       }),
       invalidatesTags: ["fees", "students", "mealAttendances"],
     }),
-    calculateSpecificMonthMealBalance: build.mutation({
-      query: ({ month, year }) => ({
-        url: "/meal-attendance/meal-balance/calculate",
-        method: "POST",
-        data: { month, year },
-      }),
-      invalidatesTags: ["fees", "students", "mealAttendances"],
-    }),
+
 
     getFeeGenerationStatus: build.query({
       query: () => ({
@@ -128,8 +121,7 @@ export const feesApi = baseApi.injectEndpoints({
 export const {
   useGenerateCurrentMonthFeesMutation,
   useGenerateSpecificMonthFeesMutation,
-  useCalculateCurrentMonthMealBalanceMutation,
-  useCalculateSpecificMonthMealBalanceMutation,
+  useGenerateMealBalanceMutation,
   useGetFeeGenerationStatusQuery,
   useGetStudentMealBalanceQuery,
   useGetDueFeesQuery,

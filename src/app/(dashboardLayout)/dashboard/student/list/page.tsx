@@ -3,37 +3,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useMemo, useState } from "react";
+import CraftTable, { Column, RowAction } from "@/components/Table";
+import { useGetAllMetaQuery } from "@/redux/api/metaApi";
+import { useGetAllSectionsQuery } from "@/redux/api/sectionApi";
 import {
+  useDeleteStudentMutation,
+  useGetAllStudentsQuery,
+} from "@/redux/api/studentApi";
+import {
+  Delete,
+  Edit,
+  Phone,
+  School,
+  Visibility
+} from "@mui/icons-material";
+import {
+  alpha,
+  Avatar,
   Box,
-  Button,
   Card,
   Chip,
   Container,
   Paper,
   Typography,
-  useTheme,
-  alpha,
-  Avatar,
+  useTheme
 } from "@mui/material";
-import {
-  Add,
-  Edit,
-  Delete,
-  Visibility,
-  Refresh,
-  School,
-  Phone,
-} from "@mui/icons-material";
-import Link from "next/link";
-import {
-  useDeleteStudentMutation,
-  useGetAllStudentsQuery,
-} from "@/redux/api/studentApi";
+import { useMemo } from "react";
 import Swal from "sweetalert2";
-import { useGetAllSectionsQuery } from "@/redux/api/sectionApi";
-import { useGetAllMetaQuery } from "@/redux/api/metaApi";
-import CraftTable, { Column, RowAction } from "@/components/Table";
 
 // Reference order for classes (only used for sorting filter options)
 const classOrder = [
@@ -153,7 +149,7 @@ const StudentList = () => {
     refetch();
   };
 
-  const handleExport = () => {};
+  const handleExport = () => { };
 
   const handlePrint = () => {
     window.print();
@@ -350,15 +346,15 @@ const StudentList = () => {
       color: "info",
       tooltip: "View Details",
     },
-    // {
-    //   label: "Edit",
-    //   icon: <Edit fontSize="small" />,
-    //   onClick: (row: any) => {
-    //     window.location.href = `/dashboard/student/update/${row._id}`;
-    //   },
-    //   color: "primary",
-    //   tooltip: "Edit Student",
-    // },
+    {
+      label: "Edit",
+      icon: <Edit fontSize="small" />,
+      onClick: (row: any) => {
+        window.location.href = `/dashboard/student/update/${row._id}`;
+      },
+      color: "primary",
+      tooltip: "Edit Student",
+    },
     {
       label: "Delete",
       icon: <Delete fontSize="small" />,

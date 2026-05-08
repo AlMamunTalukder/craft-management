@@ -13,6 +13,16 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             invalidatesTags: ["mealAttendance"],
         }),
 
+        // Bulk update attendance (multiple records at once)
+        bulkUpdateAttendance: build.mutation({
+            query: (data) => ({
+                url: "/meal-attendance/bulk",
+                method: "PUT",
+                data,
+            }),
+            invalidatesTags: ["mealAttendance"],
+        }),
+
         // Create single attendance
         createAttendance: build.mutation({
             query: (data) => ({
@@ -67,7 +77,7 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             query: ({ className, month, academicYear }) => ({
                 url: "/meal-attendance/sheet",
                 method: "GET",
-                params: { class: className, month, academicYear },
+                params: { className, month, academicYear },
             }),
             providesTags: ["mealAttendance"],
         }),
@@ -77,7 +87,7 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             query: ({ className, month, academicYear }) => ({
                 url: "/meal-attendance/summary",
                 method: "GET",
-                params: { class: className, month, academicYear },
+                params: { className, month, academicYear },
             }),
             providesTags: ["mealAttendance"],
         }),
@@ -102,16 +112,6 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             providesTags: ["mealAttendance"],
         }),
 
-        // Get attendance by specific date
-        getAttendanceBySpecificDate: build.query({
-            query: ({ className, date, academicYear }) => ({
-                url: "/meal-attendance/specific-date",
-                method: "GET",
-                params: { className, date, academicYear },
-            }),
-            providesTags: ["mealAttendance"],
-        }),
-
         // Delete attendance record
         deleteAttendance: build.mutation({
             query: (id) => ({
@@ -126,6 +126,7 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
 // Export hooks
 export const {
     useBulkCreateAttendanceMutation,
+    useBulkUpdateAttendanceMutation,
     useCreateAttendanceMutation,
     useUpdateAttendanceMutation,
     useGetAllAttendanceRecordsQuery,
@@ -134,6 +135,5 @@ export const {
     useGetMonthlySummaryQuery,
     useGetAttendanceByDateRangeQuery,
     useGetAttendanceByDateRangeForAllStudentsQuery,
-    useGetAttendanceBySpecificDateQuery,
     useDeleteAttendanceMutation,
 } = mealAttendanceApi;
