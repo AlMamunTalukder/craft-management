@@ -224,7 +224,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
         section: mappedSections,
         activeSession: mappedSessions,
         status: studentData.status || "",
-        studentType: studentData.studentType || studentData.category || "",
+        category: studentData.studentType || studentData.category || "",
         academicYear: studentData.academicYear || "",
         session: studentData.session || "",
         additionalNote: studentData.additionalNote || "",
@@ -423,7 +423,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
       section: sectionArray,
       activeSession: sessionArray,
       status: data.status || "",
-      studentType: data.studentType || "",
+      category: data.category || "",
       academicYear: data.academicYear || "",
       session: data.session || "",
       additionalNote: data.additionalNote || "",
@@ -1346,7 +1346,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
 
                   <Grid item xs={12} sm={3}>
                     <CraftSelectWithIcon
-                      name="studentType"
+                      name="category"
                       size="medium"
                       label="Category"
                       placeholder="Select Student Type"
