@@ -40,9 +40,10 @@ import { useGetAllAttendanceRecordsQuery, useDeleteAttendanceMutation, useGetMon
 import { useAcademicOption } from '@/hooks/useAcademicOption';
 import CraftTable, { BulkAction, Column, RowAction } from '@/components/Table';
 import AttendanceDetailsModal from './add/__components/AttendanceDetailsModal';
-import { useRouter } from 'next/navigation';
+
 import { AttendanceRecord, ClassItem } from '@/interface/meal';
 import Swal from 'sweetalert2';
+import { useRouter } from 'next/navigation';
 
 const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toString() }) => {
   const theme = useTheme();
@@ -59,7 +60,6 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
   const router = useRouter();
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
-  const [isClassOptionsLoaded, setIsClassOptionsLoaded] = useState(false);
 
   const allClasses = useMemo((): { classes: ClassItem[] } => {
     const defaultReturn = { classes: [] };
@@ -82,19 +82,6 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       value: cls.className,
     }));
   }, [allClasses]);
-
-  // Set default class "One" when options are loaded
-  useEffect(() => {
-    if (classDropdownOptions.length > 0 && !isClassOptionsLoaded) {
-      const hasOneClass = classDropdownOptions.some(option => option.value === 'One');
-      if (hasOneClass) {
-        setSelectedClassId('One');
-      } else if (classDropdownOptions.length > 0) {
-        setSelectedClassId(classDropdownOptions[0].value);
-      }
-      setIsClassOptionsLoaded(true);
-    }
-  }, [classDropdownOptions, isClassOptionsLoaded]);
 
   const getClassName = useCallback((classIds: string[] | any): string => {
     if (!classIds || !classIds.length || !allClasses.classes || allClasses.classes.length === 0) return 'N/A';
@@ -124,9 +111,9 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
   );
 
   // Extract stats from monthly data
-  const statsData = monthlyStats?.data || monthlyStats;
-
   const monthlySummary = useMemo(() => {
+    const statsData = monthlyStats?.data || monthlyStats;
+
     if (!statsData || !statsData.students) {
       return {
         totalStudents: 0,
@@ -136,6 +123,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
         totalLunch: 0,
         totalDinner: 0,
         averagePerStudent: 0,
+        mealRate: 55,
       };
     }
 
@@ -168,7 +156,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       averagePerStudent: totalStudents > 0 ? Math.round(totalMeals / totalStudents) : 0,
       mealRate: statsData.mealRate || 55,
     };
-  }, [statsData]);
+  }, [monthlyStats]);
 
   // Refetch stats when class or month changes
   useEffect(() => {
@@ -224,7 +212,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
     sortDirection,
   });
 
-  // ✅ Sweet Alert for delete confirmation
+  // Sweet Alert for delete confirmation
   const handleDelete = useCallback(async (row: AttendanceRecord) => {
     const student = row.student || {};
     const studentName = student?.name || 'this student';
@@ -239,12 +227,6 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, delete it!',
       cancelButtonText: 'Cancel',
-      background: '#fff',
-      customClass: {
-        popup: 'swal2-popup-custom',
-        title: 'swal2-title-custom',
-        htmlContainer: 'swal2-html-custom',
-      },
     });
 
     if (result.isConfirmed) {
@@ -257,7 +239,6 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
           icon: 'success',
           confirmButtonColor: '#3085d6',
           timer: 2000,
-          showConfirmButton: true,
         });
 
         refetch();
@@ -311,6 +292,9 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       sortable: true,
       render: (row: AttendanceRecord) => {
         const student = row.student || {};
+        const studentId = student?.studentId || 'N/A';
+        const nameBangla = student?.nameBangla || '';
+
         return (
           <Box display="flex" alignItems="center" gap={1.5}>
             <Avatar sx={{ width: 40, height: 40, bgcolor: theme.palette.primary.main }}>
@@ -318,9 +302,11 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
             </Avatar>
             <Box>
               <Typography variant="body2" fontWeight="bold">{student?.name || 'N/A'}</Typography>
-              <Typography variant="caption" color="text.secondary">{student?.nameBangla || ''}</Typography>
+              {nameBangla && (
+                <Typography variant="caption" color="text.secondary">{nameBangla}</Typography>
+              )}
               <Typography variant="caption" display="block" color="primary.main">
-                ID: {student?.studentId || 'N/A'}
+                ID: {studentId}
               </Typography>
             </Box>
           </Box>
@@ -334,9 +320,10 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       sortable: false,
       render: (row: AttendanceRecord) => {
         const student = row.student || {};
+        const rollNumber = student?.studentId || student?.studentClassRoll || 'N/A';
         return (
           <Chip
-            label={student?.studentId || student?.studentClassRoll || 'N/A'}
+            label={rollNumber}
             size="small"
             variant="outlined"
             sx={{ fontWeight: 'bold' }}
@@ -364,9 +351,51 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
         <Typography variant="body2">{dayjs(row.date).format('DD MMM YYYY')}</Typography>
       ),
     },
-    { id: 'breakfast', label: 'Breakfast', minWidth: 100, align: 'center', sortable: true, type: 'boolean' },
-    { id: 'lunch', label: 'Lunch', minWidth: 100, align: 'center', sortable: true, type: 'boolean' },
-    { id: 'dinner', label: 'Dinner', minWidth: 100, align: 'center', sortable: true, type: 'boolean' },
+    {
+      id: 'breakfast',
+      label: 'Breakfast',
+      minWidth: 100,
+      align: 'center',
+      sortable: true,
+      type: 'boolean',
+      render: (row: AttendanceRecord) => (
+        <Chip
+          label={row.breakfast ? 'Yes' : 'No'}
+          size="small"
+          color={row.breakfast ? 'success' : 'default'}
+        />
+      ),
+    },
+    {
+      id: 'lunch',
+      label: 'Lunch',
+      minWidth: 100,
+      align: 'center',
+      sortable: true,
+      type: 'boolean',
+      render: (row: AttendanceRecord) => (
+        <Chip
+          label={row.lunch ? 'Yes' : 'No'}
+          size="small"
+          color={row.lunch ? 'success' : 'default'}
+        />
+      ),
+    },
+    {
+      id: 'dinner',
+      label: 'Dinner',
+      minWidth: 100,
+      align: 'center',
+      sortable: true,
+      type: 'boolean',
+      render: (row: AttendanceRecord) => (
+        <Chip
+          label={row.dinner ? 'Yes' : 'No'}
+          size="small"
+          color={row.dinner ? 'success' : 'default'}
+        />
+      ),
+    },
     {
       id: 'status',
       label: 'Status',
@@ -376,11 +405,19 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       type: 'status',
       render: (row: AttendanceRecord) => {
         const total = [row.breakfast, row.lunch, row.dinner].filter(Boolean).length;
-        let status = 'absent';
+        let status = 'Absent';
         let color: 'success' | 'warning' | 'error' = 'error';
-        if (total === 3) { status = 'full day'; color = 'success'; }
-        else if (total >= 1) { status = total === 2 ? 'partial' : 'single meal'; color = 'warning'; }
-        return <Chip label={`${status} (${total})`} size="small" color={color} variant="filled" />;
+        if (total === 3) {
+          status = 'Full Day';
+          color = 'success';
+        } else if (total === 2) {
+          status = 'Partial (2 meals)';
+          color = 'warning';
+        } else if (total === 1) {
+          status = 'Single Meal';
+          color = 'warning';
+        }
+        return <Chip label={`${status}`} size="small" color={color} variant="filled" />;
       },
     },
   ], [theme, getClassName]);
@@ -432,7 +469,6 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
 
         if (result.isConfirmed) {
           try {
-            // Delete each selected record
             for (const row of selectedRows) {
               await deleteAttendance(row._id).unwrap();
             }
@@ -443,7 +479,6 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
               icon: 'success',
               confirmButtonColor: '#3085d6',
               timer: 2000,
-              showConfirmButton: true,
             });
 
             refetch();
@@ -471,6 +506,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
         const month = dayjs(firstRow.date).format('YYYY-MM');
         let classId = '';
         let classNameStr = '';
+
         if (Array.isArray(student.className) && student.className.length > 0) {
           const firstClass = student.className[0];
           if (typeof firstClass === 'object') {
@@ -482,6 +518,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
             classNameStr = foundClass?.className || '';
           }
         }
+
         const params = new URLSearchParams({
           classId,
           className: classNameStr,
@@ -508,7 +545,6 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
           label="Filter by Class"
           onChange={(e) => { setSelectedClassId(e.target.value); setPage(1); }}
         >
-          <MenuItem value="">All Classes</MenuItem>
           {classDropdownOptions?.map((option: any) => (
             <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
           ))}
@@ -541,7 +577,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
             setPage(1);
           }}
         >
-          Reset to Default
+          Reset to Class One
         </Button>
       )}
     </Box>
@@ -720,11 +756,12 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
         {/* Stats Cards */}
         <StatsCards />
 
+        {/* Active Filters Display */}
         {(selectedClassId !== 'One' || selectedDate || (selectedMonth && selectedMonth.format('YYYY-MM') !== dayjs().format('YYYY-MM'))) && (
           <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: 'white' }}>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
               <Typography variant="caption" color="text.secondary" fontWeight="bold">Active Filters:</Typography>
-              {selectedClassId && selectedClassId !== 'One' && <Chip label={`Class: ${selectedClassId}`} size="small" onDelete={() => setSelectedClassId('One')} />}
+              {selectedClassId !== 'One' && <Chip label={`Class: ${selectedClassId}`} size="small" onDelete={() => setSelectedClassId('One')} />}
               {selectedDate && <Chip label={`Date: ${selectedDate.format('DD MMM YYYY')}`} size="small" onDelete={() => setSelectedDate(null)} />}
               {selectedMonth && selectedMonth.format('YYYY-MM') !== dayjs().format('YYYY-MM') && (
                 <Chip label={`Month: ${selectedMonth.format('MMMM YYYY')}`} size="small" onDelete={() => setSelectedMonth(dayjs())} />
@@ -757,7 +794,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
           idField="_id"
           defaultSortColumn="date"
           defaultSortDirection="desc"
-          maxHeight="70vh"
+
           stickyHeader={true}
           dense={false}
           striped={true}
@@ -771,6 +808,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
           borderRadius={3}
           customToolbar={<CustomFilters />}
         />
+
         <AttendanceDetailsModal
           open={viewModalOpen}
           setOpen={setViewModalOpen}

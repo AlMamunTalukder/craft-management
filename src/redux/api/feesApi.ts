@@ -1,24 +1,17 @@
-
+// src/redux/api/feesApi.ts
 import { baseApi } from "./baseApi";
 
 export const feesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    generateCurrentMonthFees: build.mutation({
-      query: () => ({
+    generateFees: build.mutation({
+      query: (data: { month: number; year: number }) => ({
         url: "/fees/generate",
         method: "POST",
-        data: {},
+        data: data,
       }),
       invalidatesTags: ["fees", "students"],
     }),
-    generateSpecificMonthFees: build.mutation({
-      query: ({ month, year }) => ({
-        url: "/fees/generate",
-        method: "POST",
-        data: { month, year },
-      }),
-      invalidatesTags: ["fees", "students"],
-    }),
+
     generateMealBalance: build.mutation({
       query: ({ month, year, mealRate }) => ({
         url: "/meal-fee/generate-all",
@@ -27,7 +20,6 @@ export const feesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["fees", "students", "mealAttendances"],
     }),
-
 
     getFeeGenerationStatus: build.query({
       query: () => ({
@@ -115,12 +107,20 @@ export const feesApi = baseApi.injectEndpoints({
       }),
       providesTags: ["fees"],
     }),
+    applyFeeAdjustment: build.mutation({
+      query: (data) => ({
+        url: "/fee-adjustments",
+        method: "POST",
+        data: data,
+      }),
+      invalidatesTags: ["fees"],
+    }),
   }),
 });
 
 export const {
-  useGenerateCurrentMonthFeesMutation,
-  useGenerateSpecificMonthFeesMutation,
+  useGenerateFeesMutation,
+  useApplyFeeAdjustmentMutation,
   useGenerateMealBalanceMutation,
   useGetFeeGenerationStatusQuery,
   useGetStudentMealBalanceQuery,

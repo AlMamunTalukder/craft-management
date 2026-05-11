@@ -739,13 +739,15 @@ export const navigationItems: NavigationItem[] = [
         ),
         roles: ["admin", "teacher", "student", "super_admin", "class_teacher"],
       },
+      {
+        path: "/dashboard/fees/meal-balance",
+        title: " Meal Balance",
+        icon: <ColorfulIcon color="#E91E63"><Restaurant /></ColorfulIcon>,
+        roles: ["admin", "super_admin", "accountant"],
+      },
     ],
   },
-  // Fees Management
-  // src/constants/navigationItems.ts (আপনার সাইডবার ফাইলে যোগ করুন)
-  // Fees Management এর children এ যোগ করুন:
 
-  // src/constants/navigationItems.ts - সম্পূর্ণ আপডেটেড Fees Management সেকশন
   {
     title: "Fees Management",
     icon: (
@@ -757,40 +759,35 @@ export const navigationItems: NavigationItem[] = [
     children: [
       {
         path: "/dashboard/fees/list",
-        title: "📋 All Fees",
+        title: "All Fees",
         icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/summary",
-        title: "📊 Fee Summary",
+        title: "Fee Summary",
         icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/category",
-        title: "🏷️ Fee Categories",
+        title: "Fee Categories",
         icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/fee-collection",
-        title: "💰 Fee Collection",
+        title: "Fee Collection",
         icon: <ColorfulIcon color="#009688"><Payment /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/generate",
-        title: "📅 Generate Fees",
+        title: "Generate Fees",
         icon: <ColorfulIcon color="#FF9800"><Calculate /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
-      {
-        path: "/dashboard/fees/meal-balance",
-        title: "🍽️ Meal Balance",
-        icon: <ColorfulIcon color="#E91E63"><Restaurant /></ColorfulIcon>,
-        roles: ["admin", "super_admin", "accountant"],
-      },
+
     ],
   },
   {
