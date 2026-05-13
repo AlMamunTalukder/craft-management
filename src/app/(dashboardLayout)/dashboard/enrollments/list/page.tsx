@@ -2,13 +2,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Table, { BulkAction, Column, RowAction } from "@/components/Table";
 import { useAcademicOption } from "@/hooks/useAcademicOption";
 import {
   useDeleteEnrollmentMutation,
   useGetAllEnrollmentsQuery,
 } from "@/redux/api/enrollmentApi";
-import TakaIcon from "@/utils/takaIcon";
 import {
   Add,
   ArrowForward,
@@ -27,65 +27,18 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
-  LinearProgress,
   Typography,
   useMediaQuery,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import EnrollmentDetailsModal from "../__components/EnrollmentDetailsModal";
-import FeeCollectionModal from "../__components/FeeCollectionModal";
 import PromotionHistoryModal from "../__components/PromotionHistoryModal";
 import PromotionModal from "../__components/PromotionModal";
 import RetainModal from "../__components/RetainModal";
-import LoadingSpinner from "@/components/LoadingSpinner";
-
-const ALL_CLASSES = [
-  "Pre_one",
-  "One",
-  "Two",
-  "Three",
-  "Four_boys",
-  "Four_girls",
-  "Five",
-  "Six",
-  "Seven",
-  "Eight",
-  "Nurani",
-  "Nazera",
-  "Hifz",
-  "Sunani",
-];
-
-const calculateTotalFees = (fees: any[]) => {
-  if (!fees || !Array.isArray(fees) || fees.length === 0) {
-    return { total: 0, paid: 0, due: 0, discount: 0, waiver: 0 };
-  }
-  let total = 0,
-    paid = 0,
-    due = 0,
-    discount = 0,
-    waiver = 0;
-  fees.forEach((fee: any) => {
-    total += Number(fee.amount) || 0;
-    paid += Number(fee.paidAmount) || 0;
-    due += Number(fee.dueAmount) || 0;
-    discount += Number(fee.discount) || 0;
-    waiver += Number(fee.waiver) || 0;
-  });
-  return { total, paid, due, discount, waiver };
-};
-
-const getPaymentStatus = (fees: any[]) => {
-  if (!fees || !Array.isArray(fees) || fees.length === 0) return "unpaid";
-  const { total, paid } = calculateTotalFees(fees);
-  if (paid >= total) return "paid";
-  if (paid > 0) return "partial";
-  return "unpaid";
-};
+import { sortClassOptions } from "@/options/classReport";
 
 const getStatusColor = (status: string) => {
   switch (status?.toLowerCase()) {
@@ -124,7 +77,6 @@ export default function EnrollmentsPage() {
   const [selectedStudentForHistory, setSelectedStudentForHistory] =
     useState<any>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [feeCollectionOpen, setFeeCollectionOpen] = useState(false);
   const [promotionModalOpen, setPromotionModalOpen] = useState(false);
   const [promotionHistoryModalOpen, setPromotionHistoryModalOpen] =
     useState(false);
@@ -142,166 +94,58 @@ export default function EnrollmentsPage() {
     isLoading,
     error,
     refetch,
-  } = useGetAllEnrollmentsQuery({ limit: 1000, page: 1 });
-  console.log("Fetched enrollments:", enrollmentData);
+  } = useGetAllEnrollmentsQuery({});
   const [deleteEnrollment] = useDeleteEnrollmentMutation();
   const { classOptions } = useAcademicOption();
 
-  // Flatten API data → flat rows
   const tableData = useMemo(() => {
-    if (!enrollmentData?.data || !Array.isArray(enrollmentData.data.data))
+    if (!enrollmentData?.data?.data || !Array.isArray(enrollmentData.data.data))
       return [];
 
-    return enrollmentData.data.data.map((enrollment: any) => {
-      const className = enrollment.className
-        ? typeof enrollment.className === "object" &&
-          enrollment.className.className
-          ? enrollment.className.className
-          : Array.isArray(enrollment.className)
-            ? enrollment.className
-                .map((cls: any) =>
-                  typeof cls === "object" ? cls.className : cls,
-                )
-                .join(", ")
-            : enrollment.className
-        : "N/A";
-
-      const studentName =
-        enrollment.studentName ||
-        enrollment.name ||
-        enrollment.student?.name ||
-        "Unknown";
-
-      const studentId =
-        enrollment.studentId ||
-        enrollment.student?.studentId ||
-        enrollment._id.slice(-6);
-
-      const fatherName =
-        enrollment.fatherName ||
-        enrollment.fatherNameBangla ||
-        enrollment.student?.fatherName ||
-        enrollment.parentInfo?.father?.nameEnglish ||
-        "N/A";
-
-      // ✅ IMPORTANT: Get fees from student.fees if enrollment.fees is empty
-      const feesData =
-        enrollment.fees?.length > 0
-          ? enrollment.fees
-          : enrollment.student?.fees || [];
-
-      const { total, paid, due, discount, waiver } =
-        calculateTotalFees(feesData);
-      const paymentStatus = getPaymentStatus(feesData);
-
-      // Get parent info from the correct location
-      const parentInfo =
-        enrollment.parentInfo || enrollment.student?.parentInfo || {};
-      const father = parentInfo.father || {};
-      const mother = parentInfo.mother || {};
-      const guardian = parentInfo.guardian || {};
-
-      return {
-        id: enrollment._id,
-        enrollmentId: enrollment._id,
-        studentId,
-        studentName,
-        studentNameBangla:
-          enrollment.nameBangla || enrollment.student?.nameBangla || "",
-        fatherName: father.nameEnglish || enrollment.fatherName || "N/A",
-        fatherNameBangla:
-          father.nameBangla || enrollment.fatherNameBangla || "",
-        motherName: mother.nameEnglish || enrollment.motherName || "N/A",
-        motherNameBangla:
-          mother.nameBangla || enrollment.motherNameBangla || "",
-        fatherIncome:
-          father.income ||
-          enrollment.fatherIncome ||
-          enrollment.student?.fatherIncome ||
-          0,
-        motherIncome:
-          mother.income ||
-          enrollment.motherIncome ||
-          enrollment.student?.motherIncome ||
-          0,
-        fatherNid: father.nid || enrollment.fatherNid || "N/A",
-        motherNid: mother.nid || enrollment.motherNid || "N/A",
-        mobileNo:
-          enrollment.mobileNo ||
-          enrollment.student?.mobile ||
-          father.mobile ||
-          "N/A",
-        guardianInfo: guardian || {
-          name: "N/A",
-          relation: "N/A",
-          mobile: "N/A",
-        },
-        birthDate: enrollment.birthDate
-          ? new Date(enrollment.birthDate).toLocaleDateString()
-          : enrollment.student?.birthDate
-            ? new Date(enrollment.student.birthDate).toLocaleDateString()
-            : "N/A",
-        nationality:
-          enrollment.nationality ||
-          enrollment.student?.nationality ||
-          "Bangladeshi",
-        className,
-        studentDepartment:
-          enrollment.studentDepartment ||
-          enrollment.student?.studentDepartment ||
-          "N/A",
-        studentType:
-          enrollment.studentType || enrollment.student?.studentType || "N/A",
-        status: enrollment.status || "active",
-        paymentStatus,
-        admissionType: enrollment.admissionType || "admission",
-        presentAddress: enrollment.presentAddress ||
-          enrollment.student?.presentAddress || {
-            policeStation: "N/A",
-            district: "N/A",
-          },
-        permanentAddress: enrollment.permanentAddress ||
-          enrollment.student?.permanentAddress || {
-            policeStation: "N/A",
-            district: "N/A",
-          },
-        documents: enrollment.documents || enrollment.student?.documents || {},
-        termsAccepted:
-          enrollment.termsAccepted ||
-          enrollment.student?.termsAccepted ||
-          false,
-        totalFees: total,
-        paidAmount: paid,
-        dueAmount: due,
-        discountAmount: discount,
-        waiverAmount: waiver,
-        fees: feesData,
-        rawData: enrollment,
-        // Add additional fields for the details modal
-        student: enrollment.student,
-        parentInfo: parentInfo,
-        familyEnvironment:
-          enrollment.familyEnvironment ||
-          enrollment.student?.familyEnvironment ||
-          {},
-        behaviorSkills:
-          enrollment.behaviorSkills || enrollment.student?.behaviorSkills || {},
-        previousSchool:
-          enrollment.previousSchool || enrollment.student?.previousSchool || {},
-        bloodGroup:
-          enrollment.bloodGroup || enrollment.student?.bloodGroup || "N/A",
-        birthRegistrationNo:
-          enrollment.birthRegistrationNo ||
-          enrollment.student?.birthRegistrationNo ||
-          "N/A",
-      };
-    });
+    return enrollmentData.data.data.map((enrollment: any) => ({
+      id: enrollment._id,
+      enrollmentId: enrollment._id,
+      studentId: enrollment.studentId || enrollment.student?.studentId,
+      studentName: enrollment.studentName || enrollment.student?.name,
+      studentNameBangla: enrollment.nameBangla || enrollment.student?.nameBangla,
+      fatherName: enrollment.parentInfo?.father?.nameEnglish || enrollment.student?.parentInfo?.father?.nameEnglish,
+      fatherNameBangla: enrollment.parentInfo?.father?.nameBangla,
+      motherName: enrollment.parentInfo?.mother?.nameEnglish,
+      motherNameBangla: enrollment.parentInfo?.mother?.nameBangla,
+      fatherIncome: enrollment.parentInfo?.father?.income || 0,
+      motherIncome: enrollment.parentInfo?.mother?.income || 0,
+      fatherNid: enrollment.parentInfo?.father?.nid || "N/A",
+      motherNid: enrollment.parentInfo?.mother?.nid || "N/A",
+      mobileNo: enrollment.mobileNo || enrollment.student?.mobile || enrollment.parentInfo?.father?.mobile,
+      guardianInfo: enrollment.parentInfo?.guardian || { name: "N/A", relation: "N/A", mobile: "N/A" },
+      birthDate: enrollment.birthDate ? new Date(enrollment.birthDate).toLocaleDateString() :
+        enrollment.student?.birthDate ? new Date(enrollment.student.birthDate).toLocaleDateString() : "N/A",
+      nationality: enrollment.nationality || enrollment.student?.nationality || "Bangladeshi",
+      className: enrollment.className?.className || "N/A",
+      studentDepartment: enrollment.studentDepartment || enrollment.student?.studentDepartment || "N/A",
+      studentType: enrollment.studentType || enrollment.student?.studentType || "N/A",
+      status: enrollment.status || "active",
+      admissionType: enrollment.admissionType || "admission",
+      presentAddress: enrollment.presentAddress || enrollment.student?.presentAddress || {},
+      permanentAddress: enrollment.permanentAddress || enrollment.student?.permanentAddress || {},
+      documents: enrollment.documents || enrollment.student?.documents || {},
+      termsAccepted: enrollment.termsAccepted || enrollment.student?.termsAccepted || false,
+      fees: enrollment.fees || enrollment.student?.fees || [],
+      rawData: enrollment,
+      student: enrollment.student,
+      parentInfo: enrollment.parentInfo,
+      familyEnvironment: enrollment.familyEnvironment || enrollment.student?.familyEnvironment || {},
+      behaviorSkills: enrollment.behaviorSkills || enrollment.student?.behaviorSkills || {},
+      previousSchool: enrollment.previousSchool || enrollment.student?.previousSchool || {},
+      bloodGroup: enrollment.bloodGroup || enrollment.student?.bloodGroup || "N/A",
+      birthRegistrationNo: enrollment.birthRegistrationNo || enrollment.student?.birthRegistrationNo || "N/A",
+    }));
   }, [enrollmentData]);
 
-  //  FIXED: class filter options sorted by ALL_CLASSES order
   const classFilterOptions = useMemo(() => {
     const seen = new Set<string>();
     const opts: { label: string; value: string }[] = [];
+
     tableData.forEach((r: any) => {
       if (r.className && r.className !== "N/A" && !seen.has(r.className)) {
         seen.add(r.className);
@@ -309,42 +153,9 @@ export default function EnrollmentsPage() {
       }
     });
 
-    // Sort by the predefined order; unknown classes go to the end alphabetically.
-    return opts.sort((a, b) => {
-      const indexA = ALL_CLASSES.indexOf(a.value);
-      const indexB = ALL_CLASSES.indexOf(b.value);
-      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-      if (indexA !== -1) return -1;
-      if (indexB !== -1) return 1;
-      return a.label.localeCompare(b.label);
-    });
+    return sortClassOptions(opts);
   }, [tableData]);
 
-  const totalCount = enrollmentData?.data?.meta?.total ?? tableData.length;
-
-  const stats = useMemo(() => {
-    if (!tableData.length)
-      return {
-        total: 0,
-        active: 0,
-        paid: 0,
-        unpaid: 0,
-        totalFees: 0,
-        totalPaid: 0,
-        totalDue: 0,
-      };
-    return {
-      total: tableData.length,
-      active: tableData.filter((e: any) => e.status === "active").length,
-      paid: tableData.filter((e: any) => e.paymentStatus === "paid").length,
-      unpaid: tableData.filter((e: any) => e.paymentStatus === "unpaid").length,
-      totalFees: tableData.reduce((s: number, e: any) => s + e.totalFees, 0),
-      totalPaid: tableData.reduce((s: number, e: any) => s + e.paidAmount, 0),
-      totalDue: tableData.reduce((s: number, e: any) => s + e.dueAmount, 0),
-    };
-  }, [tableData]);
-
-  // Columns
   const columns: Column[] = useMemo(() => {
     const cols: Column[] = [
       {
@@ -415,7 +226,7 @@ export default function EnrollmentsPage() {
         minWidth: isMobile ? 100 : 180,
         sortable: true,
         filterable: true,
-        filterOptions: classFilterOptions, // ✅ now sorted correctly
+        filterOptions: classFilterOptions,
         render: (row: any) => (
           <Box>
             <Typography
@@ -461,135 +272,30 @@ export default function EnrollmentsPage() {
       });
     }
 
-    cols.push(
-      {
-        id: "paymentStatus",
-        label: "Payment",
-        minWidth: isMobile ? 100 : 180,
-        sortable: true,
-        filterable: true,
-        filterOptions: [
-          { label: "Paid", value: "paid" },
-          { label: "Partial", value: "partial" },
-          { label: "Unpaid", value: "unpaid" },
-        ],
-        render: (row: any) => {
-          const pct =
-            row.totalFees > 0 ? (row.paidAmount / row.totalFees) * 100 : 0;
-          if (isMobile) {
-            return (
-              <Chip
-                label={row.paymentStatus}
-                color={
-                  row.paymentStatus === "paid"
-                    ? "success"
-                    : row.paymentStatus === "partial"
-                      ? "warning"
-                      : "error"
-                }
-                size="small"
-                variant="filled"
-                sx={{ fontWeight: 600 }}
-              />
-            );
+    cols.push({
+      id: "admissionType",
+      label: "Type",
+      minWidth: 90,
+      sortable: true,
+      filterable: true,
+      filterOptions: [
+        { label: "Admission", value: "admission" },
+        { label: "Promotion", value: "promotion" },
+      ],
+      render: (row: any) => (
+        <Chip
+          label={row.admissionType}
+          size="small"
+          color={getAdmissionTypeColor(row.admissionType) as any}
+          variant={row.admissionType === "promotion" ? "filled" : "outlined"}
+          icon={
+            row.admissionType === "promotion" ? (
+              <ArrowForward fontSize="small" />
+            ) : undefined
           }
-          return (
-            <Box sx={{ minWidth: 150 }}>
-              <Box display="flex" justifyContent="space-between" mb={0.5}>
-                <Typography variant="caption">
-                  Paid: ৳{row.paidAmount.toLocaleString()}
-                </Typography>
-                <Typography variant="caption">
-                  Due: ৳{row.dueAmount.toLocaleString()}
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={pct}
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: "grey.200",
-                  "& .MuiLinearProgress-bar": {
-                    backgroundColor:
-                      pct >= 100
-                        ? "success.main"
-                        : pct > 0
-                          ? "warning.main"
-                          : "error.main",
-                    borderRadius: 4,
-                  },
-                }}
-              />
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                mt={1}
-              >
-                <Chip
-                  label={row.paymentStatus}
-                  color={
-                    row.paymentStatus === "paid"
-                      ? "success"
-                      : row.paymentStatus === "partial"
-                        ? "warning"
-                        : "error"
-                  }
-                  size="small"
-                  variant="filled"
-                />
-                <Typography variant="caption" fontWeight="bold">
-                  {pct.toFixed(1)}%
-                </Typography>
-              </Box>
-            </Box>
-          );
-        },
-      },
-      {
-        id: "dueAmount",
-        label: "Due",
-        minWidth: isMobile ? 80 : 120,
-        align: "right",
-        sortable: true,
-        type: "number",
-        format: (value: number) => (
-          <Typography
-            variant="body2"
-            fontWeight="bold"
-            color={value > 0 ? "error.main" : "success.main"}
-            sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
-          >
-            ৳{value.toLocaleString()}
-          </Typography>
-        ),
-      },
-      {
-        id: "admissionType",
-        label: "Type",
-        minWidth: 90,
-        sortable: true,
-        filterable: true,
-        filterOptions: [
-          { label: "Admission", value: "admission" },
-          { label: "Promotion", value: "promotion" },
-        ],
-        render: (row: any) => (
-          <Chip
-            label={row.admissionType}
-            size="small"
-            color={getAdmissionTypeColor(row.admissionType) as any}
-            variant={row.admissionType === "promotion" ? "filled" : "outlined"}
-            icon={
-              row.admissionType === "promotion" ? (
-                <ArrowForward fontSize="small" />
-              ) : undefined
-            }
-          />
-        ),
-      },
-    );
+        />
+      ),
+    });
 
     return cols;
   }, [isMobile, isTablet, classFilterOptions]);
@@ -678,90 +384,11 @@ export default function EnrollmentsPage() {
     [isMobile, router, deleteEnrollment, refetch],
   );
 
-  // ── Bulk actions ──────────────────────────────────────────────────────────
-  const bulkActions: BulkAction[] = useMemo(
-    () => [
-      {
-        label: "Export Selected",
-        icon: <FileDownload fontSize="small" />,
-        onClick: (selectedRows) => {
-          Swal.fire({
-            title: "Export",
-            text: `Exporting ${selectedRows.length} enrollment(s)...`,
-            icon: "info",
-            timer: 2000,
-            showConfirmButton: false,
-          });
-        },
-      },
-      {
-        label: "Collect Fees",
-        icon: <AttachMoney fontSize="small" />,
-        color: "success",
-        onClick: (selectedRows) => {
-          const hasDue = selectedRows.some((r) => r.dueAmount > 0);
-          if (!hasDue) {
-            Swal.fire({
-              title: "No Due Amount",
-              text: "Selected enrollments have no due amount.",
-              icon: "info",
-            });
-            return;
-          }
-          Swal.fire({
-            title: "Bulk Fee Collection",
-            html: `Collect fees from <strong>${selectedRows.length}</strong> student(s)?`,
-            icon: "info",
-            showCancelButton: true,
-            confirmButtonColor: "#1976d2",
-            confirmButtonText: "Continue",
-          });
-        },
-      },
-      {
-        label: "Delete Selected",
-        icon: <Delete fontSize="small" />,
-        color: "error",
-        onClick: (selectedRows) => {
-          Swal.fire({
-            title: "Are you sure?",
-            html: `Delete <strong>${selectedRows.length}</strong> enrollment(s)? This cannot be undone.`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            confirmButtonText: "Yes, delete them!",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              Promise.allSettled(
-                selectedRows.map((r) => deleteEnrollment(r.id).unwrap()),
-              ).then(() => {
-                Swal.fire({
-                  title: "Deleted!",
-                  icon: "success",
-                  timer: 2000,
-                  showConfirmButton: false,
-                });
-                refetch();
-              });
-            }
-          });
-        },
-      },
-    ],
-    [deleteEnrollment, refetch],
-  );
 
   // Custom toolbar
   const customToolbar = (
     <Box display="flex" gap={1.5} alignItems="center" flexWrap="wrap">
-      <Button
-        variant="contained"
-        startIcon={<Add />}
-        onClick={() => router.push("/dashboard/enrollments")}
-        size="small"
-      >
-        New Enrollment
-      </Button>
+
       <Button
         variant="outlined"
         startIcon={<ArrowForward />}
@@ -796,6 +423,22 @@ export default function EnrollmentsPage() {
     return <LoadingSpinner />;
   }
 
+  function handleCloseDetails() {
+    setDetailDialogOpen(false);
+    setSelectedEnrollment(null);
+    setActiveTab(0);
+  }
+
+  function handleEditEnrollment(enrollment: any) {
+    handleCloseDetails();
+    router.push(`/dashboard/enrollments?id=${enrollment.id}`);
+  }
+  function handleCollectFee(enrollment: any) {
+    handleCloseDetails();
+    setSelectedEnrollment(enrollment);
+
+  }
+
   return (
     <Box
       sx={{
@@ -804,105 +447,9 @@ export default function EnrollmentsPage() {
         minHeight: "100vh",
       }}
     >
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          Student Enrollments
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Manage and track all student admissions and promotions
-        </Typography>
-
-        {/* Stats cards */}
-        <Box display="flex" gap={2} flexWrap="wrap" mt={2}>
-          <Box
-            sx={{
-              p: 2,
-              bgcolor: "white",
-              borderRadius: 2,
-              boxShadow: 1,
-              minWidth: 160,
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Total Enrollments
-            </Typography>
-            <Typography variant="h5" fontWeight="bold">
-              {stats.total}
-            </Typography>
-            <Box display="flex" gap={1} mt={1} flexWrap="wrap">
-              <Chip
-                label={`Active: ${stats.active}`}
-                size="small"
-                color="success"
-              />
-              <Chip
-                label={`Paid: ${stats.paid}`}
-                size="small"
-                color="success"
-                variant="outlined"
-              />
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              p: 2,
-              bgcolor: "white",
-              borderRadius: 2,
-              boxShadow: 1,
-              minWidth: 160,
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Financial Summary
-            </Typography>
-            <Typography variant="h6" fontWeight="bold">
-              ৳{stats.totalFees.toLocaleString()}
-            </Typography>
-            <Box display="flex" gap={1} mt={1} flexWrap="wrap">
-              <Chip
-                label={`Paid: ৳${stats.totalPaid.toLocaleString()}`}
-                size="small"
-                color="success"
-              />
-              <Chip
-                label={`Due: ৳${stats.totalDue.toLocaleString()}`}
-                size="small"
-                color={stats.totalDue > 0 ? "error" : "default"}
-              />
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              p: 2,
-              bgcolor: "white",
-              borderRadius: 2,
-              boxShadow: 1,
-              minWidth: 160,
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Payment Status
-            </Typography>
-            <Box display="flex" flexDirection="column" gap={1} mt={1}>
-              <Box display="flex" justifyContent="space-between">
-                <Typography variant="body2">Paid:</Typography>
-                <Chip label={stats.paid} size="small" color="success" />
-              </Box>
-              <Box display="flex" justifyContent="space-between">
-                <Typography variant="body2">Unpaid:</Typography>
-                <Chip label={stats.unpaid} size="small" color="error" />
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Table */}
       <Box sx={{ p: { xs: 0, sm: 1 } }}>
         <Table
           title="Enrollments"
-          subtitle={`Total ${totalCount} enrollments`}
           emptyStateMessage="No enrollments found"
           columns={columns}
           data={tableData}
@@ -926,24 +473,19 @@ export default function EnrollmentsPage() {
           serverSideSorting={false}
           filterable={true}
           rowActions={rowActions}
-          bulkActions={bulkActions}
           selectable={true}
           customToolbar={customToolbar}
           showToolbar={true}
-          onRefresh={refetch}
           dense={isMobile}
           striped={true}
           hover={true}
           showRowNumbers={!isMobile}
-          maxHeight="calc(100vh - 200px)"
           actionColumnWidth={isMobile ? 100 : 140}
           actionMenuLabel={isMobile ? "" : "Actions"}
           elevation={2}
           borderRadius={3}
         />
       </Box>
-
-      {/* Modals */}
       <EnrollmentDetailsModal
         open={detailDialogOpen}
         setOpen={handleCloseDetails}
@@ -953,23 +495,14 @@ export default function EnrollmentsPage() {
         onEdit={handleEditEnrollment}
         onCollectFee={handleCollectFee}
       />
-
-      <FeeCollectionModal
-        open={feeCollectionOpen}
-        setOpen={handleCloseFeeCollection}
-        onClose={handleCloseFeeCollection}
-        enrollment={selectedEnrollment}
-      />
       <PromotionModal
         open={promotionModalOpen}
         onClose={() => setPromotionModalOpen(false)}
-        onSuccess={handlePromotionSuccess}
         classOptions={classOptions}
       />
       <RetainModal
         open={retainModalOpen}
         onClose={() => setRetainModalOpen(false)}
-        onSuccess={handleRetainSuccess}
         classOptions={classOptions}
       />
       <PromotionHistoryModal
@@ -980,43 +513,4 @@ export default function EnrollmentsPage() {
       />
     </Box>
   );
-
-  function handleCloseDetails() {
-    setDetailDialogOpen(false);
-    setSelectedEnrollment(null);
-    setActiveTab(0);
-  }
-  function handleCloseFeeCollection() {
-    setFeeCollectionOpen(false);
-    setSelectedEnrollment(null);
-  }
-  function handleEditEnrollment(enrollment: any) {
-    handleCloseDetails();
-    router.push(`/dashboard/enrollments?id=${enrollment.id}`);
-  }
-  function handleCollectFee(enrollment: any) {
-    handleCloseDetails();
-    setSelectedEnrollment(enrollment);
-    setFeeCollectionOpen(true);
-  }
-  function handlePromotionSuccess() {
-    refetch();
-    Swal.fire({
-      title: "Success!",
-      text: "Students promoted successfully!",
-      icon: "success",
-      timer: 2000,
-      showConfirmButton: false,
-    });
-  }
-  function handleRetainSuccess() {
-    refetch();
-    Swal.fire({
-      title: "Success!",
-      text: "Students retained successfully!",
-      icon: "success",
-      timer: 2000,
-      showConfirmButton: false,
-    });
-  }
 }

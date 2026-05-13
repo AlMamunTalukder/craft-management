@@ -16,7 +16,7 @@ import {
   Person,
   Phone,
   School,
-  Psychology, 
+  Psychology,
   Home,
 } from "@mui/icons-material";
 import {
@@ -88,6 +88,7 @@ const EnrollmentDetailsModal: React.FC<EnrollmentDetailsModalProps> = ({
   onCollectFee,
 }) => {
   if (!enrollment) return null;
+
 
   // --- Data Extraction & Helpers ---
   const rawData = enrollment.rawData || {};
@@ -724,37 +725,37 @@ const EnrollmentDetailsModal: React.FC<EnrollmentDetailsModalProps> = ({
 
               {(rawData.previousSchool?.institution ||
                 enrollment.previousSchool?.institution) && (
-                <Grid item xs={12}>
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    color="text.secondary"
-                  >
-                    Previous School
-                  </Typography>
-                  <List dense>
-                    <ListItem>
-                      <ListItemText
-                        primary="Institution"
-                        secondary={
-                          rawData.previousSchool?.institution ||
-                          enrollment.previousSchool?.institution
-                        }
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemText
-                        primary="Address"
-                        secondary={
-                          rawData.previousSchool?.address ||
-                          enrollment.previousSchool?.address ||
-                          "N/A"
-                        }
-                      />
-                    </ListItem>
-                  </List>
-                </Grid>
-              )}
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="subtitle2"
+                      gutterBottom
+                      color="text.secondary"
+                    >
+                      Previous School
+                    </Typography>
+                    <List dense>
+                      <ListItem>
+                        <ListItemText
+                          primary="Institution"
+                          secondary={
+                            rawData.previousSchool?.institution ||
+                            enrollment.previousSchool?.institution
+                          }
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemText
+                          primary="Address"
+                          secondary={
+                            rawData.previousSchool?.address ||
+                            enrollment.previousSchool?.address ||
+                            "N/A"
+                          }
+                        />
+                      </ListItem>
+                    </List>
+                  </Grid>
+                )}
             </Grid>
           </Paper>
         </TabPanel>
@@ -885,12 +886,12 @@ const EnrollmentDetailsModal: React.FC<EnrollmentDetailsModalProps> = ({
                 ))}
               {(!enrollment.documents ||
                 Object.keys(enrollment.documents).length === 0) && (
-                <Grid item xs={12}>
-                  <Typography color="text.secondary" align="center">
-                    No documents information available
-                  </Typography>
-                </Grid>
-              )}
+                  <Grid item xs={12}>
+                    <Typography color="text.secondary" align="center">
+                      No documents information available
+                    </Typography>
+                  </Grid>
+                )}
             </Grid>
 
             {/* Address Information */}
@@ -922,7 +923,7 @@ const EnrollmentDetailsModal: React.FC<EnrollmentDetailsModalProps> = ({
                       <Typography variant="body2">
                         {formatAddress(
                           enrollment.permanentAddress ||
-                            student.permanentAddress,
+                          student.permanentAddress,
                         )}
                       </Typography>
                     </Paper>
