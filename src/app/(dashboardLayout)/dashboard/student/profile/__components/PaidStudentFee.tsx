@@ -9,7 +9,7 @@ import {
 } from "@mui/icons-material";
 import { Box, Chip, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import AddFeeModal from "./AddFeeModal";
+import AddFeeModal from "./Fees/AddFeeModal";
 import FeeSummaryCards from "./FeeSummaryCards";
 import PaymentModal from "./PaymentModal";
 import ViewFeeModal from "./ViewFeeModal";

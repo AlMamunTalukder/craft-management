@@ -1,4 +1,3 @@
-// src/redux/api/feesApi.ts
 import { baseApi } from "./baseApi";
 
 export const feesApi = baseApi.injectEndpoints({

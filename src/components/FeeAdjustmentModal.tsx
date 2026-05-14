@@ -18,20 +18,24 @@ import {
   Checkbox,
 } from "@mui/material";
 import { Discount, MoneyOff, Close, Save } from "@mui/icons-material";
+import { useApplyFeeAdjustmentMutation } from "@/redux/api/feesApi";
+import toast from "react-hot-toast";
 
 interface FeeAdjustmentModalProps {
   open: boolean;
   onClose: () => void;
   fee: any;
-  onApplyAdjustment: (data: any) => Promise<void>;
+  onSuccess?: () => void;
 }
 
 const FeeAdjustmentModal = ({
   open,
   onClose,
   fee,
-  onApplyAdjustment,
+  onSuccess,
 }: FeeAdjustmentModalProps) => {
+  const [applyFeeAdjustment, { isLoading }] = useApplyFeeAdjustmentMutation();
+
   const [formData, setFormData] = useState({
     type: "discount",
     adjustmentType: "percentage",
@@ -42,7 +46,6 @@ const FeeAdjustmentModal = ({
     endMonth: "",
   });
 
-  const [loading, setLoading] = useState(false);
   const [calculatedAmount, setCalculatedAmount] = useState(0);
 
   useEffect(() => {
@@ -88,35 +91,40 @@ const FeeAdjustmentModal = ({
 
   const handleSubmit = async () => {
     if (!fee || !formData.reason.trim() || !formData.value || Number(formData.value) <= 0) {
-      alert("Please fill all required fields with valid values");
+      toast.error("Please fill all required fields with valid values");
       return;
     }
 
     const numericValue = Number(formData.value);
     if (formData.adjustmentType === "percentage" && numericValue > 100) {
-      alert("Percentage cannot exceed 100%");
+      toast.error("Percentage cannot exceed 100%");
       return;
     }
 
     if (formData.adjustmentType === "flat" && numericValue > (fee.dueAmount || fee.amount)) {
-      alert("Flat amount cannot exceed due amount");
+      toast.error("Flat amount cannot exceed due amount");
       return;
     }
 
-    setLoading(true);
+    const adjustmentData = {
+      student: fee.student?._id || fee.student?.id || fee.student,
+      fee: fee._id,
+      ...formData,
+      value: numericValue,
+      academicYear: fee.academicYear || new Date().getFullYear().toString(),
+    };
+
     try {
-      await onApplyAdjustment({
-        student: fee.student?._id || fee.student?.id || fee.student,
-        fee: fee._id,
-        ...formData,
-        value: numericValue,
-        academicYear: fee.academicYear || new Date().getFullYear().toString(),
-      });
-      onClose();
-    } catch (error) {
-      console.error("Failed to apply adjustment:", error);
-    } finally {
-      setLoading(false);
+      const result = await applyFeeAdjustment(adjustmentData).unwrap();
+
+      if (result) {
+        toast.success(`${formData.type === "discount" ? "Discount" : "Waiver"} applied successfully!`);
+        onSuccess?.();
+        onClose();
+      }
+    } catch (error: any) {
+      console.error("Error applying adjustment:", error);
+      toast.error(error?.data?.message || error?.message || "Failed to apply adjustment");
     }
   };
 
@@ -148,7 +156,7 @@ const FeeAdjustmentModal = ({
             {formData.type === "discount" ? <Discount color="primary" /> : <MoneyOff color="secondary" />}
             Apply {formData.type === "discount" ? "Discount" : "Waiver"}
           </Typography>
-          <Button onClick={onClose} size="small" disabled={loading}>
+          <Button onClick={onClose} size="small" disabled={isLoading}>
             <Close />
           </Button>
         </Box>
@@ -179,7 +187,7 @@ const FeeAdjustmentModal = ({
                 value={formData.type}
                 label="Adjustment Type"
                 onChange={(e) => handleInputChange("type", e.target.value)}
-                disabled={loading}
+                disabled={isLoading}
               >
                 <MenuItem value="discount">Discount</MenuItem>
                 <MenuItem value="waiver">Waiver</MenuItem>
@@ -197,7 +205,7 @@ const FeeAdjustmentModal = ({
                   handleInputChange("adjustmentType", e.target.value);
                   handleInputChange("value", "");
                 }}
-                disabled={loading}
+                disabled={isLoading}
               >
                 <MenuItem value="percentage">Percentage (%)</MenuItem>
                 <MenuItem value="flat">Flat Amount (৳)</MenuItem>
@@ -214,7 +222,7 @@ const FeeAdjustmentModal = ({
               value={formData.value}
               onChange={(e) => handleValueChange(e.target.value)}
               placeholder={formData.adjustmentType === "percentage" ? "Enter percentage" : "Enter amount"}
-              disabled={loading}
+              disabled={isLoading}
               error={formData.value ? Number(formData.value) <= 0 : false}
               helperText={formData.adjustmentType === "percentage" ? "Max: 100%" : `Max: ৳${maxFlatAmount?.toLocaleString()}`}
             />
@@ -243,7 +251,7 @@ const FeeAdjustmentModal = ({
               multiline
               rows={2}
               required
-              disabled={loading}
+              disabled={isLoading}
               placeholder="Enter reason for this adjustment"
             />
           </Grid>
@@ -256,7 +264,7 @@ const FeeAdjustmentModal = ({
               value={formData.startMonth}
               onChange={(e) => handleInputChange("startMonth", e.target.value)}
               placeholder="January 2024"
-              disabled={loading}
+              disabled={isLoading}
             />
           </Grid>
 
@@ -268,7 +276,7 @@ const FeeAdjustmentModal = ({
               value={formData.endMonth}
               onChange={(e) => handleInputChange("endMonth", e.target.value)}
               placeholder="December 2024"
-              disabled={loading}
+              disabled={isLoading}
             />
           </Grid>
 
@@ -278,7 +286,7 @@ const FeeAdjustmentModal = ({
                 <Checkbox
                   checked={formData.isRecurring}
                   onChange={(e) => handleInputChange("isRecurring", e.target.checked)}
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               }
               label="Apply this adjustment recurring monthly"
@@ -298,26 +306,26 @@ const FeeAdjustmentModal = ({
         )}
 
         <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 3 }}>
-          <Button onClick={onClose} disabled={loading} variant="outlined">Cancel</Button>
+          <Button onClick={onClose} disabled={isLoading} variant="outlined">Cancel</Button>
           <Button
             variant="contained"
             onClick={handleSubmit}
             disabled={
-              loading ||
+              isLoading ||
               !formData.reason.trim() ||
               !formData.value ||
               Number(formData.value) <= 0 ||
               (formData.adjustmentType === "percentage" && Number(formData.value) > 100) ||
               (formData.adjustmentType === "flat" && Number(formData.value) > maxFlatAmount)
             }
-            startIcon={loading ? <CircularProgress size={16} /> : <Save />}
+            startIcon={isLoading ? <CircularProgress size={16} /> : <Save />}
             sx={{
               background: formData.type === "discount"
                 ? "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)"
                 : "linear-gradient(135deg, #2196F3 0%, #1976D2 100%)",
             }}
           >
-            {loading ? "Applying..." : `Apply ${formData.type === "discount" ? "Discount" : "Waiver"}`}
+            {isLoading ? "Applying..." : `Apply ${formData.type === "discount" ? "Discount" : "Waiver"}`}
           </Button>
         </Box>
       </Box>

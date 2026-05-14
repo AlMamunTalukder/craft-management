@@ -5,7 +5,7 @@
 import FeeAdjustmentModal from "@/components/FeeAdjustmentModal";
 import StatsGrid from "@/components/StatsCard/StatsGrid";
 import CraftTable, { Column, RowAction } from "@/components/Table";
-import { useDeleteFeeMutation, useGetAllFeesQuery, useApplyFeeAdjustmentMutation } from "@/redux/api/feesApi";
+import { useDeleteFeeMutation, useGetAllFeesQuery } from "@/redux/api/feesApi";
 import {
   AccountBalance as AccountBalanceIcon,
   Delete,
@@ -23,7 +23,6 @@ import FeeDetailsModal from "../__components/FeeDetailsModal";
 export default function AllStudentFee() {
   const { data: feesData, isLoading, error, refetch } = useGetAllFeesQuery({});
   const [deleteFee] = useDeleteFeeMutation();
-  const [applyAdjustment] = useApplyFeeAdjustmentMutation();
   const [selectedFee, setSelectedFee] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
@@ -36,22 +35,6 @@ export default function AllStudentFee() {
     setDetailsModalOpen(true);
   };
 
-  const handleApplyAdjustment = async (adjustmentData: any) => {
-    try {
-      const result = await applyAdjustment(adjustmentData).unwrap();
-
-      if (result.success) {
-        toast.success("Adjustment applied successfully!");
-        setAdjustmentModalOpen(false);
-        refetch();
-      } else {
-        toast.error(result.message || "Failed to apply adjustment");
-      }
-    } catch (error: any) {
-      console.error("Error applying adjustment:", error);
-      toast.error(error?.data?.message || "Failed to apply adjustment");
-    }
-  };
 
   const handleOpenAdjustment = (row: any) => {
     setSelectedFee(row);
@@ -294,7 +277,6 @@ export default function AllStudentFee() {
           open={adjustmentModalOpen}
           onClose={() => setAdjustmentModalOpen(false)}
           fee={selectedFee}
-          onApplyAdjustment={handleApplyAdjustment}
         />
       </Container>
     </Box>
