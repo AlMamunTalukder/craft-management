@@ -129,6 +129,7 @@ const FeeItemsField = ({
                     placeholder="Enter amount"
                   />
                 </Grid>
+
                 <Grid
                   item
                   xs={12}
@@ -267,6 +268,55 @@ function FeeCategoryFormInner({
   );
 }
 
+// ─── Error Message Extractor Helper ─────────────────────────────────────────
+const extractErrorMessage = (error: any): string => {
+  console.error("Full error object:", error);
+
+  // Check if error has data property (coming from your axios interceptor)
+  if (error?.data) {
+    // If data is a string, return it directly
+    if (typeof error.data === 'string') {
+      return error.data;
+    }
+    // If data has message property
+    if (error.data?.message) {
+      return error.data.message;
+    }
+    // If data has errorSources array
+    if (error.data?.errorSources && Array.isArray(error.data.errorSources)) {
+      return error.data.errorSources[0]?.message || error.data.message || "Something went wrong!";
+    }
+  }
+
+  // Check for error object structure from RTK Query
+  if (error?.error) {
+    if (typeof error.error === 'string') {
+      return error.error;
+    }
+    if (error.error?.data) {
+      if (typeof error.error.data === 'string') {
+        return error.error.data;
+      }
+      if (error.error.data?.message) {
+        return error.error.data.message;
+      }
+    }
+  }
+
+  // Check for message property
+  if (error?.message) {
+    return error.message;
+  }
+
+  // Check for status and data from axios error
+  if (error?.status && error?.data) {
+    return typeof error.data === 'string' ? error.data : (error.data?.message || "Something went wrong!");
+  }
+
+  // Fallback
+  return "Something went wrong!";
+};
+
 // ─── FeeCategoryModal ─────────────────────────────────────────────────────────
 export default function FeeCategoryModal({ open, setOpen, id }: any) {
   const [createFeeCategory] = useCreateFeeCategoryMutation();
@@ -298,7 +348,6 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
 
   // ─── Default Values ───────────────────────────────────────────────────────
   const defaultValues = useMemo(() => {
-    // ✅ UPDATE MODE: singleFee data is loaded
     if (id && singleFee?.data && classOptions?.length > 0) {
       // Find matching class option by label (className from backend)
       const matchedClass = classOptions.find(
@@ -314,22 +363,16 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
       })) || [{ tempId: Date.now(), feeType: [], amount: "" }];
 
       return {
-        // ✅ KEY FIX: multiple={false} → pass single object, NOT array
-        // CraftIntAutoCompleteWithIcon with multiple=false expects: { label, value }
         classes: matchedClass ?? null,
-
-        // Category: CraftAutoComplete expects array of { title }
         category: singleFee.data.categoryName
           ? [{ title: singleFee.data.categoryName }]
           : [],
-
         feeItems: backendFeeItems,
       };
     }
 
     // ✅ CREATE MODE
     return {
-      // multiple={true} → pass array
       classes: [],
       category: [],
       feeItems: [{ tempId: Date.now(), feeType: [], amount: "" }],
@@ -355,26 +398,32 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
   const handleSubmit = async (data: FieldValues) => {
     // Validate class
     if (!data.classes || (Array.isArray(data.classes) && data.classes.length === 0)) {
-      return toast.error("Please select at least one class");
+      toast.error("Please select at least one class");
+      return;
     }
     // Validate category
     if (!data.category || data.category.length === 0) {
-      return toast.error("Please select a category");
+      toast.error("Please select a category");
+      return;
     }
     // Validate fee items exist
     if (!data.feeItems || data.feeItems.length === 0) {
-      return toast.error("Please add at least one fee item");
+      toast.error("Please add at least one fee item");
+      return;
     }
 
     // Build valid fee items
     const validFeeItems = data.feeItems
       .map((item: any, index: number) => {
         const feeTypeValue = normalizeFeeType(item.feeType);
-        if (!feeTypeValue || feeTypeValue.trim() === "") return null;
+        if (!feeTypeValue || feeTypeValue.trim() === "") {
+          toast.error(`Please select fee type for item ${index + 1}`);
+          return null;
+        }
 
         const amountValue = Number(item.amount);
         if (!item.amount || isNaN(amountValue) || amountValue <= 0) {
-          toast.error(`Invalid amount for: ${feeTypeValue || `Item ${index + 1}`}`);
+          toast.error(`Please enter valid amount for ${feeTypeValue || `Item ${index + 1}`}`);
           return null;
         }
 
@@ -387,24 +436,23 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
       .filter(Boolean);
 
     if (validFeeItems.length === 0) {
-      return toast.error("Please add valid fee items");
+      toast.error("Please add valid fee items");
+      return;
     }
 
     // Check duplicates
     const feeTypeSet = new Set<string>();
     for (const item of validFeeItems) {
       if (feeTypeSet.has(item.feeType)) {
-        return toast.error(`Duplicate fee type: ${item.feeType}`);
+        toast.error(`Duplicate fee type: ${item.feeType}`);
+        return;
       }
       feeTypeSet.add(item.feeType);
     }
 
-    const categoryName =
-      data.category[0]?.title || normalizeFeeType(data.category);
+    const categoryName = data.category[0]?.title || normalizeFeeType(data.category);
 
-    // ✅ Parse className correctly for both modes:
-    // UPDATE: data.classes = { label: "Sunani", value: "..." } (single object)
-    // CREATE: data.classes = [{ label: "Sunani", value: "..." }, ...] (array)
+    // Parse className correctly for both modes
     const classesRaw = data.classes;
     const classNames: string[] = Array.isArray(classesRaw)
       ? classesRaw.map((cls: any) => cls.label || cls).filter(Boolean)
@@ -415,7 +463,8 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
           : [];
 
     if (classNames.length === 0) {
-      return toast.error("Please select a valid class");
+      toast.error("Please select a valid class");
+      return;
     }
 
     setIsSubmitting(true);
@@ -429,8 +478,6 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
           feeItems: validFeeItems,
         };
 
-        console.log("✅ Update payload:", JSON.stringify(submitData, null, 2));
-
         const res = await updateFeeCategory({ id, data: submitData }).unwrap();
 
         if (res?.success) {
@@ -441,6 +488,7 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
         }
       } else {
         // ── CREATE ──────────────────────────────────────────────────────────
+        // Send all classes at once as array
         const feeCategoriesData = classNames.map((className: string) => ({
           categoryName,
           className,
@@ -450,7 +498,7 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
           })),
         }));
 
-        console.log("✅ Create payload:", JSON.stringify(feeCategoriesData, null, 2));
+        console.log("Create payload:", feeCategoriesData);
 
         const res = await createFeeCategory(feeCategoriesData).unwrap();
 
@@ -461,11 +509,16 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
               : "Fee category created successfully!"
           );
           setOpen(false);
+        } else {
+          toast.error(res?.message || "Creation failed!");
         }
       }
-    } catch (err: any) {
-      console.error("Submission error:", err);
-      toast.error(err?.data?.message || "Something went wrong!");
+    } catch (error: any) {
+      console.error("Submission error:", error);
+
+      //  Extract and show the actual error message from the response
+      const errorMessage = extractErrorMessage(error);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -490,8 +543,6 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
         <CraftForm
           onSubmit={handleSubmit}
           defaultValues={defaultValues}
-          // ✅ Key changes when: id changes, modal opens/closes, or data loads
-          // classOptions added so key updates when options finally arrive
           key={`${id ?? "create"}-${open}-${singleFee ? "loaded" : "empty"}-${classOptions?.length ?? 0}`}
         >
           <FeeCategoryFormInner

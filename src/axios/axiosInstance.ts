@@ -13,7 +13,7 @@ const instance = axios.create({
   },
 });
 
-// ── Refresh queue state ──────────────────────────────────────────────────────
+
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
