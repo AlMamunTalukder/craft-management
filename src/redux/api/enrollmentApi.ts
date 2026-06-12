@@ -4,7 +4,6 @@ export const enrollmentApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     createEnrollment: build.mutation({
       query: ({ data, applicationId }) => {
-        // Create URL with query params if applicationId exists
         let url = "/enrollments";
         if (applicationId) {
           url += `?applicationId=${applicationId}`;

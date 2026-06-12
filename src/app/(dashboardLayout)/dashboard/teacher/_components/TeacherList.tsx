@@ -75,7 +75,7 @@ export default function TeacherList() {
 
           const status =
             teacher.status?.toLowerCase() === "active" ||
-            teacher.additionalInfo?.status?.toLowerCase() === "active"
+              teacher.additionalInfo?.status?.toLowerCase() === "active"
               ? ("Active" as TeacherStatus)
               : ("Inactive" as TeacherStatus);
           const experience = calculateExperience(
@@ -99,8 +99,8 @@ export default function TeacherList() {
             students: 120,
             joinDate: new Date(
               teacher.joiningDate ||
-                teacher.professionalInfo?.joiningDate ||
-                teacher.createdAt,
+              teacher.professionalInfo?.joiningDate ||
+              teacher.createdAt,
             ).toLocaleDateString(),
             qualifications:
               teacher.designation ||

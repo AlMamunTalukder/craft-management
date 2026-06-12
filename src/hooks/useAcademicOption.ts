@@ -18,7 +18,7 @@ export function useAcademicOption(limit = 100, initialSearch = "") {
     limit: limit,
     page: page + 1,
     searchTerm: searchTerm,
-    department: department
+    // department: department
 
   });
   const { data: applicationData } = useGetAllAdmissionApplicationsQuery({

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { BulkPaymentModalProps } from "@/interface/fees";
 import { useCreateBulkPaymentMutation } from "@/redux/api/paymentApi";
 import { ArrowBack, CheckCircle, Close } from "@mui/icons-material";
 import {
@@ -32,39 +33,6 @@ import {
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
-interface Fee {
-  _id: string;
-  feeType: string;
-  month: string;
-  class: string;
-  amount: number;
-  paidAmount: number;
-  dueAmount: number;
-  status: string;
-  academicYear?: string;
-  isCurrentMonth?: boolean;
-  advanceUsed?: number;
-  discount?: number;
-  waiver?: number;
-  computedDue?: number;
-}
-
-interface BulkPaymentModalProps {
-  open: boolean;
-  onClose: () => void;
-  student: {
-    _id: string;
-    name: string;
-    studentId: string;
-    className?: string | any;
-    roll?: string;
-    section?: string;
-    jamatGroup?: string;
-  };
-  fees: Fee[];
-  refetch?: () => void;
-  onPaymentCompleted?: (receiptData: any) => void;
-}
 
 const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
   open,
@@ -86,6 +54,9 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
   const steps = ["Select Fees", "Payment Details", "Confirmation"];
 
   const payableFees = fees.filter((fee) => fee.dueAmount > 0);
+
+  console.log('slected fee', selectedFees)
+  console.log('fees check', fees)
 
   const calculateTotals = () => {
     const selectedFeeObjects = fees.filter((fee) =>
@@ -109,7 +80,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       0,
     );
     const totalDue = selectedFeeObjects.reduce(
-      (sum, fee) => sum + fee.dueAmount,
+      (sum, fee) => sum + (fee.dueAmount || 0), // সরাসরি dueAmount নিচ্ছি
       0,
     );
     const netAmount = totalAmount - totalDiscount - totalWaiver;
@@ -188,7 +159,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
     setActiveStep((prev) => prev - 1);
   };
 
-  const buildReceiptData = (paymentResponse: any) => {
+  const buildReceiptData = (paymentResponse: any, paidAmount: number) => {
     const paymentDate = new Date(paymentResponse.paymentDate || new Date());
     const receiptNo = paymentResponse.receiptNo || `RCP-${Date.now()}`;
 
@@ -196,16 +167,24 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       selectedFees.includes(fee._id),
     );
 
-    const receiptFees = selectedFeeObjects.map((fee) => ({
-      feeType: fee.feeType,
-      month: fee.month,
-      originalAmount: fee.amount,
-      discount: fee.discount || 0,
-      waiver: fee.waiver || 0,
-      netAmount: fee.amount - (fee.discount || 0) - (fee.waiver || 0),
-      paidAmount: fee.dueAmount,
-      quantity: 1,
-    }));
+    // প্রতিটি ফি এর জন্য প্রপার paidAmount ক্যালকুলেশন
+    const receiptFees = selectedFeeObjects.map((fee) => {
+      // প্রতিটি ফি তে কত টাকা পেমেন্ট করা হচ্ছে (dueAmount অনুযায়ী)
+      const paidForThisFee = fee.dueAmount || 0;
+
+      return {
+        feeType: fee.feeType,
+        month: fee.month,
+        originalAmount: fee.amount,
+        discount: fee.discount || 0,
+        waiver: fee.waiver || 0,
+        netAmount: fee.amount - (fee.discount || 0) - (fee.waiver || 0),
+        dueAmount: fee.dueAmount || 0,
+        paidAmount: paidForThisFee, // শুধু dueAmount পেইড হচ্ছে
+        previousPaid: fee.paidAmount || 0,
+        quantity: 1,
+      };
+    });
 
     const subtotal = selectedFeeObjects.reduce((sum, f) => sum + f.amount, 0);
     const totalDiscount = selectedFeeObjects.reduce(
@@ -214,10 +193,6 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
     );
     const totalWaiver = selectedFeeObjects.reduce(
       (sum, f) => sum + (f.waiver || 0),
-      0,
-    );
-    const amountPaid = selectedFeeObjects.reduce(
-      (sum, f) => sum + f.dueAmount,
       0,
     );
 
@@ -233,14 +208,14 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       className: student.className || "",
       rollNumber: student.roll || "",
       section: student.section || "",
-      totalAmount: amountPaid,
+      totalAmount: paidAmount, // এখানে paidAmount হবে total payable amount
       fees: receiptFees,
       summary: {
         totalItems: selectedFees.length,
         subtotal,
         totalDiscount,
         totalWaiver,
-        amountPaid,
+        amountPaid: paidAmount, // সঠিক amount
       },
       transactionId: paymentMethod !== "cash" ? transactionId : undefined,
       note: note || undefined,
@@ -250,20 +225,41 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
   const handleSubmitPayment = async () => {
     setIsProcessing(true);
     try {
+      // শুধুমাত্র selected fees গুলোর dueAmount নিচ্ছি
+      const selectedFeeObjects = fees.filter((fee) =>
+        selectedFees.includes(fee._id),
+      );
+
+      // মোট payable amount গণনা করছি (dueAmount এর সমষ্টি)
+      const totalPayableAmount = selectedFeeObjects.reduce(
+        (sum, fee) => sum + (fee.dueAmount || 0),
+        0,
+      );
+
+      // চেক করছি কোন ফি সিলেক্ট করা আছে কিনা
+      if (totalPayableAmount === 0) {
+        toast.error("No due amount to pay for selected fees");
+        setIsProcessing(false);
+        return;
+      }
+
       const paymentData = {
         studentId: student._id,
         feeIds: selectedFees,
-        amountPaid: totals.totalDue,
+        amountPaid: totalPayableAmount, // এখানে dueAmount পেমেন্ট হচ্ছে
         paymentMethod,
         transactionId: paymentMethod !== "cash" ? transactionId : undefined,
         note,
         collectedBy,
       };
 
+      console.log('Payment data being sent:', paymentData);
+
       const result = await createBulkPayment(paymentData).unwrap();
 
       if (result.success) {
-        const receiptData = buildReceiptData(result);
+        // সঠিক receipt data তৈরি করছি যাতে paidAmount সঠিকভাবে দেখায়
+        const receiptData = buildReceiptData(result, totalPayableAmount);
 
         toast.success(
           <Box>
@@ -273,6 +269,9 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
             <Typography variant="body2">
               Receipt No: {receiptData.receiptNo}
             </Typography>
+            <Typography variant="body2">
+              Amount Paid: ৳{totalPayableAmount.toLocaleString()}
+            </Typography>
           </Box>,
           {
             duration: 5000,
@@ -280,22 +279,12 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
           },
         );
 
-        // Attempt to refresh data via parent refetch (if provided)
         if (refetch) refetch();
         if (onPaymentCompleted) onPaymentCompleted(receiptData);
 
-        // Fallback: reload the page after modal closes to guarantee UI update
-        // setTimeout(() => {
-        //   handleReset();
-        //   onClose();
-        //   // Reload the page to ensure all data is fresh
-        //   window.location.reload();
-        // }, 1500);
         setTimeout(() => {
           handleReset();
           onClose();
-          // Reload the page to ensure all data is fresh
-          // window.location.reload();
         }, 1500);
       } else {
         toast.error(result.message || "Payment failed");

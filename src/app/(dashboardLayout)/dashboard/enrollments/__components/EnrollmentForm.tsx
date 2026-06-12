@@ -5,7 +5,6 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-
 import CraftIntAutoCompleteWithIcon from "@/components/Forms/AutocompleteWithIcon";
 import CraftForm from "@/components/Forms/Form";
 import FileUploadWithIcon from "@/components/Forms/Upload";
@@ -23,7 +22,6 @@ import { useGetAllAdmissionApplicationsQuery } from "@/redux/api/admissionApplic
 import {
   AccessTime,
   AccountCircle,
-  Add,
   ArrowBack,
   ArrowForward,
   Book,
@@ -32,30 +30,26 @@ import {
   Check,
   Class,
   Close,
-  Delete,
   Description,
-  Discount,
   FamilyRestroom,
   Flag,
   Group,
   Home,
-  Lock,
-  Money,
-  Payment,
   Person,
   Phone,
-  Save,
+  Print,
   School,
   School as SchoolIcon,
   Work,
-  Print,
-  Assignment,
-  FileCopy,
   WhatsApp,
   School as EducationIcon,
+  Assignment,
+  FileCopy,
+  Save,
 } from "@mui/icons-material";
 import {
   Alert,
+  alpha,
   Avatar,
   Box,
   Button,
@@ -65,32 +59,23 @@ import {
   CircularProgress,
   Container,
   Dialog,
-  DialogContent,
   DialogActions,
+  DialogContent,
   FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
   Paper,
-  Select,
-  MenuItem,
   Switch,
-  Tooltip,
   Typography,
-  alpha,
   useTheme,
   Chip,
 } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 import PrintModal from "../../student/profile/__components/PrintModal";
-import AddFeeModal from "../../student/profile/__components/AddFeeModal";
-import PaymentModal from "../../student/profile/__components/PaymentModal";
-import { MONTHS } from "@/constant/month";
-
-const CURRENT_MONTH = MONTHS[new Date().getMonth()];
 
 const fadeInSlideUp = {
   animation: "fadeInSlideUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both",
@@ -115,22 +100,19 @@ const getFirstIncompleteStep = (formData: any): number => {
   const hasPresentAddress =
     formData.village || formData.district || formData.policeStation;
   if (!hasPermanentAddress && !hasPresentAddress) return 3;
-  return 4;
+  return 3;
 };
 
+// Category options
+const CATEGORY_OPTIONS = [
+  { label: "Residential", value: "Residential" },
+  { label: "Non-Residential", value: "Non-Residential" },
+  { label: "Day Care", value: "Day Care" },
+  { label: "Day Care One Meal", value: "Day Care One Meal" },
+  { label: "Non-Residential One Meal", value: "Non-Residential One Meal" },
+];
 
-const PaidBadge = ({ amount }: { amount: number }) => (
-  <Chip
-    icon={<Lock sx={{ fontSize: "14px !important" }} />}
-    label={`Paid ৳${amount.toLocaleString()}`}
-    size="small"
-    color="success"
-    variant="filled"
-    sx={{ fontSize: "0.7rem", height: 22, fontWeight: 700 }}
-  />
-);
-
-
+// ─── AdmissionApplicationSelector ────────────────────────────────────────────────
 const AdmissionApplicationSelector = ({
   onSelect,
 }: {
@@ -240,1208 +222,7 @@ const AdmissionApplicationSelector = ({
   );
 };
 
-const FeeAmountHandler = ({
-  feeIndex,
-  feeCategoryData,
-}: {
-  feeIndex: number;
-  feeCategoryData: any;
-}) => {
-  const { watch, setValue } = useFormContext();
-  const selectedClass = watch(`fees.${feeIndex}.className`);
-  const selectedCategory = watch(`fees.${feeIndex}.category`);
-
-  useEffect(() => {
-    if (selectedClass?.length > 0 && selectedCategory?.length > 0) {
-      const selectedClassName = Array.isArray(selectedClass)
-        ? selectedClass[0]?.label || selectedClass[0]
-        : selectedClass;
-      const selectedCategoryName = Array.isArray(selectedCategory)
-        ? selectedCategory[0]?.label ||
-          selectedCategory[0]?.title ||
-          selectedCategory[0]
-        : selectedCategory;
-
-      const matchingEntries =
-        feeCategoryData?.data?.data?.filter(
-          (category: any) =>
-            category.className === selectedClassName &&
-            category.categoryName === selectedCategoryName,
-        ) || [];
-
-      let feeItems: any[] = [];
-      matchingEntries.forEach((entry: any) => {
-        if (entry.feeItems && Array.isArray(entry.feeItems))
-          feeItems = [...feeItems, ...entry.feeItems];
-        else if (entry.feeType)
-          feeItems.push({
-            feeType: entry.feeType,
-            amount: entry.amount,
-            isSelected: true,
-            discount: 0,
-          });
-      });
-
-      if (feeItems.length > 0) {
-        const formattedItems: any[] = feeItems.map((item: any) => {
-          const typeLabel =
-            typeof item.feeType === "string"
-              ? item.feeType
-              : item.feeType?.value || "";
-          return {
-            feeType:
-              typeof item.feeType === "string"
-                ? { label: item.feeType, value: item.feeType }
-                : item.feeType,
-            amount: item.amount,
-            advanceAmount: "",
-            isSelected: true,
-            discount: item.discount || 0,
-            isMonthly: typeLabel.toLowerCase().includes("monthly"),
-            discountRangeStart: "",
-            discountRangeEnd: "",
-            discountRangeAmount: 0,
-            isPaid: false, // new items are never paid
-            paidAmount: 0,
-            _tempId: Date.now() + Math.random(),
-          };
-        });
-        setValue(`fees.${feeIndex}.feeItems`, formattedItems);
-        setValue(
-          `fees.${feeIndex}.feeAmount`,
-          formattedItems
-            .reduce((s: number, i: any) => s + (i.amount || 0), 0)
-            .toString(),
-        );
-      } else {
-        setValue(`fees.${feeIndex}.feeItems`, []);
-        setValue(`fees.${feeIndex}.feeAmount`, "");
-      }
-    }
-  }, [selectedClass, selectedCategory, setValue, feeIndex, feeCategoryData]);
-
-  return null;
-};
-
-const DynamicFeeFields = ({
-  classOptions,
-  feeCategoryData,
-  studentData,
-}: any) => {
-  const theme = useTheme();
-  const { control, watch, setValue } = useFormContext();
-  const { fields, append, remove } = useFieldArray({ control, name: "fees" });
-
-  const mainClassName = watch("className");
-  const selectedStudent = watch("studentIdSelect");
-  const [studentAdvanceBalance, setStudentAdvanceBalance] = useState(0);
-  const [selectAllFees, setSelectAllFees] = useState(false);
-
-  const getCategoryOptions = () => {
-    if (!feeCategoryData?.data?.data) return [];
-    const uniqueCategories = Array.from(
-      new Set(feeCategoryData.data.data.map((item: any) => item.categoryName)),
-    );
-    return uniqueCategories.map((category) => ({
-      label: category,
-      name: category,
-      value: category,
-    }));
-  };
-
-  const getFeeTypeOptionsForClass = (classNameStr: string) => {
-    if (!feeCategoryData?.data?.data) return [];
-    const normalizedTargetClass = String(classNameStr || "")
-      .trim()
-      .toLowerCase();
-    const types = new Set<string>();
-    feeCategoryData.data.data.forEach((item: any) => {
-      const normalizedEntryClass = String(item.className || "")
-        .trim()
-        .toLowerCase();
-      if (normalizedEntryClass === normalizedTargetClass) {
-        if (item.feeType) types.add(item.feeType);
-        if (item.feeItems)
-          item.feeItems.forEach((sub: any) => types.add(sub.feeType));
-      }
-    });
-    const options = Array.from(types).map((t) => ({ label: t, value: t }));
-    if (options.length === 0) {
-      feeCategoryData.data.data.forEach((item: any) => {
-        if (item.feeType) types.add(item.feeType);
-        if (item.feeItems)
-          item.feeItems.forEach((sub: any) => types.add(sub.feeType));
-      });
-      return Array.from(types).map((t) => ({ label: t, value: t }));
-    }
-    return options;
-  };
-
-  const buildFeeItemsForCategory = useCallback(
-    (matchingEntries: any[]) => {
-      const allFeeItems: any[] = [];
-      matchingEntries.forEach((entry: any) => {
-        if (entry.feeItems && Array.isArray(entry.feeItems))
-          allFeeItems.push(...entry.feeItems);
-        else if (entry.feeType) allFeeItems.push(entry);
-      });
-
-      return allFeeItems
-        .filter((item: any) => {
-          const typeLabel =
-            typeof item.feeType === "string"
-              ? item.feeType
-              : item.feeType?.value || "";
-          return (
-            selectAllFees || typeLabel.toLowerCase().includes("admission fee")
-          );
-        })
-        .map((item: any) => {
-          const typeLabel =
-            typeof item.feeType === "string"
-              ? item.feeType
-              : item.feeType?.value || "";
-          return {
-            feeType:
-              typeof item.feeType === "string"
-                ? { label: item.feeType, value: item.feeType }
-                : item.feeType,
-            amount: item.amount,
-            advanceAmount: "",
-            isSelected: true,
-            discount: item.discount || 0,
-            isMonthly: typeLabel.toLowerCase().includes("monthly"),
-            discountRangeStart: "",
-            discountRangeEnd: "",
-            discountRangeAmount: 0,
-            isPaid: false,
-            paidAmount: 0,
-            _tempId: Date.now() + Math.random(),
-          };
-        });
-    },
-    [selectAllFees],
-  );
-
-  const reloadAllFeeItems = useCallback(() => {
-    const fees = watch("fees") || [];
-    fees.forEach((fee: any, index: number) => {
-      if (fee.category?.length > 0 && fee.className?.length > 0) {
-        const selectedClassName = Array.isArray(fee.className)
-          ? fee.className[0]?.label || fee.className[0]
-          : fee.className;
-        const categoryName = Array.isArray(fee.category)
-          ? fee.category[0]?.label || fee.category[0]
-          : fee.category;
-
-        const matchingEntries =
-          feeCategoryData?.data?.data?.filter(
-            (item: any) =>
-              item.className === selectedClassName &&
-              item.categoryName === categoryName,
-          ) || [];
-
-        // ⚠️ Preserve paid items — never reload over them
-        const existingItems = fee.feeItems || [];
-        const paidItems = existingItems.filter((i: any) => i.isPaid);
-        const newItems = buildFeeItemsForCategory(matchingEntries);
-
-        // Merge: paid items stay, new items are added if not already paid
-        const paidKeys = new Set(
-          paidItems.map((i: any) => {
-            const label =
-              typeof i.feeType === "string"
-                ? i.feeType
-                : i.feeType?.label || i.feeType?.value || "";
-            return label;
-          }),
-        );
-        const filteredNew = newItems.filter((i: any) => {
-          const label =
-            typeof i.feeType === "string"
-              ? i.feeType
-              : i.feeType?.label || i.feeType?.value || "";
-          return !paidKeys.has(label);
-        });
-
-        const merged = [...paidItems, ...filteredNew];
-        setValue(`fees.${index}.feeItems`, merged);
-        setValue(
-          `fees.${index}.feeAmount`,
-          merged
-            .filter((i: any) => !i.isPaid)
-            .reduce((s: number, i: any) => s + (i.amount || 0), 0)
-            .toString(),
-        );
-      }
-    });
-  }, [watch, setValue, feeCategoryData, buildFeeItemsForCategory]);
-
-  const handleSelectAllFeesToggle = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const newValue = e.target.checked;
-    setSelectAllFees(newValue);
-    setTimeout(() => reloadAllFeeItems(), 0);
-    toast.success(
-      newValue
-        ? "Switched to All Fees mode"
-        : "Switched to Admission Only mode",
-    );
-  };
-
-  useEffect(() => {
-    if (selectedStudent && studentData?.data) {
-      const student = studentData.data.find(
-        (s: any) => s._id === (selectedStudent.value || selectedStudent),
-      );
-      if (student) {
-        setStudentAdvanceBalance(student.advanceBalance || 0);
-        setValue("advanceBalance", student.advanceBalance || 0);
-      }
-    }
-  }, [selectedStudent, studentData, setValue]);
-
-  useEffect(() => {
-    if (mainClassName && mainClassName.length > 0) {
-      const currentFees = watch("fees") || [];
-      if (currentFees.length > 0) {
-        const updatedFees = currentFees.map((fee: any) => ({
-          ...fee,
-          className: JSON.parse(JSON.stringify(mainClassName)),
-        }));
-        setValue("fees", updatedFees);
-      }
-    }
-  }, [mainClassName, setValue, watch]);
-
-  const addFeeField = () => {
-    const classNameValue =
-      mainClassName && mainClassName.length > 0
-        ? JSON.parse(JSON.stringify(mainClassName))
-        : [];
-    append({
-      category: [],
-      className: classNameValue,
-      feeItems: [],
-      feeAmount: "",
-    });
-  };
-
-  const removeFeeField = (index: number) => {
-    if (fields.length > 1) remove(index);
-    else toast.error("At least one fee entry is required");
-  };
-
-  const handleCategoryChange = (index: number, selectedCategory: any) => {
-    const feeClassName = watch(`fees.${index}.className`);
-    if (selectedCategory?.length > 0 && feeClassName) {
-      const selectedClassName = Array.isArray(feeClassName)
-        ? feeClassName[0]?.label || feeClassName[0]
-        : feeClassName;
-      const categoryName = Array.isArray(selectedCategory)
-        ? selectedCategory[0]?.label || selectedCategory[0]
-        : selectedCategory;
-
-      const matchingEntries =
-        feeCategoryData?.data?.data?.filter(
-          (item: any) =>
-            item.className === selectedClassName &&
-            item.categoryName === categoryName,
-        ) || [];
-
-      // Keep existing paid items
-      const existingItems = watch(`fees.${index}.feeItems`) || [];
-      const paidItems = existingItems.filter((i: any) => i.isPaid);
-      const newItems = buildFeeItemsForCategory(matchingEntries);
-      const paidKeys = new Set(
-        paidItems.map((i: any) =>
-          typeof i.feeType === "string" ? i.feeType : i.feeType?.label || "",
-        ),
-      );
-      const filteredNew = newItems.filter((i: any) => {
-        const label =
-          typeof i.feeType === "string" ? i.feeType : i.feeType?.label || "";
-        return !paidKeys.has(label);
-      });
-      const merged = [...paidItems, ...filteredNew];
-
-      setValue(`fees.${index}.feeItems`, merged);
-      setValue(
-        `fees.${index}.feeAmount`,
-        filteredNew
-          .reduce((s: number, i: any) => s + (i.amount || 0), 0)
-          .toString(),
-      );
-      toast.success(
-        selectAllFees
-          ? `All fees loaded for ${categoryName}`
-          : `Admission fee only loaded for ${categoryName}`,
-      );
-    } else {
-      // Only clear unpaid items
-      const existingItems = watch(`fees.${index}.feeItems`) || [];
-      const paidItems = existingItems.filter((i: any) => i.isPaid);
-      setValue(`fees.${index}.feeItems`, paidItems);
-      setValue(`fees.${index}.feeAmount`, "");
-    }
-  };
-
-  // ── Remove a fee item (blocked for paid items) ──────────────────────────────
-  const removeFeeItem = (feeIndex: number, item: any) => {
-    if (item.isPaid) {
-      toast.error(
-        `Cannot remove "${typeof item.feeType === "string" ? item.feeType : item.feeType?.label}" — ৳${item.paidAmount?.toLocaleString()} has already been paid.`,
-      );
-      return;
-    }
-    const currentFeeItems = watch(`fees.${feeIndex}.feeItems`) || [];
-    const newFeeItems = currentFeeItems.filter(
-      (i: any) => i._tempId !== item._tempId,
-    );
-    setValue(`fees.${feeIndex}.feeItems`, newFeeItems);
-    const selectedTotal = newFeeItems
-      .filter((i: any) => !i.isPaid && i.isSelected)
-      .reduce((s: number, i: any) => s + (i.amount || 0), 0);
-    setValue(`fees.${feeIndex}.feeAmount`, selectedTotal.toString());
-  };
-
-  const handleItemFieldChange = (
-    feeIndex: number,
-    itemIndex: number,
-    field: string,
-    value: any,
-  ) => {
-    const feeItems = watch(`fees.${feeIndex}.feeItems`) || [];
-    const item = feeItems[itemIndex];
-    // Block changes on paid items for critical fields
-    if (item?.isPaid && (field === "feeType" || field === "isSelected")) {
-      toast.error("Cannot modify a fee that has already been paid.");
-      return;
-    }
-    const updatedItems = [...feeItems];
-    if (updatedItems[itemIndex]) {
-      updatedItems[itemIndex] = { ...updatedItems[itemIndex], [field]: value };
-      setValue(`fees.${feeIndex}.feeItems`, updatedItems);
-      if (field === "amount" || field === "isSelected" || field === "feeType") {
-        const selectedTotal = updatedItems
-          .filter((i: any) => !i.isPaid && i.isSelected)
-          .reduce((s: number, i: any) => s + (i.amount || 0), 0);
-        setValue(`fees.${feeIndex}.feeAmount`, selectedTotal.toString());
-      }
-    }
-  };
-
-  const handleApplyRangeDiscount = (
-    feeIndex: number,
-    itemIndex: number,
-    startMonth: string,
-    endMonth: string,
-    amount: number,
-  ) => {
-    if (!startMonth || !endMonth) {
-      toast.error("Please select start and end month");
-      return;
-    }
-    const startIdx = MONTHS.indexOf(startMonth);
-    const endIdx = MONTHS.indexOf(endMonth);
-    if (startIdx === -1 || endIdx === -1) {
-      toast.error("Invalid month selection");
-      return;
-    }
-    const actualStart = startIdx <= endIdx ? startMonth : endMonth;
-    const actualEnd = startIdx <= endIdx ? endMonth : startMonth;
-    setValue(
-      `fees.${feeIndex}.feeItems.${itemIndex}.discountRangeStart`,
-      actualStart,
-    );
-    setValue(
-      `fees.${feeIndex}.feeItems.${itemIndex}.discountRangeEnd`,
-      actualEnd,
-    );
-    setValue(
-      `fees.${feeIndex}.feeItems.${itemIndex}.discountRangeAmount`,
-      amount,
-    );
-    toast.success(
-      `Discount range set: ${actualStart} to ${actualEnd} (৳${amount}/month)`,
-    );
-  };
-
-  const categoryOptions = getCategoryOptions();
-
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        mb: 2,
-        borderRadius: 3,
-        overflow: "hidden",
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
-        background: "#fff",
-      }}
-    >
-      <Box
-        sx={{
-          p: 2.5,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          bgcolor: alpha(theme.palette.primary.main, 0.02),
-        }}
-      >
-        <Box>
-          <Typography
-            variant="h6"
-            fontWeight="600"
-            sx={{ color: theme.palette.text.primary }}
-          >
-            Fee Details
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 500,
-                color: !selectAllFees ? "primary.main" : "text.secondary",
-              }}
-            >
-              Admission Only
-            </Typography>
-            <Switch
-              checked={selectAllFees}
-              onChange={handleSelectAllFeesToggle}
-              color="info"
-              size="small"
-            />
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 500,
-                color: selectAllFees ? "info.main" : "text.secondary",
-              }}
-            >
-              All Fees
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      <CardContent sx={{ p: 3 }}>
-        {fields.map((field, index) => {
-          const feeClassName = watch(`fees.${index}.className`);
-          const feeCategory = watch(`fees.${index}.category`);
-          const feeItems = watch(`fees.${index}.feeItems`) || [];
-          const isClassSelected = mainClassName && mainClassName.length > 0;
-          const classNameStr = Array.isArray(feeClassName)
-            ? feeClassName[0]?.label || feeClassName[0]
-            : feeClassName;
-          const classSpecificFeeOptions =
-            getFeeTypeOptionsForClass(classNameStr);
-
-          const [rangeStart, setRangeStart] = useState("");
-          const [rangeEnd, setRangeEnd] = useState("");
-          const [rangeAmt, setRangeAmt] = useState(0);
-
-          const hasPaidItems = feeItems.some((i: any) => i.isPaid);
-
-          return (
-            <Box
-              key={field.id}
-              sx={{
-                mb: 3,
-                p: 3,
-                borderRadius: 2,
-                background: alpha(theme.palette.background.paper, 0.5),
-                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                position: "relative",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                  borderColor: alpha(theme.palette.primary.main, 0.2),
-                },
-              }}
-            >
-              {index > 0 && (
-                <Tooltip title="Remove Fee Category">
-                  <IconButton
-                    onClick={() => removeFeeField(index)}
-                    sx={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      color: "text.disabled",
-                      width: 24,
-                      height: 24,
-                      "&:hover": {
-                        color: "error.main",
-                        bgcolor: alpha(theme.palette.error.main, 0.1),
-                      },
-                    }}
-                  >
-                    <Close fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
-
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  mb: 3,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      bgcolor: theme.palette.primary.main,
-                      mr: 1.5,
-                    }}
-                  />
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="bold"
-                    color="text.secondary"
-                    sx={{
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                      letterSpacing: 1,
-                    }}
-                  >
-                    Fee Category
-                  </Typography>
-                </Box>
-                {hasPaidItems && (
-                  <Chip
-                    icon={<Lock sx={{ fontSize: "14px !important" }} />}
-                    label="Some fees are locked (paid)"
-                    size="small"
-                    color="warning"
-                    variant="outlined"
-                    sx={{ fontSize: "0.7rem" }}
-                  />
-                )}
-              </Box>
-
-              <FeeAmountHandler
-                feeIndex={index}
-                feeCategoryData={feeCategoryData}
-              />
-
-              <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={6}>
-                  <CraftIntAutoCompleteWithIcon
-                    name={`fees.${index}.className`}
-                    label="Class"
-                    margin="none"
-                    size="small"
-                    placeholder="Select Class"
-                    options={classOptions}
-                    fullWidth
-                    multiple
-                    icon={<School color="primary" />}
-                    disabled={true}
-                    helperText="Auto-filled from Academic Information"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <CraftIntAutoCompleteWithIcon
-                    name={`fees.${index}.category`}
-                    label={
-                      <span>
-                        Category <span style={{ color: "red" }}>*</span>
-                      </span>
-                    }
-                    margin="none"
-                    size="small"
-                    placeholder={
-                      isClassSelected ? "Select Category" : "Select class first"
-                    }
-                    options={categoryOptions.map((opt) => ({
-                      label: String(opt.label || ""),
-                      value: String(opt.value || ""),
-                      name: String(opt.name || opt.label || ""),
-                    }))}
-                    fullWidth
-                    multiple
-                    icon={<CalendarMonth color="primary" />}
-                    disabled={!isClassSelected}
-                    onChange={(event: any, value: any) =>
-                      handleCategoryChange(index, value)
-                    }
-                  />
-                </Grid>
-              </Grid>
-
-              {feeItems.length > 0 && (
-                <Box sx={{ mb: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 2,
-                    }}
-                  >
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight="bold"
-                      sx={{ color: "primary.main" }}
-                    >
-                      Fee Items
-                    </Typography>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => {
-                        const newItems = [
-                          ...feeItems,
-                          {
-                            feeType: "",
-                            amount: 0,
-                            advanceAmount: "",
-                            isSelected: true,
-                            discount: 0,
-                            isMonthly: false,
-                            discountRangeStart: "",
-                            discountRangeEnd: "",
-                            discountRangeAmount: 0,
-                            isPaid: false,
-                            paidAmount: 0,
-                            _tempId: Date.now() + Math.random(),
-                          },
-                        ];
-                        setValue(`fees.${index}.feeItems`, newItems);
-                      }}
-                    >
-                      <Add fontSize="small" /> Add Custom Item
-                    </Button>
-                  </Box>
-
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      bgcolor: alpha(theme.palette.background.paper, 0.7),
-                      border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Grid container spacing={2}>
-                      {/* Header row */}
-                      <Grid item xs={12}>
-                        <Grid
-                          container
-                          spacing={2}
-                          sx={{
-                            mb: 1,
-                            pb: 1,
-                            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-                          }}
-                        >
-                          <Grid item xs={1}>
-                            <Typography
-                              variant="caption"
-                              fontWeight="bold"
-                              color="text.secondary"
-                            >
-                              SEL
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={3}>
-                            <Typography
-                              variant="caption"
-                              fontWeight="bold"
-                              color="text.secondary"
-                            >
-                              FEE TYPE
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={2.5}>
-                            <Typography
-                              variant="caption"
-                              fontWeight="bold"
-                              color="text.secondary"
-                            >
-                              AMOUNT
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={2.5}>
-                            <Typography
-                              variant="caption"
-                              fontWeight="bold"
-                              color="text.secondary"
-                            >
-                              DISCOUNT
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={2}>
-                            <Typography
-                              variant="caption"
-                              fontWeight="bold"
-                              color="text.secondary"
-                            >
-                              Advance
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={1}></Grid>
-                        </Grid>
-                      </Grid>
-
-                      {feeItems.map((item: any, itemIndex: number) => {
-                        const isMonthly = item.isMonthly;
-                        const isPaid = Boolean(item.isPaid);
-                        const hasRangeDiscount =
-                          item.discountRangeStart && item.discountRangeEnd;
-
-                        return (
-                          <Grid item xs={12} key={item._tempId || itemIndex}>
-                            <Grid
-                              container
-                              spacing={2}
-                              alignItems="center"
-                              sx={{
-                                mb: 1,
-                                p: 0.5,
-                                borderRadius: 1,
-                                bgcolor: isPaid
-                                  ? alpha(theme.palette.success.light, 0.15)
-                                  : isMonthly
-                                    ? alpha(theme.palette.info.light, 0.15)
-                                    : "transparent",
-                                border: isPaid
-                                  ? `1px solid ${alpha(theme.palette.success.main, 0.3)}`
-                                  : "1px solid transparent",
-                              }}
-                            >
-                              {/* Checkbox */}
-                              <Grid item xs={1}>
-                                {isPaid ? (
-                                  <Tooltip title="This fee has been paid and cannot be deselected">
-                                    <span>
-                                      <Checkbox
-                                        size="small"
-                                        checked={true}
-                                        disabled
-                                        color="success"
-                                      />
-                                    </span>
-                                  </Tooltip>
-                                ) : (
-                                  <Checkbox
-                                    size="small"
-                                    checked={item.isSelected || false}
-                                    onChange={(e) =>
-                                      handleItemFieldChange(
-                                        index,
-                                        itemIndex,
-                                        "isSelected",
-                                        e.target.checked,
-                                      )
-                                    }
-                                    color="primary"
-                                  />
-                                )}
-                              </Grid>
-
-                              {/* Fee Type */}
-                              <Grid item xs={3}>
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: 0.5,
-                                  }}
-                                >
-                                  {isMonthly ? (
-                                    <CraftInputWithIcon
-                                      name={`fees.${index}.feeItems.${itemIndex}.feeTypeDisplay`}
-                                      label=""
-                                      fullWidth
-                                      margin="none"
-                                      size="small"
-                                      disabled
-                                      value={`${typeof item.feeType === "string" ? item.feeType : item.feeType?.label || ""} (${CURRENT_MONTH})`}
-                                      InputProps={{
-                                        startAdornment: (
-                                          <InputAdornment position="start">
-                                            <Description
-                                              color="disabled"
-                                              sx={{ fontSize: 16 }}
-                                            />
-                                          </InputAdornment>
-                                        ),
-                                      }}
-                                    />
-                                  ) : (
-                                    <CraftIntAutoCompleteWithIcon
-                                      freeSolo
-                                      name={`fees.${index}.feeItems.${itemIndex}.feeType`}
-                                      label=""
-                                      options={classSpecificFeeOptions}
-                                      size="small"
-                                      fullWidth
-                                      placeholder="Select Fee Type"
-                                      multiple={false}
-                                      icon={
-                                        <Description
-                                          color="disabled"
-                                          sx={{ fontSize: 16 }}
-                                        />
-                                      }
-                                      disableClearable={false}
-                                      disabled={!isClassSelected || isPaid}
-                                      isOptionEqualToValue={(
-                                        option: any,
-                                        value: any,
-                                      ) => {
-                                        if (!option || !value) return false;
-                                        const optVal =
-                                          typeof option === "string"
-                                            ? option
-                                            : option.value;
-                                        const valVal =
-                                          typeof value === "string"
-                                            ? value
-                                            : value.value;
-                                        return optVal === valVal;
-                                      }}
-                                      onKeyDown={(e: any) => {
-                                        if (e.key === "Enter")
-                                          e.preventDefault();
-                                      }}
-                                      onChange={(e: any, val: any) =>
-                                        handleItemFieldChange(
-                                          index,
-                                          itemIndex,
-                                          "feeType",
-                                          val,
-                                        )
-                                      }
-                                    />
-                                  )}
-                                  {isPaid && (
-                                    <PaidBadge amount={item.paidAmount || 0} />
-                                  )}
-                                </Box>
-                              </Grid>
-
-                              {/* Amount */}
-                              <Grid item xs={2.5}>
-                                <CraftInputWithIcon
-                                  name={`fees.${index}.feeItems.${itemIndex}.amount`}
-                                  label=""
-                                  fullWidth
-                                  margin="none"
-                                  size="small"
-                                  type="number"
-                                  disabled={isPaid}
-                                  InputProps={{
-                                    startAdornment: (
-                                      <InputAdornment position="start">
-                                        {isPaid ? (
-                                          <Lock
-                                            sx={{
-                                              fontSize: 14,
-                                              color: "success.main",
-                                            }}
-                                          />
-                                        ) : (
-                                          <Typography
-                                            variant="body2"
-                                            color="text.secondary"
-                                          >
-                                            ৳
-                                          </Typography>
-                                        )}
-                                      </InputAdornment>
-                                    ),
-                                  }}
-                                  sx={
-                                    isPaid
-                                      ? {
-                                          "& .MuiInputBase-root": {
-                                            bgcolor: alpha(
-                                              theme.palette.success.light,
-                                              0.1,
-                                            ),
-                                          },
-                                        }
-                                      : {}
-                                  }
-                                />
-                              </Grid>
-
-                              {/* Discount */}
-                              <Grid item xs={2.5}>
-                                <CraftInputWithIcon
-                                  name={`fees.${index}.feeItems.${itemIndex}.discount`}
-                                  label=""
-                                  fullWidth
-                                  margin="none"
-                                  size="small"
-                                  type="number"
-                                  placeholder="0"
-                                  disabled={isPaid}
-                                  InputProps={{
-                                    startAdornment: (
-                                      <InputAdornment position="start">
-                                        <Discount
-                                          sx={{
-                                            fontSize: 16,
-                                            color: isPaid
-                                              ? "success.main"
-                                              : "error.main",
-                                          }}
-                                        />
-                                      </InputAdornment>
-                                    ),
-                                  }}
-                                />
-                              </Grid>
-
-                              {/* Pay Now / Advance */}
-                              <Grid item xs={2}>
-                                {isPaid ? (
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      height: "100%",
-                                    }}
-                                  >
-                                    <Typography
-                                      variant="caption"
-                                      color="success.main"
-                                      fontWeight="bold"
-                                    >
-                                      ✓ Done
-                                    </Typography>
-                                  </Box>
-                                ) : (
-                                  <CraftInputWithIcon
-                                    name={`fees.${index}.feeItems.${itemIndex}.advanceAmount`}
-                                    label=""
-                                    fullWidth
-                                    margin="none"
-                                    size="small"
-                                    type="number"
-                                    disabled={!isClassSelected || !item.amount}
-                                    InputProps={{
-                                      startAdornment: (
-                                        <InputAdornment position="start">
-                                          <Typography
-                                            variant="body2"
-                                            color="text.secondary"
-                                          >
-                                            ৳
-                                          </Typography>
-                                        </InputAdornment>
-                                      ),
-                                    }}
-                                  />
-                                )}
-                              </Grid>
-
-                              {/* Delete */}
-                              <Grid
-                                item
-                                xs={1}
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                {isPaid ? (
-                                  <Tooltip
-                                    title={`Locked — ৳${item.paidAmount?.toLocaleString()} already paid`}
-                                  >
-                                    <span>
-                                      <IconButton
-                                        size="small"
-                                        disabled
-                                        sx={{ color: "text.disabled" }}
-                                      >
-                                        <Lock fontSize="small" />
-                                      </IconButton>
-                                    </span>
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip title="Remove this item">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => removeFeeItem(index, item)}
-                                      sx={{ color: "error.main" }}
-                                    >
-                                      <Delete fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                              </Grid>
-
-                              {/* Range discount panel for monthly unpaid */}
-                              {isMonthly && !isPaid && (
-                                <Grid item xs={12} sx={{ mt: 1 }}>
-                                  <Paper
-                                    variant="outlined"
-                                    sx={{
-                                      p: 1.5,
-                                      borderColor: theme.palette.info.main,
-                                      bgcolor: alpha(
-                                        theme.palette.info.light,
-                                        0.1,
-                                      ),
-                                    }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        gap: 1,
-                                        alignItems: "center",
-                                        flexWrap: "wrap",
-                                      }}
-                                    >
-                                      <Select
-                                        size="small"
-                                        value={rangeStart}
-                                        onChange={(e) =>
-                                          setRangeStart(e.target.value)
-                                        }
-                                        displayEmpty
-                                        sx={{ minWidth: 100 }}
-                                      >
-                                        <MenuItem value="" disabled>
-                                          From
-                                        </MenuItem>
-                                        {MONTHS.map((m) => (
-                                          <MenuItem key={m} value={m}>
-                                            {m}
-                                          </MenuItem>
-                                        ))}
-                                      </Select>
-                                      <Typography variant="body2">
-                                        to
-                                      </Typography>
-                                      <Select
-                                        size="small"
-                                        value={rangeEnd}
-                                        onChange={(e) =>
-                                          setRangeEnd(e.target.value)
-                                        }
-                                        displayEmpty
-                                        sx={{ minWidth: 100 }}
-                                      >
-                                        <MenuItem value="" disabled>
-                                          To
-                                        </MenuItem>
-                                        {MONTHS.map((m) => (
-                                          <MenuItem key={m} value={m}>
-                                            {m}
-                                          </MenuItem>
-                                        ))}
-                                      </Select>
-                                      <CraftInputWithIcon
-                                        name="rangAmt"
-                                        size="small"
-                                        type="number"
-                                        placeholder="Amt"
-                                        value={rangeAmt || ""}
-                                        onChange={(e: any) =>
-                                          setRangeAmt(
-                                            parseFloat(e.target.value),
-                                          )
-                                        }
-                                        sx={{ width: 150 }}
-                                      />
-                                      <Button
-                                        size="small"
-                                        variant="contained"
-                                        onClick={() =>
-                                          handleApplyRangeDiscount(
-                                            index,
-                                            itemIndex,
-                                            rangeStart,
-                                            rangeEnd,
-                                            rangeAmt,
-                                          )
-                                        }
-                                        sx={{ fontSize: "0.75rem", py: 0.5 }}
-                                      >
-                                        Set Range
-                                      </Button>
-                                    </Box>
-                                    {hasRangeDiscount && (
-                                      <Typography
-                                        variant="caption"
-                                        color="success.main"
-                                        sx={{ mt: 1, display: "block" }}
-                                      >
-                                        Active: {item.discountRangeStart} to{" "}
-                                        {item.discountRangeEnd} (-৳
-                                        {item.discountRangeAmount}/mo)
-                                      </Typography>
-                                    )}
-                                  </Paper>
-                                </Grid>
-                              )}
-                            </Grid>
-                          </Grid>
-                        );
-                      })}
-                    </Grid>
-                  </Paper>
-                </Box>
-              )}
-
-              {feeItems.length === 0 && (
-                <Box
-                  sx={{ textAlign: "center", py: 3, color: "text.disabled" }}
-                >
-                  <Money sx={{ fontSize: 36, mb: 1, opacity: 0.5 }} />
-                  <Typography variant="body2">
-                    {feeCategory && feeCategory.length > 0
-                      ? "No fee items found for this category"
-                      : "Select a category to load fee items"}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          );
-        })}
-
-        {fields.length === 0 && (
-          <Box sx={{ textAlign: "center", py: 4, color: "text.disabled" }}>
-            <Payment sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
-            <Typography variant="body2">
-              {!mainClassName || mainClassName.length === 0
-                ? "Select a class in Academic Information step to add fees"
-                : "No fee categories added yet"}
-            </Typography>
-            <Button
-              onClick={addFeeField}
-              variant="outlined"
-              sx={{ mt: 2 }}
-              startIcon={<Add />}
-              disabled={!mainClassName || mainClassName.length === 0}
-            >
-              Add First Category
-            </Button>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
+// ─── StudentInformationStep ──────────────────────────────────────────────────────
 const StudentInformationStep = () => (
   <Box sx={{ ...fadeInSlideUp }}>
     <Grid container spacing={3}>
@@ -1590,10 +371,26 @@ const StudentInformationStep = () => (
           }}
         />
       </Grid>
+      <Grid item xs={12} md={4}>
+        <CraftSelectWithIcon
+          margin="none"
+          size="medium"
+          name="category"
+          label={
+            <span>
+              Category <span style={{ color: "red" }}>*</span>
+            </span>
+          }
+          placeholder="Select Category"
+          items={CATEGORY_OPTIONS.map((opt) => opt.label)}
+          adornment={<School color="action" />}
+        />
+      </Grid>
     </Grid>
   </Box>
 );
 
+// ─── AcademicStep ────────────────────────────────────────────────────────────────
 const AcademicStep = ({ classOptions }: any) => {
   const { watch } = useFormContext();
   const selectedClass = watch("className");
@@ -1617,7 +414,6 @@ const AcademicStep = ({ classOptions }: any) => {
               <Typography variant="body2">
                 Selected class "
                 {selectedClass.map((cls: any) => cls.label || cls).join(", ")}"
-                will be automatically used in Fee section.
               </Typography>
             </Alert>
           )}
@@ -1700,6 +496,7 @@ const AcademicStep = ({ classOptions }: any) => {
   );
 };
 
+// ─── ParentGuardianStep ─────────────────────────────────────────────────────────
 const ParentGuardianStep = () => (
   <Box sx={{ ...fadeInSlideUp }}>
     <Grid container spacing={3}>
@@ -2059,6 +856,7 @@ const DocumentCheckbox = ({ name, label }: { name: string; label: string }) => {
   );
 };
 
+// ─── AddressDocumentsStep ────────────────────────────────────────────────────────
 const AddressDocumentsStep = () => {
   const theme = useTheme();
   const { watch, setValue } = useFormContext();
@@ -2385,266 +1183,7 @@ const AddressDocumentsStep = () => {
   );
 };
 
-const FeeStep = ({ classOptions, feeCategoryData, studentData }: any) => {
-  const theme = useTheme();
-  const { watch, setValue } = useFormContext();
-  const [isPaidAmountEdited, setIsPaidAmountEdited] = useState(false);
-
-  const paymentOptions = [
-    { label: "Cash", value: "cash" },
-    { label: "Bkash", value: "bkash" },
-    { label: "Bank", value: "bank" },
-    { label: "Online", value: "online" },
-  ];
-  const calculateTotals = () => {
-    const fees = watch("fees") || [];
-    let totalUnpaid = 0;
-    let discountUnpaid = 0;
-    let alreadyPaid = 0;
-
-    fees.forEach((fee: any) => {
-      (fee.feeItems || []).forEach((item: any) => {
-        if (item.isPaid) {
-          alreadyPaid += Number(item.paidAmount || 0);
-        } else if (item.isSelected) {
-          totalUnpaid += Number(item.amount || 0);
-          discountUnpaid += Number(item.discount || 0);
-        }
-      });
-    });
-
-    const netPayable = Math.max(0, totalUnpaid - discountUnpaid);
-    const formPaidAmount = parseFloat(watch("paidAmount") || "0");
-    const paidNow = isPaidAmountEdited ? formPaidAmount : netPayable;
-    const dueAmount = Math.max(0, netPayable - paidNow);
-
-    return {
-      totalUnpaid,
-      discountUnpaid,
-      netPayable,
-      paidNow,
-      dueAmount,
-      alreadyPaid,
-    };
-  };
-
-  const summary = calculateTotals();
-
-  useEffect(() => {
-    if (!isPaidAmountEdited && summary.netPayable >= 0) {
-      setValue("paidAmount", summary.netPayable);
-    }
-    setValue("totalAmount", summary.totalUnpaid);
-    setValue("totalDiscount", summary.discountUnpaid);
-    setValue("netPayable", summary.netPayable);
-    setValue("dueAmount", summary.dueAmount);
-    if (!isPaidAmountEdited) setValue("paidAmount", summary.paidNow);
-  }, [
-    summary.totalUnpaid,
-    summary.discountUnpaid,
-    summary.netPayable,
-    summary.dueAmount,
-    summary.paidNow,
-    isPaidAmountEdited,
-    setValue,
-  ]);
-
-  return (
-    <Box sx={{ ...fadeInSlideUp }}>
-      <DynamicFeeFields
-        classOptions={classOptions}
-        feeCategoryData={feeCategoryData}
-        studentData={studentData}
-      />
-      <Card
-        elevation={2}
-        sx={{
-          mt: 4,
-          borderRadius: 3,
-          overflow: "hidden",
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          background: "#fff",
-        }}
-      >
-        <CardContent sx={{ p: 4 }}>
-          <Grid container spacing={3}>
-            {summary.alreadyPaid > 0 && (
-              <Grid item xs={12}>
-                <Alert severity="success" icon={<Lock />}>
-                  <Typography variant="body2">
-                    <strong>৳{summary.alreadyPaid.toLocaleString()}</strong> has
-                    already been paid for some fees. Those fees are locked and
-                    cannot be modified.
-                  </Typography>
-                </Alert>
-              </Grid>
-            )}
-
-            <Grid item xs={12}>
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                sx={{ mb: 1.5, fontWeight: 600 }}
-              >
-                Payment Details (for new/unpaid fees only)
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={6}>
-                  <CraftInputWithIcon
-                    name="paidAmount"
-                    label="Pay Amount Now"
-                    placeholder=""
-                    type="number"
-                    fullWidth
-                    size="small"
-                    onChange={(e: any) => {
-                      setIsPaidAmountEdited(true);
-                      setValue("paidAmount", parseFloat(e.target.value) || 0);
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Typography variant="body2" color="text.secondary">
-                            ৳
-                          </Typography>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      "& .MuiInputBase-root": {
-                        backgroundColor: alpha(
-                          theme.palette.success.light,
-                          0.05,
-                        ),
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={6}>
-                  <CraftIntAutoCompleteWithIcon
-                    name="paymentMethod"
-                    label="Payment Method"
-                    options={paymentOptions}
-                    size="small"
-                    multiple={false}
-                    icon={<Payment />}
-                    disableClearable
-                    fullWidth
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: alpha(theme.palette.info.light, 0.05),
-                  border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  sx={{ mb: 1, fontWeight: 600 }}
-                >
-                  Summary
-                </Typography>
-                <Grid container spacing={1}>
-                  {summary.alreadyPaid > 0 && (
-                    <>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary">
-                          Previously Paid:
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} sx={{ textAlign: "right" }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight="bold"
-                          color="success.main"
-                        >
-                          ৳{summary.alreadyPaid.toLocaleString()}
-                        </Typography>
-                      </Grid>
-                    </>
-                  )}
-                  {summary.discountUnpaid > 0 && (
-                    <>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary">
-                          New Discounts:
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6} sx={{ textAlign: "right" }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight="bold"
-                          color="warning.main"
-                        >
-                          - ৳{summary.discountUnpaid.toLocaleString()}
-                        </Typography>
-                      </Grid>
-                    </>
-                  )}
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
-                      Net Payable (new):
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} sx={{ textAlign: "right" }}>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color="primary.main"
-                    >
-                      ৳{summary.netPayable.toLocaleString()}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
-                      Paying Now:
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} sx={{ textAlign: "right" }}>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color="success.main"
-                    >
-                      ৳{summary.paidNow.toLocaleString()}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
-                      Due Amount:
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} sx={{ textAlign: "right" }}>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color={
-                        summary.dueAmount > 0 ? "error.main" : "success.main"
-                      }
-                    >
-                      ৳{summary.dueAmount.toLocaleString()}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-    </Box>
-  );
-};
-
-
+// ─── transformApplicationToFormData ──────────────────────────────────────────────
 const transformApplicationToFormData = (
   application: any,
   classOptions: any[],
@@ -2695,7 +1234,7 @@ const transformApplicationToFormData = (
     mobileNo:
       fatherInfo.mobile || motherInfo.mobile || guardianInfo.mobile || "",
     session: application.academicYear || new Date().getFullYear().toString(),
-    category: "residential",
+    category: studentInfo.category || "Residential",
     dateOfBirth: formatDate(studentInfo.dateOfBirth),
     nidBirth: studentInfo.nidBirth || "",
     bloodGroup: studentInfo.bloodGroup || "",
@@ -2768,28 +1307,13 @@ const transformApplicationToFormData = (
       religiousInterest: behaviorSkills.religiousInterest || "",
       angerControl: behaviorSkills.angerControl || "",
     },
-    fees: [
-      { category: [], className: formattedClass, feeItems: [], feeAmount: "" },
-    ],
-    admissionFee: 0,
-    monthlyFee: 0,
-    discountAmount: 0,
-    paymentMethod: { label: "Cash", value: "cash" },
-    studentIdSelect: null,
-    studentNameSelect: null,
-    totalAmount: 0,
-    totalDiscount: 0,
-    netPayable: 0,
-    paidAmount: 0,
-    dueAmount: 0,
-    advanceBalance: 0,
   };
 };
 
+// ─── transformEnrollmentDataToForm ──────────────────────────────────────────────
 const transformEnrollmentDataToForm = (
   enrollmentData: any,
   classOptions: any[],
-  feeCategoryData: any,
 ) => {
   if (!enrollmentData?.data) return null;
   const data = enrollmentData.data;
@@ -2847,97 +1371,6 @@ const transformEnrollmentDataToForm = (
       : [];
 
   const formattedClass = formatClassForForm(rawClassName);
-  const MONTH_SET = new Set(MONTHS);
-
-  // ── Build fee items, preserving isPaid from the actual DB fee documents ──
-  const uniqueFeeItemsMap = new Map<string, any>();
-  const feesArray: any[] = data.fees || data.student?.fees || [];
-
-  if (feesArray.length > 0) {
-    const feeGroups = new Map<string, any[]>();
-
-    feesArray.forEach((fee: any) => {
-      let baseFeeType: string = fee.feeType || "";
-      let isMonthlyFee = false;
-      let month: string | null = null;
-
-      const dashIdx = baseFeeType.lastIndexOf(" - ");
-      if (dashIdx !== -1) {
-        const possibleMonth = baseFeeType.slice(dashIdx + 3);
-        if (MONTH_SET.has(possibleMonth)) {
-          baseFeeType = baseFeeType.slice(0, dashIdx);
-          isMonthlyFee = true;
-          month = possibleMonth;
-        }
-      }
-
-      if (!feeGroups.has(baseFeeType)) feeGroups.set(baseFeeType, []);
-      feeGroups.get(baseFeeType)!.push({ ...fee, month, isMonthlyFee });
-    });
-
-    feeGroups.forEach((fees, baseFeeType) => {
-      const firstFee = fees[0];
-      const isMonthlyGroup = fees.some((f) => f.isMonthlyFee);
-
-      // ⚠️ KEY: A group is "paid" if any of its months has paidAmount > 0
-      const totalPaidForGroup = fees.reduce(
-        (s, f) => s + (f.paidAmount || 0),
-        0,
-      );
-      const isPaidGroup = totalPaidForGroup > 0;
-
-      let discountRangeStart = "",
-        discountRangeEnd = "",
-        discountRangeAmount = 0;
-      let baseDiscount = firstFee.discount || 0;
-
-      if (isMonthlyGroup && fees.length > 1) {
-        const discountCounts: { [key: number]: number } = {};
-        fees.forEach((f) => {
-          const d = f.discount || 0;
-          discountCounts[d] = (discountCounts[d] || 0) + 1;
-        });
-        let maxCount = 0;
-        Object.entries(discountCounts).forEach(([discount, count]) => {
-          if ((count as number) > maxCount) {
-            maxCount = count as number;
-            baseDiscount = parseFloat(discount);
-          }
-        });
-        const rangeMonths = fees
-          .filter((f) => (f.discount || 0) !== baseDiscount && f.month)
-          .map((f) => f.month);
-        if (rangeMonths.length > 0) {
-          rangeMonths.sort(
-            (a: string, b: string) => MONTHS.indexOf(a) - MONTHS.indexOf(b),
-          );
-          discountRangeStart = rangeMonths[0];
-          discountRangeEnd = rangeMonths[rangeMonths.length - 1];
-          discountRangeAmount =
-            fees.find((f) => f.month === discountRangeStart)?.discount || 0;
-        }
-      }
-
-      uniqueFeeItemsMap.set(baseFeeType, {
-        feeType: { label: baseFeeType, value: baseFeeType },
-        amount: firstFee.amount,
-        advanceAmount: 0,
-        isSelected: true,
-        discount: baseDiscount,
-        isMonthly: isMonthlyGroup,
-        discountRangeStart,
-        discountRangeEnd,
-        discountRangeAmount,
-        // ── New fields ──────────────────────────────────────────────
-        isPaid: isPaidGroup,
-        paidAmount: totalPaidForGroup,
-        // ────────────────────────────────────────────────────────────
-        _tempId: Date.now() + Math.random(),
-      });
-    });
-  }
-
-  const uniqueFeeItems = Array.from(uniqueFeeItemsMap.values());
 
   const guardianName = data.guardianName || guardianInfo.nameEnglish || "";
   const guardianRelation = data.guardianRelation || guardianInfo.relation || "";
@@ -2955,9 +1388,10 @@ const transformEnrollmentDataToForm = (
     mobileNo: data.mobileNo || data.student?.mobile || "",
     session: data.session || new Date().getFullYear().toString(),
     category:
+      data.category ||
       data.studentType ||
-      data.student?.studentType?.toLowerCase() ||
-      "residential",
+      data.student?.category ||
+      "Residential",
     dateOfBirth: formatDate(data.birthDate || data.student?.birthDate),
     nidBirth:
       data.birthRegistrationNo || data.student?.birthRegistrationNo || "",
@@ -3062,66 +1496,24 @@ const transformEnrollmentDataToForm = (
       data.student?.documents?.photographs ??
       false,
     termsAccepted: data.termsAccepted ?? data.student?.termsAccepted ?? false,
-    fees:
-      uniqueFeeItems.length > 0
-        ? [
-            {
-              category: [],
-              className: formattedClass,
-              feeItems: uniqueFeeItems,
-              feeAmount: uniqueFeeItems
-                .filter((i) => !i.isPaid)
-                .reduce((s, i) => s + (i.amount || 0), 0)
-                .toString(),
-            },
-          ]
-        : [
-            {
-              category: [],
-              className: formattedClass,
-              feeItems: [],
-              feeAmount: "",
-            },
-          ],
-    admissionFee: 0,
-    monthlyFee: 0,
-    discountAmount: 0,
-    paymentMethod: { label: "Cash", value: "cash" },
-    studentIdSelect: null,
-    studentNameSelect: null,
-    totalAmount: data.totalAmount || 0,
-    totalDiscount: data.totalDiscount || 0,
-    netPayable: data.netPayable || 0,
-    paidAmount: data.paidAmount || 0,
-    dueAmount: data.dueAmount || 0,
-    advanceBalance: data.advanceBalance || data.student?.advanceBalance || 0,
   };
 };
+
 const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
   const theme = useTheme();
-  const limit = 200;
-  const [page] = useState(0);
-  const [searchTerm] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [openPrintModal, setOpenPrintModal] = useState(false);
-  const [openAddFeeModal, setOpenAddFeeModal] = useState(false);
-  const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [enrolledStudentData, setEnrolledStudentData] = useState<any>(null);
   const [isApplicationLoading, setIsApplicationLoading] = useState(false);
-console.log('admissionApplications', admissionApplications)
-  const { classOptions, feeCategoryData } = useAcademicOption();
+
+  const { classOptions } = useAcademicOption();
   const [createEnrollment] = useCreateEnrollmentMutation();
   const [updateEnrollment] = useUpdateEnrollmentMutation();
   const { data: singleEnrollment, isLoading: enrollmentLoading } =
     useGetSingleEnrollmentQuery(id ? { id } : undefined, { skip: !id });
-  const { data: studentData } = useGetAllStudentsQuery({
-    limit,
-    page: page + 1,
-    searchTerm,
-  });
 
   const [submitting, setSubmitting] = useState(false);
   const [defaultValues, setDefaultValues] = useState<any>(null);
@@ -3133,19 +1525,15 @@ console.log('admissionApplications', admissionApplications)
     { label: "Academic Info", icon: <SchoolIcon /> },
     { label: "Parent/Guardian", icon: <FamilyRestroom /> },
     { label: "Address & Docs", icon: <Home /> },
-    { label: "Fee Info", icon: <Payment /> },
   ];
 
   useEffect(() => {
-    if (id && singleEnrollment && classOptions.length > 0 && feeCategoryData) {
+    if (id && singleEnrollment && classOptions.length > 0) {
       const transformedData = transformEnrollmentDataToForm(
         singleEnrollment,
         classOptions,
-        feeCategoryData,
       );
       if (transformedData) {
-        if (!transformedData.paymentMethod)
-          transformedData.paymentMethod = { label: "Cash", value: "cash" };
         setDefaultValues(transformedData);
         setFormKey((prev) => prev + 1);
         setActiveStep(0);
@@ -3176,7 +1564,7 @@ console.log('admissionApplications', admissionApplications)
         studentName: "",
         mobileNo: "",
         session: new Date().getFullYear().toString(),
-        category: "residential",
+        category: "Residential",
         dateOfBirth: null,
         nidBirth: "",
         bloodGroup: "",
@@ -3221,19 +1609,6 @@ console.log('admissionApplications', admissionApplications)
         markSheet: false,
         photographs: false,
         termsAccepted: false,
-        fees: [{ category: [], className: [], feeItems: [], feeAmount: "" }],
-        admissionFee: 0,
-        monthlyFee: 0,
-        discountAmount: 0,
-        paymentMethod: { label: "Cash", value: "cash" },
-        studentIdSelect: null,
-        studentNameSelect: null,
-        totalAmount: 0,
-        totalDiscount: 0,
-        netPayable: 0,
-        paidAmount: 0,
-        dueAmount: 0,
-        advanceBalance: 0,
       });
       setFormKey((prev) => prev + 1);
       setActiveStep(0);
@@ -3244,7 +1619,6 @@ console.log('admissionApplications', admissionApplications)
     singleEnrollment,
     admissionApplications,
     classOptions,
-    feeCategoryData,
   ]);
 
   const handleApplicationSelect = useCallback(
@@ -3269,8 +1643,6 @@ console.log('admissionApplications', admissionApplications)
   const handleFinishProcess = () => {
     setOpenSuccessModal(false);
     setOpenPrintModal(false);
-    setOpenAddFeeModal(false);
-    setOpenPaymentModal(false);
     router.push(`/dashboard/student/list`);
   };
 
@@ -3294,6 +1666,11 @@ console.log('admissionApplications', admissionApplications)
         setSubmitting(false);
         return;
       }
+      if (!submitData.category) {
+        toast.error("Category selection is required");
+        setSubmitting(false);
+        return;
+      }
 
       const classNameArray = submitData.className
         .map((cls: any) => cls.value || cls)
@@ -3304,115 +1681,11 @@ console.log('admissionApplications', admissionApplications)
         return;
       }
 
-      const paymentMethodValue =
-        typeof submitData.paymentMethod === "object"
-          ? submitData.paymentMethod?.value || "cash"
-          : submitData.paymentMethod || "cash";
-
       const studentPhotoValue =
         typeof submitData.studentPhoto === "string" &&
         submitData.studentPhoto.startsWith("data:")
           ? ""
           : submitData.studentPhoto || "";
-
-      // ── Format fees — skip paid items (they are handled by backend) ──────
-      const fees: any[] = [];
-
-      if (
-        submitData.fees &&
-        Array.isArray(submitData.fees) &&
-        submitData.fees.length > 0
-      ) {
-        for (const feeCategory of submitData.fees) {
-          if (!feeCategory.feeItems?.length) continue;
-
-          const processedFeeItems: any[] = [];
-
-          for (const item of feeCategory.feeItems) {
-            // ⚠️ Include paid items in payload with isPaid flag so backend can identify them
-            // Backend will SKIP creating new fees for these and keep existing paid docs
-            let feeTypeStr = "";
-            if (typeof item.feeType === "object" && item.feeType !== null)
-              feeTypeStr = item.feeType?.label || item.feeType?.value || "";
-            else if (typeof item.feeType === "string")
-              feeTypeStr = item.feeType;
-            if (!feeTypeStr.trim()) continue;
-
-            const amount = parseFloat(String(item.amount)) || 0;
-            const discount = parseFloat(String(item.discount)) || 0;
-
-            // For paid items, just pass them through unchanged (backend will skip)
-            if (item.isPaid) {
-              processedFeeItems.push({
-                feeType: feeTypeStr,
-                amount,
-                discount,
-                isSelected: true,
-                isMonthly: item.isMonthly || false,
-                isPaid: true, // signal to backend
-                paidAmount: item.paidAmount || 0,
-                month: item.month || (item.isMonthly ? "Monthly" : "Admission"),
-              });
-              continue;
-            }
-
-            if (item.isSelected === false) continue;
-            if (amount <= 0) continue;
-
-            const isMonthly =
-              item.isMonthly === true ||
-              feeTypeStr.toLowerCase().includes("monthly");
-            const feeItemObj: any = {
-              feeType: feeTypeStr,
-              amount,
-              discount,
-              isSelected: true,
-              isMonthly,
-              isPaid: false,
-              month: item.month || (isMonthly ? "Monthly" : "Admission"),
-            };
-
-            if (isMonthly) {
-              feeItemObj.discountRangeStart = item.discountRangeStart || "";
-              feeItemObj.discountRangeEnd = item.discountRangeEnd || "";
-              feeItemObj.discountRangeAmount =
-                parseFloat(String(item.discountRangeAmount)) || 0;
-            }
-            if (item.advanceAmount)
-              feeItemObj.advanceAmount =
-                parseFloat(String(item.advanceAmount)) || 0;
-            processedFeeItems.push(feeItemObj);
-          }
-
-          if (processedFeeItems.length > 0) {
-            let categoryName = "";
-            if (feeCategory.category?.length > 0) {
-              categoryName =
-                typeof feeCategory.category[0] === "object"
-                  ? feeCategory.category[0]?.label ||
-                    feeCategory.category[0]?.value ||
-                    ""
-                  : feeCategory.category[0] || "";
-            }
-            let className = "";
-            if (feeCategory.className?.length > 0) {
-              className =
-                typeof feeCategory.className[0] === "object"
-                  ? feeCategory.className[0]?.label ||
-                    feeCategory.className[0]?.value ||
-                    ""
-                  : feeCategory.className[0] || "";
-            }
-            fees.push({
-              category: categoryName,
-              className,
-              feeItems: processedFeeItems,
-            });
-          }
-        }
-      }
-
-      const totalPaidAmount = parseFloat(String(submitData.paidAmount)) || 0;
 
       const finalSubmitData: any = {
         studentName: submitData.studentName || "",
@@ -3480,12 +1753,7 @@ console.log('admissionApplications', admissionApplications)
           markSheet: Boolean(submitData.markSheet),
           photographs: Boolean(submitData.photographs),
         },
-        fees,
         termsAccepted: Boolean(submitData.termsAccepted),
-        advanceBalance: Number(submitData.advanceBalance) || 0,
-        paidAmount: totalPaidAmount,
-        paymentMethod: paymentMethodValue,
-        collectedBy: "Admin",
         familyEnvironment: submitData.familyEnvironment,
         behaviorSkills: submitData.behaviorSkills,
       };
@@ -3526,7 +1794,6 @@ console.log('admissionApplications', admissionApplications)
       .getElementById("form-content-wrapper")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
     setActiveStep((prev) => prev - 1);
@@ -3534,37 +1801,6 @@ console.log('admissionApplications', admissionApplications)
       .getElementById("form-content-wrapper")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-
-  const getClassLabel = (clsData: any) => {
-    if (!clsData) return "";
-    if (Array.isArray(clsData) && clsData.length > 0)
-      return clsData[0]?.label || clsData[0]?.className || clsData[0];
-    if (typeof clsData === "object") return clsData.label || clsData.className;
-    return clsData;
-  };
-
-  const feeDataForPaymentModal = enrolledStudentData
-    ? {
-        _id: enrolledStudentData._id,
-        feeType: "Enrollment Due",
-        month: enrolledStudentData.session,
-        class: getClassLabel(enrolledStudentData.className),
-        amount: enrolledStudentData.totalAmount,
-        discount: enrolledStudentData.totalDiscount,
-        waiver: 0,
-        paidAmount: enrolledStudentData.paidAmount,
-        dueAmount: enrolledStudentData.dueAmount,
-        studentName: enrolledStudentData.studentName,
-      }
-    : {};
-
-  const studentDataForAddFeeModal = enrolledStudentData?.student
-    ? {
-        ...enrolledStudentData.student,
-        className: enrolledStudentData.className,
-        name: enrolledStudentData.studentName,
-      }
-    : enrolledStudentData;
 
   if (enrollmentLoading || isApplicationLoading) {
     return (
@@ -3688,13 +1924,6 @@ console.log('admissionApplications', admissionApplications)
                 )}
                 {activeStep === 2 && <ParentGuardianStep />}
                 {activeStep === 3 && <AddressDocumentsStep />}
-                {activeStep === 4 && (
-                  <FeeStep
-                    classOptions={classOptions}
-                    feeCategoryData={feeCategoryData}
-                    studentData={studentData}
-                  />
-                )}
               </Box>
             </CardContent>
           </Paper>
@@ -3744,11 +1973,6 @@ console.log('admissionApplications', admissionApplications)
                   fontWeight: "bold",
                   boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
                   textTransform: "none",
-                  background: theme.palette.primary.main,
-                  "&:hover": {
-                    boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-                    bgcolor: theme.palette.primary.dark,
-                  },
                 }}
               >
                 {submitting
@@ -3769,11 +1993,6 @@ console.log('admissionApplications', admissionApplications)
                   py: 1.5,
                   fontWeight: "bold",
                   boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-                  background: theme.palette.primary.main,
-                  "&:hover": {
-                    boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-                    bgcolor: theme.palette.primary.dark,
-                  },
                   textTransform: "none",
                 }}
               >
@@ -3856,21 +2075,6 @@ console.log('admissionApplications', admissionApplications)
             setTimeout(() => {
               window.location.href = "/dashboard/student/list";
             }, 100);
-          }}
-        />
-        <AddFeeModal
-          open={openAddFeeModal}
-          setOpen={setOpenAddFeeModal}
-          student={studentDataForAddFeeModal}
-        />
-        <PaymentModal
-          open={openPaymentModal}
-          onClose={() => setOpenPaymentModal(false)}
-          fee={feeDataForPaymentModal}
-          onPaymentSuccess={() => {
-            toast.success("Payment successful!");
-            setOpenPaymentModal(false);
-            router.push(`/dashboard/enrollments/list`);
           }}
         />
       </CraftForm>

@@ -2,30 +2,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import FeeAdjustmentModal from "@/components/FeeAdjustmentModal";
 import CraftTable, { Column, RowAction } from "@/components/Table";
+import { StudentFeeProps } from "@/interface/student";
 import {
   Delete,
   Discount,
-  Download,
-  Payment,
-  Visibility,
-  Warning as WarningIcon,
   History,
+  Info as InfoIcon,
+  Visibility,
+  Warning as WarningIcon
 } from "@mui/icons-material";
-import { Box, Button, Chip, Typography, Tooltip } from "@mui/material";
-import { useEffect, useState } from "react";
-import AddFeeModal from "./AddFeeModal";
-import PaymentModal from "./PaymentModal";
+import { Box, Button, Chip, Typography } from "@mui/material";
+import { JSX, useEffect, useState } from "react";
 import BulkPaymentModal from "./BulkPaymentModal";
-import LateFeeCustomizationModal from "./LateFeeCustomizationModal";
+import AddFeeModal from "./Fees/AddFeeModal";
 import FeeSummaryCards from "./FeeSummaryCards";
-import PrintModal from "./PrintModal";
-import { StudentFeeProps } from "@/interface/student";
+import LateFeeCustomizationModal from "./LateFeeCustomizationModal";
 import ViewFeeModal from "./ViewFeeModal";
 
 const DueStudentFee = ({
   studentFees,
   loading = false,
-  onView,
   onDelete,
   onPay,
   student,
@@ -50,18 +46,13 @@ const DueStudentFee = ({
     setViewModalOpen(true);
   };
 
-  // State for print modal
-  const [printModalOpen, setPrintModalOpen] = useState(false);
-  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
-
-  // Filter only unpaid fees
   useEffect(() => {
-    const unpaidFees =
-      studentFees?.filter((fee) => fee?.status === "unpaid") || [];
-    setFilteredFees(unpaidFees);
+    const dueFees =
+      studentFees?.filter((fee) => fee?.status === "unpaid" || fee?.status === "partial") || [];
+    setFilteredFees(dueFees);
 
-    if (unpaidFees?.length) {
-      const summary = unpaidFees.reduce(
+    if (dueFees?.length) {
+      const summary = dueFees.reduce(
         (acc, fee) => {
           if (fee.lateFeeAmount > 0) {
             acc.totalLateFees += fee.lateFeeAmount;
@@ -90,11 +81,6 @@ const DueStudentFee = ({
     }
   }, [studentFees]);
 
-  const handlePayClick = (fee: any) => {
-    setSelectedFee(fee);
-    setPaymentModalOpen(true);
-  };
-
   const handleAdjustmentClick = (fee: any) => {
     setSelectedFee(fee);
     setAdjustmentModalOpen(true);
@@ -105,38 +91,9 @@ const DueStudentFee = ({
     setCustomizationModalOpen(true);
   };
 
-  const handlePaymentSuccess = (paymentData: any) => {
-    if (onPay) {
-      onPay(paymentData);
-    }
-    if (refetch) refetch();
-  };
-
-  const handleAdjustmentSuccess = async (adjustmentData: any) => {
-    try {
-      const response = await fetch(
-        "http://localhost:5000/api/v1/fee-adjustments",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(adjustmentData),
-        },
-      );
-
-      if (response.ok) {
-        alert("Adjustment applied successfully!");
-        setAdjustmentModalOpen(false);
-        if (refetch) {
-          refetch();
-        }
-      } else {
-        throw new Error("Failed to apply adjustment");
-      }
-    } catch (error) {
-      console.error("Error applying adjustment:", error);
-      alert("Failed to apply adjustment");
+  const handleAdjustmentSuccess = () => {
+    if (refetch) {
+      refetch();
     }
   };
 
@@ -144,11 +101,6 @@ const DueStudentFee = ({
     if (refetch) {
       refetch();
     }
-  };
-
-  const handleClosePaymentModal = () => {
-    setPaymentModalOpen(false);
-    setSelectedFee(null);
   };
 
   const handleCloseAdjustmentModal = () => {
@@ -169,39 +121,26 @@ const DueStudentFee = ({
     setAddFeeModalOpen(false);
   };
 
-  // Callback when bulk payment completes
-  const handleBulkPaymentCompleted = (receiptData: any) => {
-    setSelectedReceipt(receiptData);
-    setPrintModalOpen(true);
-  };
-
-  // Close print modal and clear receipt
-  const handleClosePrintModal = () => {
-    setPrintModalOpen(false);
-    setSelectedReceipt(null);
-  };
-
   const calculateSummary = () => {
-    const unpaidFees =
-      studentFees?.filter((fee) => fee?.status === "unpaid") || [];
+    const dueFees = studentFees?.filter((fee) => fee?.status === "unpaid" || fee?.status === "partial") || [];
 
-    const totalFees = unpaidFees?.reduce(
+    const totalFees = dueFees?.reduce(
       (sum, fee) => sum + (fee.amount || 0),
       0,
     );
-    const totalPaid = unpaidFees?.reduce(
+    const totalPaid = dueFees?.reduce(
       (sum, fee) => sum + (fee.paidAmount || 0),
       0,
     );
-    const totalDue = unpaidFees?.reduce(
+    const totalDue = dueFees?.reduce(
       (sum, fee) => sum + (fee.dueAmount || 0),
       0,
     );
-    const totalDiscount = unpaidFees?.reduce(
+    const totalDiscount = dueFees?.reduce(
       (sum, fee) => sum + (fee.discount || 0),
       0,
     );
-    const totalWaiver = unpaidFees?.reduce(
+    const totalWaiver = dueFees?.reduce(
       (sum, fee) => sum + (fee.waiver || 0),
       0,
     );
@@ -219,7 +158,7 @@ const DueStudentFee = ({
 
   const summary = calculateSummary();
 
-  // Define columns for fee table (unchanged)
+  // Define columns for fee table
   const columns: Column[] = [
     {
       id: "feeType",
@@ -228,7 +167,13 @@ const DueStudentFee = ({
       sortable: true,
       filterable: true,
     },
-
+    {
+      id: "month",
+      label: "Month",
+      minWidth: 100,
+      sortable: true,
+      filterable: true,
+    },
     {
       id: "amount",
       label: "Total Amount",
@@ -257,7 +202,6 @@ const DueStudentFee = ({
         </Typography>
       ),
     },
-
     {
       id: "netAmount",
       label: "Net Amount",
@@ -299,7 +243,6 @@ const DueStudentFee = ({
         </Typography>
       ),
     },
-
     {
       id: "status",
       label: "Status",
@@ -312,10 +255,11 @@ const DueStudentFee = ({
           [key: string]: {
             color: "success" | "warning" | "error" | "default";
             label: string;
+            icon?: JSX.Element;
           };
         } = {
           paid: { color: "success", label: "Paid" },
-          partial: { color: "warning", label: "Partial" },
+          partial: { color: "warning", label: "Partial", icon: <InfoIcon fontSize="small" /> },
           unpaid: { color: "error", label: "Unpaid" },
         };
         const config = statusConfig[row.status] || {
@@ -331,30 +275,15 @@ const DueStudentFee = ({
               label={config.label}
               color={config.color}
               size="small"
-              variant="outlined"
+              variant="filled"
             />
             {hasAdjustments && <Discount fontSize="small" color="success" />}
           </Box>
         );
       },
     },
-    {
-      id: "createdAt",
-      label: "Created Date",
-      minWidth: 150,
-      sortable: true,
-      type: "date",
-      format: (value: string) => {
-        try {
-          return new Date(value).toLocaleDateString();
-        } catch {
-          return "Invalid Date";
-        }
-      },
-    },
   ];
 
-  // Define row actions (unchanged)
   const rowActions: RowAction[] = [
     {
       label: "View Details",
@@ -377,13 +306,6 @@ const DueStudentFee = ({
       color: "warning",
       tooltip: "Customize late fee amount",
       inMenu: true,
-    },
-    {
-      label: "Make Payment",
-      icon: <Payment fontSize="small" />,
-      onClick: (row) => handlePayClick(row),
-      color: "primary",
-      tooltip: "Make payment",
     },
     {
       label: "View Late Fee History",
@@ -410,10 +332,6 @@ const DueStudentFee = ({
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Due Student Fee Management
-      </Typography>
-
       <FeeSummaryCards
         type="due"
         summary={summary}
@@ -422,7 +340,6 @@ const DueStudentFee = ({
 
       <CraftTable
         title="Due Fee Records"
-        subtitle={`Total ${filteredFees?.length || 0} unpaid fee records found`}
         columns={columns}
         data={filteredFees}
         loading={loading}
@@ -433,9 +350,8 @@ const DueStudentFee = ({
         sortable={true}
         pagination={true}
         idField="_id"
-        emptyStateMessage="No unpaid fee records found"
+        emptyStateMessage="No pending fee records found. All fees are paid."
         height="auto"
-        maxHeight="60vh"
         stickyHeader={true}
         hover={true}
         showToolbar={true}
@@ -443,8 +359,6 @@ const DueStudentFee = ({
         borderRadius={2}
         showRowNumbers={true}
         rowNumberHeader="#"
-        onRefresh={refetch}
-        onExport={() => {}}
         onAdd={handleAddFeeClick}
         customToolbar={
           <Box sx={{ display: "flex", gap: 1 }}>
@@ -464,60 +378,21 @@ const DueStudentFee = ({
             </Button>
           </Box>
         }
-        bulkActions={[
-          {
-            label: "Apply Bulk Discount",
-            icon: <Discount fontSize="small" />,
-            onClick: (selectedRows) => {
-              alert(
-                `Applying discount to ${selectedRows.length} selected fees`,
-              );
-            },
-          },
-          {
-            label: "Apply Bulk Late Fee Customization",
-            icon: <WarningIcon fontSize="small" />,
-            onClick: (selectedRows) => {
-              alert(
-                `Bulk late fee customization for ${selectedRows.length} fees - Coming soon!`,
-              );
-            },
-          },
-          {
-            label: "Export Selected",
-            icon: <Download fontSize="small" />,
-            onClick: (selectedRows) => {},
-          },
-          {
-            label: "Delete Selected",
-            icon: <Delete fontSize="small" />,
-            onClick: (selectedRows) => {},
-            color: "error",
-          },
-        ]}
       />
 
-      {/* Payment Modal */}
-      <PaymentModal
-        open={paymentModalOpen}
-        onClose={handleClosePaymentModal}
-        fee={selectedFee}
-        onPaymentSuccess={handlePaymentSuccess}
-      />
-
-      {/* Add Fee Modal */}
       <AddFeeModal
         open={addFeeModalOpen}
         setOpen={handleCloseAddFeeModal}
         student={student}
+        refetch={refetch}
       />
 
-      {/* Fee Adjustment Modal */}
+      {/* Fee Adjustment Modal - Now handles API call internally */}
       <FeeAdjustmentModal
         open={adjustmentModalOpen}
         onClose={handleCloseAdjustmentModal}
         fee={selectedFee}
-        onApplyAdjustment={handleAdjustmentSuccess}
+        onSuccess={handleAdjustmentSuccess}
       />
 
       {/* Late Fee Customization Modal */}
@@ -534,7 +409,6 @@ const DueStudentFee = ({
         onClose={() => setBulkPaymentModalOpen(false)}
         student={{
           ...student,
-          // Ensure className is a string
           className:
             typeof student?.className === "object"
               ? student.className?.className || student.className?.name || ""
@@ -542,15 +416,8 @@ const DueStudentFee = ({
         }}
         fees={filteredFees}
         refetch={refetch}
-        onPaymentCompleted={handleBulkPaymentCompleted}
       />
 
-      {/* Print Modal */}
-      <PrintModal
-        open={printModalOpen}
-        setOpen={handleClosePrintModal}
-        receipt={selectedReceipt}
-      />
       <ViewFeeModal
         open={viewModalOpen}
         onClose={() => setViewModalOpen(false)}

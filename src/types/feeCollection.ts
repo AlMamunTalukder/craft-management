@@ -60,3 +60,11 @@ export interface StudentTableRow {
   feesCount: number;
   overallStatus: string;
 }
+
+export interface FeeItem {
+  id: string;
+  feeType: string;
+  amount: number;
+  discount: number;
+  isMonthly: boolean;
+}

@@ -1,25 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FeeAdjustmentModal from "@/components/FeeAdjustmentModal";
 import CraftTable, { Column, RowAction } from "@/components/Table";
+import { StudentFeeProps } from "@/interface/student";
 import {
-  CheckCircle,
   Delete,
   Discount,
-  Download,
-  Edit,
-  History,
-  Visibility,
+  Visibility
 } from "@mui/icons-material";
-import { Box, Chip, Tooltip, Typography } from "@mui/material";
+import { Box, Chip, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import AddFeeModal from "./AddFeeModal";
-import BulkPaymentModal from "./BulkPaymentModal";
-import LateFeeCustomizationModal from "./LateFeeCustomizationModal";
-import PaymentModal from "./PaymentModal";
+import AddFeeModal from "./Fees/AddFeeModal";
 import FeeSummaryCards from "./FeeSummaryCards";
-import ViewFeeModal from "./ViewFeeModal"; // <-- import the new modal
-import { StudentFeeProps } from "@/interface/student";
+import PaymentModal from "./PaymentModal";
+import ViewFeeModal from "./ViewFeeModal";
 
 const PaidStudentFee = ({
   studentFees,
@@ -33,11 +26,8 @@ const PaidStudentFee = ({
 }: StudentFeeProps) => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [addFeeModalOpen, setAddFeeModalOpen] = useState(false);
-  const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
-  const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState<any>(null);
   const [filteredFees, setFilteredFees] = useState<any[]>([]);
-  const [bulkPaymentModalOpen, setBulkPaymentModalOpen] = useState(false);
   const [lateFeeSummary, setLateFeeSummary] = useState({
     totalLateFees: 0,
     totalCustomized: 0,
@@ -47,7 +37,7 @@ const PaidStudentFee = ({
   // State for view modal
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedFeeForView, setSelectedFeeForView] = useState<any>(null);
-
+  console.log('student paid fee check', studentFees)
   useEffect(() => {
     const paidFees = studentFees?.filter((fee) => fee?.status === "paid") || [];
     setFilteredFees(paidFees);
@@ -76,15 +66,11 @@ const PaidStudentFee = ({
     }
   }, [studentFees]);
 
-  const handleCustomizeLateFeeClick = (fee: any) => {
-    setSelectedFee(fee);
-    setCustomizationModalOpen(true);
-  };
+
 
   const handleViewClick = (fee: any) => {
     setSelectedFeeForView(fee);
     setViewModalOpen(true);
-    // Optionally still call onView if needed
     if (onView) onView(fee);
   };
 
@@ -95,54 +81,12 @@ const PaidStudentFee = ({
     if (refetch) refetch();
   };
 
-  const handleAdjustmentSuccess = async (adjustmentData: any) => {
-    try {
-      const response = await fetch(
-        "https://server.craftinternationalinstitute.com/api/v1/fee-adjustments",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(adjustmentData),
-        },
-      );
-
-      if (response.ok) {
-        alert("Adjustment applied successfully!");
-        setAdjustmentModalOpen(false);
-        if (refetch) {
-          refetch();
-        }
-      } else {
-        throw new Error("Failed to apply adjustment");
-      }
-    } catch (error) {
-      console.error("Error applying adjustment:", error);
-      alert("Failed to apply adjustment");
-    }
-  };
-
-  const handleCustomizationSuccess = () => {
-    if (refetch) {
-      refetch();
-    }
-  };
-
   const handleClosePaymentModal = () => {
     setPaymentModalOpen(false);
     setSelectedFee(null);
   };
 
-  const handleCloseAdjustmentModal = () => {
-    setAdjustmentModalOpen(false);
-    setSelectedFee(null);
-  };
 
-  const handleCloseCustomizationModal = () => {
-    setCustomizationModalOpen(false);
-    setSelectedFee(null);
-  };
 
   const handleAddFeeClick = () => {
     setAddFeeModalOpen(true);
@@ -191,6 +135,7 @@ const PaidStudentFee = ({
   const summary = calculateSummary();
 
   // Define columns for fee table with all fee information
+  // Define columns for fee table with all fee information including month and advance used
   const columns: Column[] = [
     {
       id: "feeType",
@@ -199,7 +144,18 @@ const PaidStudentFee = ({
       sortable: true,
       filterable: true,
     },
-
+    {
+      id: "month",
+      label: "Month",
+      minWidth: 100,
+      sortable: true,
+      filterable: true,
+      render: (row: any) => (
+        <Typography variant="body2">
+          {row.month || "N/A"}
+        </Typography>
+      ),
+    },
     {
       id: "amount",
       label: "Total Amount",
@@ -209,7 +165,24 @@ const PaidStudentFee = ({
       type: "number",
       format: (value: number) => `৳${value?.toLocaleString()}`,
     },
-
+    {
+      id: "advanceUsed",
+      label: "Advance Used",
+      minWidth: 120,
+      align: "right",
+      sortable: true,
+      type: "number",
+      format: (value: number) => `৳${value?.toLocaleString()}`,
+      render: (row: any) => (
+        <Typography
+          variant="body2"
+          color={row.advanceUsed > 0 ? "info.main" : "text.secondary"}
+          fontWeight={row.advanceUsed > 0 ? "bold" : "normal"}
+        >
+          {row.advanceUsed > 0 ? `৳${row.advanceUsed.toLocaleString()}` : "-"}
+        </Typography>
+      ),
+    },
     {
       id: "netAmount",
       label: "Net Amount",
@@ -260,7 +233,6 @@ const PaidStudentFee = ({
         </Typography>
       ),
     },
-
     {
       id: "paymentDate",
       label: "Payment Date",
@@ -423,31 +395,6 @@ const PaidStudentFee = ({
         open={addFeeModalOpen}
         setOpen={handleCloseAddFeeModal}
         student={student}
-      />
-
-      {/* Fee Adjustment Modal */}
-      <FeeAdjustmentModal
-        open={adjustmentModalOpen}
-        onClose={handleCloseAdjustmentModal}
-        fee={selectedFee}
-        onApplyAdjustment={handleAdjustmentSuccess}
-      />
-
-      {/* Late Fee Customization Modal */}
-      <LateFeeCustomizationModal
-        open={customizationModalOpen}
-        onClose={handleCloseCustomizationModal}
-        fee={selectedFee}
-        onSuccess={handleCustomizationSuccess}
-      />
-
-      {/* Bulk Payment Modal */}
-      <BulkPaymentModal
-        open={bulkPaymentModalOpen}
-        onClose={() => setBulkPaymentModalOpen(false)}
-        student={student}
-        fees={[]}
-        refetch={refetch}
       />
 
       {/* View Fee Modal */}

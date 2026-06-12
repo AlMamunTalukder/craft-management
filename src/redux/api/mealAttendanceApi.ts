@@ -13,6 +13,16 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             invalidatesTags: ["mealAttendance"],
         }),
 
+        // Bulk update attendance (multiple records at once)
+        bulkUpdateAttendance: build.mutation({
+            query: (data) => ({
+                url: "/meal-attendance/bulk",
+                method: "PUT",
+                data,
+            }),
+            invalidatesTags: ["mealAttendance"],
+        }),
+
         // Create single attendance
         createAttendance: build.mutation({
             query: (data) => ({
@@ -23,9 +33,17 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             invalidatesTags: ["mealAttendance"],
         }),
 
-        // Get all attendance records with pagination (NEW)
-        // src/redux/api/mealAttendanceApi.ts - getAllAttendanceRecords আপডেট করুন
+        // Update single attendance
+        updateAttendance: build.mutation({
+            query: ({ id, data }) => ({
+                url: `/meal-attendance/${id}`,
+                method: "PUT",
+                data,
+            }),
+            invalidatesTags: ["mealAttendance"],
+        }),
 
+        // Get all attendance records with pagination
         getAllAttendanceRecords: build.query({
             query: ({ page = 1, limit = 10, search = "", className = "", date = "", month = "", academicYear, sortColumn = "date", sortDirection = "desc" }) => ({
                 url: "/meal-attendance/all",
@@ -44,12 +62,22 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             }),
             providesTags: ["mealAttendance"],
         }),
+
+        // Get attendance by ID
+        getAttendanceById: build.query({
+            query: (id) => ({
+                url: `/meal-attendance/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "mealAttendance", id }],
+        }),
+
         // Get monthly attendance sheet by class
         getMonthlyAttendanceSheet: build.query({
             query: ({ className, month, academicYear }) => ({
                 url: "/meal-attendance/sheet",
                 method: "GET",
-                params: { class: className, month, academicYear },
+                params: { className, month, academicYear },
             }),
             providesTags: ["mealAttendance"],
         }),
@@ -59,7 +87,7 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             query: ({ className, month, academicYear }) => ({
                 url: "/meal-attendance/summary",
                 method: "GET",
-                params: { class: className, month, academicYear },
+                params: { className, month, academicYear },
             }),
             providesTags: ["mealAttendance"],
         }),
@@ -84,16 +112,6 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             providesTags: ["mealAttendance"],
         }),
 
-        // Get attendance by specific date
-        getAttendanceBySpecificDate: build.query({
-            query: ({ className, date, academicYear }) => ({
-                url: "/meal-attendance/specific-date",
-                method: "GET",
-                params: { className, date, academicYear },
-            }),
-            providesTags: ["mealAttendance"],
-        }),
-
         // Delete attendance record
         deleteAttendance: build.mutation({
             query: (id) => ({
@@ -108,12 +126,14 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
 // Export hooks
 export const {
     useBulkCreateAttendanceMutation,
+    useBulkUpdateAttendanceMutation,
     useCreateAttendanceMutation,
+    useUpdateAttendanceMutation,
     useGetAllAttendanceRecordsQuery,
+    useGetAttendanceByIdQuery,
     useGetMonthlyAttendanceSheetQuery,
     useGetMonthlySummaryQuery,
     useGetAttendanceByDateRangeQuery,
     useGetAttendanceByDateRangeForAllStudentsQuery,
-    useGetAttendanceBySpecificDateQuery,
     useDeleteAttendanceMutation,
 } = mealAttendanceApi;

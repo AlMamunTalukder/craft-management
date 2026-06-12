@@ -250,7 +250,7 @@ const LoginDashboard = () => {
       if (res?.success) {
         toast.success(
           res.message ||
-            `Welcome to Craft International Institute! Login Successful!`,
+          `Welcome to Craft International Institute! Login Successful!`,
         );
         router.push("/dashboard");
       } else {

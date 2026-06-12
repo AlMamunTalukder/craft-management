@@ -243,6 +243,7 @@ const StudentProfile = ({ params }: PageProps) => {
             studentFees={singleStudent?.data?.fees}
             student={singleStudent?.data}
           />
+          
         </TabPanel>
         <TabPanel value={tabValue} index={4}>
           <PaymentHistory singleStudent={singleStudent} />
