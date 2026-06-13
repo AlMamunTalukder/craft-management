@@ -150,28 +150,47 @@ export const subjects = [
   "Other",
 ];
 
-export const departments = [
-  "Science",
-  "Mathematics",
-  "Languages",
-  "Humanities",
-  "Arts",
-  "Physical Education",
-  "Computer Science",
-  "Administration",
-  "Support Staff",
+export const departments = ["hifz", "academic"];
+export const academicClassValues = [
+  "Pre_one",
+  "One",
+  "Two",
+  "Three",
+  "Four_boys",
+  "Four_girls",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
 ];
+export const hifzClassValues = ["Nurani", "Nazera", "Hifz", "Sunani"];
+export const classOrder = [
+  "Pre_one",
+  "One",
+  "Two",
+  "Three",
+  "Four_boys",
+  "Four_girls",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nurani",
+  "Nazera",
+  "Hifz",
+  "Sunani",
+];
+
 export const designations = [
-  "Principal",
-  "Vice Principal",
+  "Superintendent",
+  "Assistant Superintendent ",
+  "In-Charge ",
   "Head of Department",
   "Senior Teacher",
   "Teacher",
   "Assistant Teacher",
-  "Lab Assistant",
-  "Librarian",
-  "Counselor",
-  "Administrative Staff",
+  "Lab Assistant / Librarian",
+  "Administrative Staff"
 ];
 export const maritalStatuses = [
   "Single",
@@ -261,5 +280,46 @@ export const months = [
   "September",
   "October",
   "November",
-  "December"
+  "December",
+];
+
+export const departmentOptions = ["hifz", "academic", "nazera", "tajbid"];
+
+export const genderOptions = ["male", "female"];
+
+export const fatherProfessionOptions = [
+  "Engineer",
+  "Teacher",
+  "Business",
+  "Doctor",
+  "Farmer",
+  "Service",
+  "Lawyer",
+  "Other",
+];
+
+// Mother profession options
+export const motherProfessionOptions = [
+  "Housewife",
+  "Teacher",
+  "Doctor",
+  "Business",
+  "Service",
+  "Other",
+];
+
+export const classOption = [
+  "Pre_one",
+  "One",
+  "Tow",
+  "Three",
+  "Four_boys",
+  "Four_girls",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nazera",
+  "Hifz",
+  "Eight",
 ];

@@ -3,6 +3,7 @@ export const CATEGORY_OPTIONS = [
   { title: "Non-Residential" },
   { title: "Day Care" },
   { title: "Non-Residential One Meal" },
+  { title: "Residential No Meal" },
   { title: "Day Care One Meal" },
 ];
 

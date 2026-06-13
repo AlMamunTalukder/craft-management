@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseApi } from "@/redux/api/baseApi";
 
 const authApi = baseApi.injectEndpoints({
@@ -8,6 +9,9 @@ const authApi = baseApi.injectEndpoints({
         method: "POST",
         data,
       }),
+      transformResponse: (response: any) => {
+        return response;
+      },
     }),
   }),
 });

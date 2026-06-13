@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   useBulkPromoteEnrollmentsMutation,
@@ -45,7 +46,6 @@ interface PromotionModalProps {
 const PromotionModal: React.FC<PromotionModalProps> = ({
   open,
   onClose,
-  onSuccess,
   classOptions,
 }) => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -67,30 +67,28 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
     skip: !sourceClassId,
   });
 
+  console.log('eligible data promotion ', eligibleData)
+
+  // Filter out incomplete student records (missing required fields)
+  const getValidStudents = () => {
+    const students = eligibleData?.data?.students || [];
+    return students.filter((student: any) =>
+      student.studentId && student.studentName && student.studentIdentifier
+    );
+  };
+
   const getNextClass = (currentClassLabel: string): string => {
     const classOrder = [
-      "Hifz",
-      "Play",
-      "Nursery",
-      "KG",
-      "Class I",
-      "Class II",
-      "Class III",
-      "Class IV",
-      "Class V",
-      "Class VI",
-      "Class VII",
-      "Class VIII",
-      "Class IX",
-      "Class X",
-      "Alim First Year",
-      "Alim Second Year",
-      "Fazil First Year",
-      "Fazil Second Year",
-      "Fazil Third Year",
-      "Kamil First Year",
-      "Kamil Second Year",
-      "Kamil Third Year",
+      "Pre_one",
+      "One",
+      "Two",
+      "Three",
+      "Four_boys",
+      "Four_girls",
+      "Five",
+      "Six",
+      "Seven",
+      "Eight",
     ];
 
     const currentIndex = classOrder.indexOf(currentClassLabel);
@@ -116,9 +114,9 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
   }, [sourceClassId, classOptions]);
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const eligibleStudents = eligibleData?.data?.students || [];
+    const validStudents = getValidStudents();
     if (event.target.checked) {
-      setSelectedStudents(eligibleStudents.map((s: any) => s.studentId));
+      setSelectedStudents(validStudents.map((s: any) => s.studentId));
     } else {
       setSelectedStudents([]);
     }
@@ -164,7 +162,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
     }
 
     try {
-      // Show confirmation dialog
+
       const result = await Swal.fire({
         title: "Confirm Promotion",
         html: `Promote <strong>${selectedStudents.length}</strong> student(s) to target class?`,
@@ -172,16 +170,17 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
         showCancelButton: true,
         confirmButtonColor: "#1976d2",
         confirmButtonText: "Yes, Promote",
-        focusCancel: true, // Focus on cancel button by default
-        allowOutsideClick: false, // Prevent closing by clicking outside
-        allowEscapeKey: false, // Prevent closing by escape key
+        focusCancel: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
       });
 
       if (result.isConfirmed) {
         setLoading(true);
 
+        const validStudents = getValidStudents();
         const promotions = selectedStudents.map((studentId) => {
-          const studentData = eligibleData?.data?.students.find(
+          const studentData = validStudents.find(
             (s: any) => s.studentId === studentId
           );
 
@@ -210,7 +209,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
         setTargetClassId("");
         setSearchTerm("");
         onClose();
-        if (onSuccess) onSuccess();
+
       }
     } catch (error: any) {
       console.error("Promotion error:", error);
@@ -225,10 +224,11 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
   };
 
   const filteredStudents = React.useMemo(() => {
-    const students = eligibleData?.data?.students || [];
-    if (!searchTerm.trim()) return students;
+    const validStudents = getValidStudents();
+    if (!searchTerm.trim()) return validStudents;
+
     const term = searchTerm.toLowerCase();
-    return students.filter(
+    return validStudents.filter(
       (s: any) =>
         s.studentName.toLowerCase().includes(term) ||
         s.studentIdentifier.toLowerCase().includes(term)
@@ -244,6 +244,9 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
     setSearchTerm("");
     onClose();
   };
+  const totalStudents = eligibleData?.data?.students?.length || 0;
+  const validStudentsCount = getValidStudents().length;
+  const incompleteStudentsCount = totalStudents - validStudentsCount;
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
@@ -283,7 +286,12 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
                 color="textSecondary"
                 sx={{ ml: 1, mt: 1 }}
               >
-                Found: {eligibleData?.data?.students?.length} active students
+                Found: {validStudentsCount} active students
+                {incompleteStudentsCount > 0 && (
+                  <span style={{ color: 'orange', marginLeft: '8px' }}>
+                    ({incompleteStudentsCount} incomplete records skipped)
+                  </span>
+                )}
               </Typography>
             )}
           </Grid>
@@ -314,6 +322,11 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
             <Alert severity="info" sx={{ mb: 2 }}>
               Select a Source Class to load active students. Then select Target
               Class to promote them to. Session is auto-managed by system.
+              {incompleteStudentsCount > 0 && (
+                <span style={{ display: 'block', marginTop: '8px' }}>
+                  ⚠️ {incompleteStudentsCount} student(s) with incomplete data have been skipped from the list.
+                </span>
+              )}
             </Alert>
           </Grid>
 
@@ -324,7 +337,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
               label="Search Students"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              disabled={!sourceClassId || promoting || loading}
+              disabled={!sourceClassId || promoting || loading || validStudentsCount === 0}
               InputProps={{
                 startAdornment: <Search sx={{ mr: 1 }} />,
               }}
@@ -350,7 +363,11 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
                 </Box>
               ) : filteredStudents.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: "center" }}>
-                  <Typography>No students found in this class.</Typography>
+                  <Typography>
+                    {validStudentsCount === 0
+                      ? "No valid students found in this class. All records are incomplete."
+                      : "No students found matching your search."}
+                  </Typography>
                 </Box>
               ) : (
                 <TableContainer>
@@ -366,7 +383,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
                             checked={
                               filteredStudents.length > 0 &&
                               selectedStudents.length ===
-                                filteredStudents.length
+                              filteredStudents.length
                             }
                             onChange={handleSelectAll}
                             disabled={promoting || loading}
@@ -422,7 +439,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({
                             </TableCell>
                             <TableCell>
                               <Chip
-                                label={student.currentRoll}
+                                label={student.currentRoll || "Not assigned"}
                                 size="small"
                                 variant="outlined"
                               />

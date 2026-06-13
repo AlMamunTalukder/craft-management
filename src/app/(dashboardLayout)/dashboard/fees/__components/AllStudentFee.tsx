@@ -1,5 +1,4 @@
-// app/dashboard/fees/list/page.tsx (Updated)
-/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -18,73 +17,51 @@ import {
 } from "@mui/icons-material";
 import { Box, Chip, Container, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import FeeDetailsModal from "../__components/FeeDetailsModal";
 
 export default function AllStudentFee() {
-  const { data: feesData, isLoading, error } = useGetAllFeesQuery({});
+  const { data: feesData, isLoading, error, refetch } = useGetAllFeesQuery({});
   const [deleteFee] = useDeleteFeeMutation();
   const [selectedFee, setSelectedFee] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
+
+  const feeRecords = feesData?.data?.data || [];
+
 
   const handleViewFee = (row: any) => {
     setSelectedFee(row);
     setDetailsModalOpen(true);
   };
 
-  const handleApplyAdjustment = async (adjustmentData: any) => {
-    try {
-      const response = await fetch(
-        "http://localhost:5000/api/v1/fee-adjustments",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(adjustmentData),
-        }
-      );
-
-      if (response.ok) {
-        alert("Adjustment applied successfully!");
-        setAdjustmentModalOpen(false);
-        window.location.reload();
-      } else {
-        throw new Error("Failed to apply adjustment");
-      }
-    } catch (error) {
-      console.error("Error applying adjustment:", error);
-      alert("Failed to apply adjustment");
-    }
-  };
 
   const handleOpenAdjustment = (row: any) => {
     setSelectedFee(row);
     setAdjustmentModalOpen(true);
   };
 
+  const handleDeleteFee = async (id: string) => {
+    try {
+      const result = await deleteFee(id).unwrap();
+      if (result.success) {
+        toast.success("Fee deleted successfully");
+        refetch();
+      } else {
+        toast.error(result.message || "Failed to delete fee");
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to delete fee");
+    }
+  };
+
   const statsData = useMemo(() => {
-    const fees = feesData?.data?.data || [];
-    const totalFees = fees.reduce(
-      (sum: number, fee: any) => sum + (fee.amount || 0),
-      0
-    );
-    const totalPaid = fees.reduce(
-      (sum: number, fee: any) => sum + (fee.paidAmount || 0),
-      0
-    );
-    const totalDue = fees.reduce(
-      (sum: number, fee: any) => sum + (fee.dueAmount || 0),
-      0
-    );
-    const totalDiscount = fees.reduce(
-      (sum: number, fee: any) => sum + (fee.discount || 0),
-      0
-    );
-    const totalWaiver = fees.reduce(
-      (sum: number, fee: any) => sum + (fee.waiver || 0),
-      0
-    );
+    const fees = feeRecords;
+    const totalFees = fees.reduce((sum: number, fee: any) => sum + (fee.amount || 0), 0);
+    const totalPaid = fees.reduce((sum: number, fee: any) => sum + (fee.paidAmount || 0), 0);
+    const totalDue = fees.reduce((sum: number, fee: any) => sum + (fee.dueAmount || 0), 0);
+    const totalDiscount = fees.reduce((sum: number, fee: any) => sum + (fee.discount || 0), 0);
+    const totalWaiver = fees.reduce((sum: number, fee: any) => sum + (fee.waiver || 0), 0);
 
     return [
       {
@@ -113,7 +90,7 @@ export default function AllStudentFee() {
         subValue: `Discount: ৳${totalDiscount.toLocaleString()} | Waiver: ৳${totalWaiver.toLocaleString()}`,
       },
     ];
-  }, [feesData]);
+  }, [feeRecords]);
 
   const columns: Column[] = [
     {
@@ -132,16 +109,16 @@ export default function AllStudentFee() {
       filterable: true,
     },
     {
-      id: "month",
-      label: "Month",
-      minWidth: 100,
+      id: "feeType",
+      label: "Fee Type",
+      minWidth: 120,
       sortable: true,
       filterable: true,
     },
     {
-      id: "feeType",
-      label: "Fee Type",
-      minWidth: 120,
+      id: "month",
+      label: "Month",
+      minWidth: 100,
       sortable: true,
       filterable: true,
     },
@@ -159,8 +136,6 @@ export default function AllStudentFee() {
       minWidth: 90,
       align: "right" as const,
       sortable: true,
-      format: (value: number) =>
-        value > 0 ? `-৳${value?.toLocaleString()}` : "৳0",
       render: (row: any) => (
         <Typography color="error" variant="body2">
           {row.discount > 0 ? `-৳${row.discount.toLocaleString()}` : "৳0"}
@@ -173,8 +148,6 @@ export default function AllStudentFee() {
       minWidth: 90,
       align: "right" as const,
       sortable: true,
-      format: (value: number) =>
-        value > 0 ? `-৳${value?.toLocaleString()}` : "৳0",
       render: (row: any) => (
         <Typography color="error" variant="body2">
           {row.waiver > 0 ? `-৳${row.waiver.toLocaleString()}` : "৳0"}
@@ -195,7 +168,6 @@ export default function AllStudentFee() {
       minWidth: 100,
       align: "right" as const,
       sortable: true,
-      format: (value: number) => `৳${value?.toLocaleString() || "0"}`,
       render: (row: any) => (
         <Typography
           color={row.dueAmount > 0 ? "error" : "success"}
@@ -213,14 +185,8 @@ export default function AllStudentFee() {
       sortable: true,
       render: (row: any) => (
         <Chip
-          label={row.status}
-          color={
-            row.status === "paid"
-              ? "success"
-              : row.status === "partial"
-                ? "warning"
-                : "error"
-          }
+          label={row.status === "paid" ? "Paid" : row.status === "partial" ? "Partial" : "Unpaid"}
+          color={row.status === "paid" ? "success" : row.status === "partial" ? "warning" : "error"}
           size="small"
         />
       ),
@@ -252,7 +218,7 @@ export default function AllStudentFee() {
       icon: <Delete fontSize="small" />,
       onClick: (row: any) => {
         if (confirm("Are you sure you want to delete this fee record?")) {
-          deleteFee(row._id);
+          handleDeleteFee(row._id);
         }
       },
       color: "error" as const,
@@ -261,68 +227,31 @@ export default function AllStudentFee() {
 
   const bulkActions = [
     {
-      label: "Apply Bulk Discount",
-      icon: <Discount fontSize="small" />,
-      onClick: (selectedRows: any[]) => {
-        // Implement bulk discount functionality
-        console.log("Bulk discount for:", selectedRows);
-      },
-    },
-    {
       label: "Delete Selected",
       icon: <Delete fontSize="small" />,
       onClick: (selectedRows: any[]) => {
-        if (
-          confirm(
-            `Are you sure you want to delete ${selectedRows.length} records?`
-          )
-        ) {
-          selectedRows.forEach((row) => deleteFee(row._id));
+        if (confirm(`Are you sure you want to delete ${selectedRows.length} records?`)) {
+          selectedRows.forEach((row) => handleDeleteFee(row._id));
         }
       },
       color: "error" as const,
     },
   ];
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
-  const handleExport = () => {
-    console.log("Export all data");
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const tableData = feesData?.data?.data || [];
 
   return (
     <Box>
       <Container maxWidth="xl">
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h3" sx={{ fontWeight: "bold" }}>
-            Fee Management
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            Track and manage all student fee payments with discount/waiver
-            support
-          </Typography>
-        </Box>
+
 
         <StatsGrid stats={statsData} />
 
         <CraftTable
           title="Fee Records"
-          subtitle="Manage fees with discount and waiver support"
           columns={columns}
-          data={tableData}
+          data={feeRecords}
           loading={isLoading}
           error={error ? "Failed to load fee data" : undefined}
-          onRefresh={handleRefresh}
-          onExport={handleExport}
-          onPrint={handlePrint}
           rowActions={rowActions}
           bulkActions={bulkActions}
           selectable={true}
@@ -332,13 +261,11 @@ export default function AllStudentFee() {
           pagination={true}
           emptyStateMessage="No fee records found"
           idField="_id"
-          height="600px"
           stickyHeader={true}
           hover={true}
           showToolbar={true}
         />
 
-        {/* Fee Details Modal */}
         <FeeDetailsModal
           open={detailsModalOpen}
           setOpen={setDetailsModalOpen}
@@ -346,12 +273,10 @@ export default function AllStudentFee() {
           onEdit={() => console.log("Edit fee")}
         />
 
-        {/* Fee Adjustment Modal */}
         <FeeAdjustmentModal
           open={adjustmentModalOpen}
           onClose={() => setAdjustmentModalOpen(false)}
           fee={selectedFee}
-          onApplyAdjustment={handleApplyAdjustment}
         />
       </Container>
     </Box>

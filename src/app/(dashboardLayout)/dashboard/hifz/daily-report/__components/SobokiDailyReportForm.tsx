@@ -16,7 +16,7 @@ import { useAcademicOption } from "@/hooks/useAcademicOption";
 import CraftForm from "@/components/Forms/Form";
 import { ReportHeader } from "@/components/common/ReportHeader";
 import ReportTableRow from "@/components/tables/Daily/ReportTableRow";
-import { tableStyle } from "@/style/customeStyle";
+import { tableStyle } from "@/style/customStyle";
 
 import { SubmitButton } from "@/components/common/SubmitButton";
 
@@ -48,8 +48,6 @@ function SobokiDailyReportForm({ studentName, reportDate, month, id }: any) {
   const [updateSobokiReport] = useUpdateSobokiReportMutation();
   const { data: singleData, isLoading: singleReportLoading } =
     useGetSingleSobokiReportQuery(id);
-
-  console.log(singleData);
 
   const handleSubmit = async (formData: any) => {
     try {

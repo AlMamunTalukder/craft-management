@@ -63,8 +63,6 @@ import {
 } from "@mui/material";
 import { format } from "date-fns";
 import React, { useEffect, useMemo, useState } from "react";
-
-// Styled components for enhanced design
 const StyledTableHead = styled(TableHead)(({ theme }) => ({
   "& .MuiTableCell-head": {
     backgroundColor: theme.palette.primary.main,
@@ -1299,8 +1297,10 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                               </Tooltip>
                               <Menu
                                 anchorEl={actionMenuAnchor}
+                                // CRITICAL FIX: Use idField instead of hardcoded 'id'
                                 open={Boolean(
-                                  actionMenuAnchor && currentRow?.id === row.id,
+                                  actionMenuAnchor &&
+                                    currentRow?.[idField] === row?.[idField],
                                 )}
                                 onClose={handleActionMenuClose}
                                 PaperProps={{

@@ -1,51 +1,48 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// middleware.ts
 import { jwtDecode } from "jwt-decode";
+import { NextRequest, NextResponse } from "next/server";
 
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-
-const AuthRoutes = ["/"];
-
-const roleBasedPrivateRoutes = {
-  admin: [/^\/dashboard(\/.*)?$/],
-  teacher: [/^\/dashboard(\/.*)?$/],
-  super_admin: [/^\/dashboard(\/.*)?$/],
-  accountant: [/^\/dashboard(\/.*)?$/],
-};
-
-type Role = keyof typeof roleBasedPrivateRoutes;
+const AuthRoutes = ["/", "/login", "/register"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get("craft-token")?.value ?? null;
-  if (!accessToken) {
-    if (AuthRoutes.includes(pathname)) {
-      return NextResponse.next();
-    } else {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+
+  const accessToken = request.cookies.get("accessToken")?.value;
+
+  if (AuthRoutes.includes(pathname)) {
+    return NextResponse.next();
   }
 
-  let decodedData = null;
-  try {
-    decodedData = jwtDecode(accessToken) as any;
-  } catch (error: any) {
+  if (!accessToken) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  const role = decodedData?.role as Role;
+  try {
+    const decoded = jwtDecode(accessToken);
+    const role = (decoded as any)?.role;
 
-  if (role && roleBasedPrivateRoutes[role]) {
-    const routes = roleBasedPrivateRoutes[role];
-    if (routes.some((route) => route.test(pathname))) {
+    const allowedRoutes: Record<string, RegExp[]> = {
+      super_admin: [/^\/dashboard(\/.*)?$/],
+      admin: [/^\/dashboard(\/.*)?$/],
+      teacher: [/^\/dashboard(\/.*)?$/],
+      accountant: [/^\/dashboard(\/.*)?$/],
+      student: [/^\/dashboard(\/.*)?$/],
+      class_teacher: [/^\/dashboard(\/.*)?$/],
+      super_visor: [/^\/dashboard(\/.*)?$/],
+    };
+
+    if (allowedRoutes[role]?.some((route) => route.test(pathname))) {
       return NextResponse.next();
     }
-  }
 
-  return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
+  } catch (error) {
+    console.error("Invalid token:", error);
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 }
 
 export const config = {
-  matcher: ["/login", "/register", "/profile/:path*", "/dashboard/:path*"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|public|img).*)"],
 };

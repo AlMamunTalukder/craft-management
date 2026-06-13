@@ -2,7 +2,6 @@ import { baseApi } from "./baseApi";
 
 export const feedbackApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // Create feedback
     createFeedback: build.mutation({
       query: (data) => ({
         url: "/feedback",
@@ -11,8 +10,6 @@ export const feedbackApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["feedback"],
     }),
-
-    // Get all feedbacks
     getAllFeedbacks: build.query({
       query: ({
         limit,
@@ -37,8 +34,6 @@ export const feedbackApi = baseApi.injectEndpoints({
       }),
       providesTags: ["feedback"],
     }),
-
-    // Get single feedback by ID
     getSingleFeedback: build.query({
       query: (id: string) => ({
         url: `/feedback/${id}`,
@@ -46,8 +41,6 @@ export const feedbackApi = baseApi.injectEndpoints({
       }),
       providesTags: ["feedback"],
     }),
-
-    // Update feedback
     updateFeedback: build.mutation({
       query: ({ id, data }) => ({
         url: `/feedback/${id}`,
@@ -56,8 +49,6 @@ export const feedbackApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["feedback"],
     }),
-
-    // Delete feedback
     deleteFeedback: build.mutation({
       query: (id: string) => ({
         url: `/feedback/${id}`,
