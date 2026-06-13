@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -22,11 +23,12 @@ export const BootstrapDialog = styled(Dialog)(({ theme }) => ({
 
 type TModalProps = {
   open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpen: any;
   title: string;
   children: React.ReactNode;
   sx?: SxProps;
   size?: "sm" | "md" | "lg" | "xl";
+  onClose?: () => void;
 };
 
 export default function CraftModal({
@@ -36,14 +38,15 @@ export default function CraftModal({
   children,
   sx,
   size = "lg",
+  onClose,
 }: TModalProps) {
   const theme = useTheme();
 
   const handleClose = () => {
     setOpen(false);
+    if (onClose) onClose();
   };
 
-  // Size mapping
   const sizeMap = {
     sm: "400px",
     md: "600px",
@@ -51,7 +54,6 @@ export default function CraftModal({
     xl: "1200px",
   };
 
-  // Default styles
   const modalStyles = {
     paper: {
       background: theme.palette.background.paper,

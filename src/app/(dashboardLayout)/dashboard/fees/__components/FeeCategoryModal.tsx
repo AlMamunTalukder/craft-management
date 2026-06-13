@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -16,7 +17,8 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useFormContext } from "react-hook-form";
 
 import CraftAutoComplete from "@/components/Forms/AutoComplete";
 import CraftIntAutoCompleteWithIcon from "@/components/Forms/AutocompleteWithIcon";
@@ -29,13 +31,29 @@ import {
   useGetSingleFeeCategoryQuery,
   useUpdateFeeCategoryMutation,
 } from "@/redux/api/feeCategoryApi";
-import { buttonStyle, inputStyle } from "@/style/customeStyle";
-import { useState } from "react";
+import { buttonStyle, inputStyle } from "@/style/customStyle";
 import toast from "react-hot-toast";
 import { FieldValues } from "react-hook-form";
 import { CATEGORY_OPTIONS, FEE_TYPE_OPTIONS } from "@/options/feeCategory";
 
-const FeeItemsField = ({ feeItems, onAdd, onRemove }: any) => {
+// ─── Types ────────────────────────────────────────────────────────────────────
+type FeeItem = {
+  tempId?: number;
+  feeType: { title: string }[];
+  amount: string;
+  _id?: string;
+};
+
+// ─── FeeItemsField ────────────────────────────────────────────────────────────
+const FeeItemsField = ({
+  feeItems,
+  onAdd,
+  onRemove,
+}: {
+  feeItems: FeeItem[];
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+}) => {
   return (
     <Grid item xs={12}>
       <Paper
@@ -76,9 +94,9 @@ const FeeItemsField = ({ feeItems, onAdd, onRemove }: any) => {
             No fee items added.
           </Typography>
         ) : (
-          feeItems.map((item: any, index: number) => (
+          feeItems.map((item: FeeItem, index: number) => (
             <Box
-              key={item.tempId || index}
+              key={item.tempId || item._id || index}
               sx={{
                 mb: 2,
                 p: 2,
@@ -111,21 +129,20 @@ const FeeItemsField = ({ feeItems, onAdd, onRemove }: any) => {
                     placeholder="Enter amount"
                   />
                 </Grid>
+
                 <Grid
                   item
                   xs={12}
                   sm={2}
                   sx={{ display: "flex", justifyContent: "center" }}
                 >
-                  {feeItems.length > 1 && (
-                    <IconButton
-                      onClick={() => onRemove(index)}
-                      color="error"
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
+                  <IconButton
+                    onClick={() => onRemove(index)}
+                    color="error"
+                    size="small"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                 </Grid>
               </Grid>
             </Box>
@@ -136,76 +153,240 @@ const FeeItemsField = ({ feeItems, onAdd, onRemove }: any) => {
   );
 };
 
+// ─── FeeCategoryFormInner ─────────────────────────────────────────────────────
+function FeeCategoryFormInner({
+  id,
+  setOpen,
+  feeItems,
+  setFeeItems,
+  classOptions,
+  isSubmitting,
+  isLoading,
+}: any) {
+  const { setValue, getValues } = useFormContext();
+  const totalLoading = isLoading || isSubmitting;
+
+  const handleAddFeeItem = () => {
+    const newItem: FeeItem = { tempId: Date.now(), feeType: [], amount: "" };
+    const updated = [...feeItems, newItem];
+    setFeeItems(updated);
+    setValue("feeItems", updated, { shouldDirty: true });
+  };
+
+  const handleRemoveFeeItem = (index: number) => {
+    const currentRHFItems = getValues("feeItems") || [];
+    const updatedRHFItems = currentRHFItems.filter((_: any, i: number) => i !== index);
+    const updatedStateItems = feeItems.filter((_: any, i: number) => i !== index);
+    setFeeItems(updatedStateItems);
+    setValue("feeItems", updatedRHFItems, { shouldDirty: true, shouldValidate: true });
+  };
+
+  return (
+    <Box>
+      <Grid container spacing={3}>
+        {/* Class selector */}
+        <Grid item xs={6} sm={6}>
+          <CraftIntAutoCompleteWithIcon
+            name="classes"
+            label={
+              <span>
+                Class{!id && "es"} <span style={{ color: "red" }}>*</span>
+                {!id && (
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                    (Select multiple for multiple classes)
+                  </Typography>
+                )}
+              </span>
+            }
+            placeholder={id ? "Select Class" : "Select Classes"}
+            options={classOptions}
+            freeSolo
+            fullWidth
+            icon={<Class color="primary" />}
+            sx={inputStyle}
+            multiple={!id}
+          />
+        </Grid>
+
+        {/* Category selector */}
+        <Grid item xs={12} sm={6}>
+          <CraftAutoComplete
+            fullWidth
+            label="Category"
+            name="category"
+            options={CATEGORY_OPTIONS}
+            sx={inputStyle}
+            placeholder="Select category"
+          />
+        </Grid>
+
+        {/* Fee Items */}
+        <FeeItemsField
+          feeItems={feeItems}
+          onAdd={handleAddFeeItem}
+          onRemove={handleRemoveFeeItem}
+        />
+      </Grid>
+
+      {/* Action Buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          justifyContent: "flex-end",
+          pt: 3,
+          mt: 3,
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Button
+          type="button"
+          variant="outlined"
+          onClick={() => setOpen(false)}
+          disabled={totalLoading}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          endIcon={
+            totalLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <SaveIcon />
+            )
+          }
+          sx={buttonStyle}
+          disabled={totalLoading}
+        >
+          {totalLoading ? "Saving..." : id ? "Update" : "Save"}
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+// ─── Error Message Extractor Helper ─────────────────────────────────────────
+const extractErrorMessage = (error: any): string => {
+  console.error("Full error object:", error);
+
+  // Check if error has data property (coming from your axios interceptor)
+  if (error?.data) {
+    // If data is a string, return it directly
+    if (typeof error.data === 'string') {
+      return error.data;
+    }
+    // If data has message property
+    if (error.data?.message) {
+      return error.data.message;
+    }
+    // If data has errorSources array
+    if (error.data?.errorSources && Array.isArray(error.data.errorSources)) {
+      return error.data.errorSources[0]?.message || error.data.message || "Something went wrong!";
+    }
+  }
+
+  // Check for error object structure from RTK Query
+  if (error?.error) {
+    if (typeof error.error === 'string') {
+      return error.error;
+    }
+    if (error.error?.data) {
+      if (typeof error.error.data === 'string') {
+        return error.error.data;
+      }
+      if (error.error.data?.message) {
+        return error.error.data.message;
+      }
+    }
+  }
+
+  // Check for message property
+  if (error?.message) {
+    return error.message;
+  }
+
+  // Check for status and data from axios error
+  if (error?.status && error?.data) {
+    return typeof error.data === 'string' ? error.data : (error.data?.message || "Something went wrong!");
+  }
+
+  // Fallback
+  return "Something went wrong!";
+};
+
+// ─── FeeCategoryModal ─────────────────────────────────────────────────────────
 export default function FeeCategoryModal({ open, setOpen, id }: any) {
   const [createFeeCategory] = useCreateFeeCategoryMutation();
   const [updateFeeCategory] = useUpdateFeeCategoryMutation();
+
   const { data: singleFee, isLoading } = useGetSingleFeeCategoryQuery(id, {
     skip: !id,
   });
+
   const { classOptions } = useAcademicOption();
 
-  const [feeItems, setFeeItems] = useState<
-    Array<{ tempId: number; feeType: any[]; amount: string }>
-  >([{ tempId: Date.now(), feeType: [], amount: "" }]);
+  const [feeItems, setFeeItems] = useState<FeeItem[]>([
+    { tempId: Date.now(), feeType: [], amount: "" },
+  ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // ─── Normalize feeType ────────────────────────────────────────────────────
   const normalizeFeeType = (feeTypeData: any): string => {
     if (!feeTypeData) return "";
     if (typeof feeTypeData === "string") return feeTypeData;
     if (Array.isArray(feeTypeData)) {
-      if (feeTypeData.length > 0 && feeTypeData[0]?.title) {
-        return feeTypeData[0].title;
-      }
-      if (feeTypeData.length > 0 && typeof feeTypeData[0] === "string") {
-        return feeTypeData[0];
-      }
+      if (feeTypeData[0]?.title) return feeTypeData[0].title;
+      if (typeof feeTypeData[0] === "string") return feeTypeData[0];
       return "";
     }
-    if (feeTypeData?.title) {
-      return feeTypeData.title;
-    }
+    if (feeTypeData?.title) return feeTypeData.title;
     return "";
   };
 
-  // Get single class value for update mode
-  const getSingleClassValue = () => {
-    if (id && singleFee?.data) {
-      const classOption = classOptions.find(
+  // ─── Default Values ───────────────────────────────────────────────────────
+  const defaultValues = useMemo(() => {
+    if (id && singleFee?.data && classOptions?.length > 0) {
+      // Find matching class option by label (className from backend)
+      const matchedClass = classOptions.find(
         (option: any) => option.label === singleFee.data.className
       );
-      return classOption ? [classOption] : [];
-    }
-    return [];
-  };
 
-  const defaultValues = useMemo(() => {
-    if (id && singleFee?.data) {
-      const backendFeeItems = singleFee.data.feeItems?.map((item: any) => ({
+      // Build fee items from backend data
+      const backendFeeItems: FeeItem[] = singleFee.data.feeItems?.map((item: any) => ({
+        tempId: Date.now() + Math.random(),
         feeType: item.feeType ? [{ title: item.feeType }] : [],
         amount: item.amount?.toString() || "",
-      })) || [{ feeType: [], amount: "" }];
+        _id: item._id,
+      })) || [{ tempId: Date.now(), feeType: [], amount: "" }];
 
       return {
-        classes: getSingleClassValue(), // For update, use single class
+        classes: matchedClass ?? null,
         category: singleFee.data.categoryName
           ? [{ title: singleFee.data.categoryName }]
           : [],
         feeItems: backendFeeItems,
       };
     }
+
+    // ✅ CREATE MODE
     return {
-      classes: [], // Multiple classes selection for create
+      classes: [],
       category: [],
-      feeItems: [{ feeType: [], amount: "" }],
+      feeItems: [{ tempId: Date.now(), feeType: [], amount: "" }],
     };
   }, [id, singleFee, classOptions]);
 
+  // ─── Sync feeItems state when data loads ──────────────────────────────────
   useEffect(() => {
     if (id && singleFee?.data) {
-      const backendFeeItems = singleFee.data.feeItems?.map((item: any) => ({
+      const backendFeeItems: FeeItem[] = singleFee.data.feeItems?.map((item: any) => ({
         tempId: Date.now() + Math.random(),
         feeType: item.feeType ? [{ title: item.feeType }] : [],
         amount: item.amount?.toString() || "",
+        _id: item._id,
       })) || [{ tempId: Date.now(), feeType: [], amount: "" }];
       setFeeItems(backendFeeItems);
     } else if (!id && open) {
@@ -213,127 +394,137 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
     }
   }, [id, singleFee, open]);
 
+  // ─── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (data: FieldValues) => {
-    // Validation for class selection
-    if (!data.classes || data.classes.length === 0) {
-      return toast.error("Please select at least one class");
+    // Validate class
+    if (!data.classes || (Array.isArray(data.classes) && data.classes.length === 0)) {
+      toast.error("Please select at least one class");
+      return;
     }
-
-    // Validation for category
+    // Validate category
     if (!data.category || data.category.length === 0) {
-      return toast.error("Please select a category");
+      toast.error("Please select a category");
+      return;
     }
-
-    // Validation for fee items
+    // Validate fee items exist
     if (!data.feeItems || data.feeItems.length === 0) {
-      return toast.error("Please add at least one fee item");
+      toast.error("Please add at least one fee item");
+      return;
     }
 
-    // Process and validate fee items
-    const validFeeItems = data.feeItems.filter((item: any) => {
-      const feeTypeValue = normalizeFeeType(item.feeType);
-      const amountValue = item.amount;
-      const isValid =
-        feeTypeValue &&
-        feeTypeValue.trim() !== "" &&
-        amountValue !== "" &&
-        !isNaN(Number(amountValue)) &&
-        Number(amountValue) > 0;
-      return isValid;
-    });
+    // Build valid fee items
+    const validFeeItems = data.feeItems
+      .map((item: any, index: number) => {
+        const feeTypeValue = normalizeFeeType(item.feeType);
+        if (!feeTypeValue || feeTypeValue.trim() === "") {
+          toast.error(`Please select fee type for item ${index + 1}`);
+          return null;
+        }
+
+        const amountValue = Number(item.amount);
+        if (!item.amount || isNaN(amountValue) || amountValue <= 0) {
+          toast.error(`Please enter valid amount for ${feeTypeValue || `Item ${index + 1}`}`);
+          return null;
+        }
+
+        return {
+          feeType: feeTypeValue,
+          amount: amountValue,
+          ...(item._id && { _id: item._id }),
+        };
+      })
+      .filter(Boolean);
 
     if (validFeeItems.length === 0) {
       toast.error("Please add valid fee items");
       return;
     }
 
-    // Check for duplicate fee types
-    const feeTypeSet = new Set();
-    const hasDuplicates = validFeeItems.some((item: any) => {
-      const feeTypeValue = normalizeFeeType(item.feeType);
-      if (feeTypeSet.has(feeTypeValue)) {
-        toast.error(`Duplicate fee type: ${feeTypeValue}`);
-        return true;
+    // Check duplicates
+    const feeTypeSet = new Set<string>();
+    for (const item of validFeeItems) {
+      if (feeTypeSet.has(item.feeType)) {
+        toast.error(`Duplicate fee type: ${item.feeType}`);
+        return;
       }
-      feeTypeSet.add(feeTypeValue);
-      return false;
-    });
+      feeTypeSet.add(item.feeType);
+    }
 
-    if (hasDuplicates) return;
-
-    // Get category name
     const categoryName = data.category[0]?.title || normalizeFeeType(data.category);
 
-    // Prepare fee items data
-    const feeItemsData = validFeeItems.map((item: any) => ({
-      feeType: normalizeFeeType(item.feeType),
-      amount: Number(item.amount),
-    }));
+    // Parse className correctly for both modes
+    const classesRaw = data.classes;
+    const classNames: string[] = Array.isArray(classesRaw)
+      ? classesRaw.map((cls: any) => cls.label || cls).filter(Boolean)
+      : classesRaw?.label
+        ? [classesRaw.label]
+        : typeof classesRaw === "string"
+          ? [classesRaw]
+          : [];
+
+    if (classNames.length === 0) {
+      toast.error("Please select a valid class");
+      return;
+    }
 
     setIsSubmitting(true);
+
     try {
       if (id) {
-        // Update mode - single class
-        const classNames = data.classes.map((cls: any) => cls.label);
-        if (classNames.length !== 1) {
-          toast.error("Update mode supports only one class");
-          return;
-        }
-
+        // ── UPDATE ──────────────────────────────────────────────────────────
         const submitData = {
           categoryName,
           className: classNames[0],
-          feeItems: feeItemsData,
+          feeItems: validFeeItems,
         };
 
         const res = await updateFeeCategory({ id, data: submitData }).unwrap();
+
         if (res?.success) {
           toast.success(res.message || "Updated successfully!");
           setOpen(false);
+        } else {
+          toast.error(res?.message || "Update failed!");
         }
       } else {
-        // Create mode - multiple classes
-        const classNames = data.classes.map((cls: any) => cls.label);
-
-        // Create array of fee categories for each class
+        // ── CREATE ──────────────────────────────────────────────────────────
+        // Send all classes at once as array
         const feeCategoriesData = classNames.map((className: string) => ({
           categoryName,
           className,
-          feeItems: feeItemsData,
+          feeItems: validFeeItems.map((item: any) => ({
+            feeType: item.feeType,
+            amount: item.amount,
+          })),
         }));
 
+        console.log("Create payload:", feeCategoriesData);
+
         const res = await createFeeCategory(feeCategoriesData).unwrap();
+
         if (res?.success) {
-          const message = classNames.length > 1
-            ? `${classNames.length} fee categories created successfully!`
-            : "Fee category created successfully!";
-          toast.success(message);
+          toast.success(
+            classNames.length > 1
+              ? `${classNames.length} fee categories created successfully!`
+              : "Fee category created successfully!"
+          );
           setOpen(false);
+        } else {
+          toast.error(res?.message || "Creation failed!");
         }
       }
-    } catch (err: any) {
-      console.error("Submission error:", err);
-      toast.error(err?.data?.message || "Failed to save!");
+    } catch (error: any) {
+      console.error("Submission error:", error);
+
+      //  Extract and show the actual error message from the response
+      const errorMessage = extractErrorMessage(error);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleAddFeeItem = () => {
-    const newFeeItem = { tempId: Date.now(), feeType: [], amount: "" };
-    setFeeItems([...feeItems, newFeeItem]);
-  };
-
-  const handleRemoveFeeItem = (index: number) => {
-    if (feeItems.length > 1) {
-      const newFeeItems = [...feeItems];
-      newFeeItems.splice(index, 1);
-      setFeeItems(newFeeItems);
-    }
-  };
-
   const title = id ? "Update Fee Category" : "Add New Fee Category";
-  const totalLoading = isLoading || isSubmitting;
 
   return (
     <CraftModal open={open} setOpen={setOpen} title={title} size="lg">
@@ -352,105 +543,18 @@ export default function FeeCategoryModal({ open, setOpen, id }: any) {
         <CraftForm
           onSubmit={handleSubmit}
           defaultValues={defaultValues}
-          key={`${id || "create"}-${open}`}
+          key={`${id ?? "create"}-${open}-${singleFee ? "loaded" : "empty"}-${classOptions?.length ?? 0}`}
         >
-          <Box>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={id ? 12 : 6}>
-                <CraftIntAutoCompleteWithIcon
-                  name="classes"
-                  label={
-                    <span>
-                      Class{!id && "es"} <span style={{ color: "red" }}>*</span>
-                      {!id && <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                        (Select multiple for multiple classes)
-                      </Typography>}
-                    </span>
-                  }
-                  placeholder={id ? "Select Class" : "Select Classes"}
-                  options={classOptions}
-                  fullWidth
-                  icon={<Class color="primary" />}
-                  sx={inputStyle}
-                  multiple={!id} // Allow multiple selection only in create mode
-                />
-              </Grid>
-
-              {!id && (
-                <Grid item xs={12} sm={6}>
-                  <CraftAutoComplete
-                    fullWidth
-                    label="Category"
-                    name="category"
-                    margin="none"
-                    options={CATEGORY_OPTIONS}
-                    sx={inputStyle}
-                    placeholder="Select category"
-                  />
-                </Grid>
-              )}
-
-              {id && (
-                <Grid item xs={12} sm={6}>
-                  <CraftAutoComplete
-                    fullWidth
-                    label="Category"
-                    name="category"
-                    margin="none"
-                    options={CATEGORY_OPTIONS}
-                    sx={inputStyle}
-                    placeholder="Select category"
-                  />
-                </Grid>
-              )}
-
-              <FeeItemsField
-                feeItems={feeItems}
-                onAdd={handleAddFeeItem}
-                onRemove={handleRemoveFeeItem}
-              />
-            </Grid>
-
-            <Box
-              sx={{
-                display: "flex",
-                gap: 2,
-                justifyContent: "flex-end",
-                pt: 3,
-                mt: 3,
-                borderTop: "1px solid",
-                borderColor: "divider",
-              }}
-            >
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={() => setOpen(false)}
-                disabled={totalLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                endIcon={
-                  totalLoading ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : (
-                    <SaveIcon />
-                  )
-                }
-                sx={buttonStyle}
-                disabled={totalLoading}
-              >
-                {totalLoading
-                  ? "Saving..."
-                  : id
-                    ? "Update"
-                    : "Save"}
-              </Button>
-            </Box>
-          </Box>
+          <FeeCategoryFormInner
+            id={id}
+            open={open}
+            setOpen={setOpen}
+            feeItems={feeItems}
+            setFeeItems={setFeeItems}
+            classOptions={classOptions}
+            isSubmitting={isSubmitting}
+            isLoading={isLoading}
+          />
         </CraftForm>
       )}
     </CraftModal>

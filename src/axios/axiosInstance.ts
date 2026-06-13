@@ -1,60 +1,97 @@
-import { authKey } from "@/constant/authkey";
-import { getNewAccessToken } from "@/services/auth.services";
-import { setAccessToken } from "@/services/setAccessToken";
-import { IGenericErrorResponse, ResponseSuccessType } from "@/types";
-import { getFromLocalStorage, setToLocalStorage } from "@/utils/local.storage";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { IGenericErrorResponse } from "@/types";
 import axios from "axios";
 
-const instance = axios.create();
-instance.defaults.headers.post["Content-Type"] = "application/json";
-instance.defaults.headers["Accept"] = "application/json";
-instance.defaults.timeout = 60000;      
-// Add a request interceptor
+const instance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_BASE_API_URL,
+  withCredentials: true,
+  timeout: 60000,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
+
 instance.interceptors.request.use(
   function (config) {
-    const accessToken = getFromLocalStorage(authKey);
-   
-    if (accessToken) {
-      config.headers.Authorization = accessToken;
-    }
     return config;
   },
   function (error) {
-    // Do something with request error
     return Promise.reject(error);
-  }
+  },
 );
 
-// Add a response interceptor
 instance.interceptors.response.use(
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //@ts-ignore
   function (response) {
-    const responseObject: ResponseSuccessType = {
-      data: response?.data,
+    const cookies = response.headers["set-cookie"];
+    if (cookies) {
+    }
+
+    const responseObject: any = {
+      data: response?.data || response?.data,
       meta: response?.data?.meta,
+      success: response?.data?.success,
+      message: response?.data?.message,
     };
     return responseObject;
   },
   async function (error) {
-    const config = error.config;
-    if (error?.response?.status === 500 && !config.sent) {
-      config.sent = true;
-      const response = await getNewAccessToken();
-      const accessToken = response?.data?.accessToken;
-      config.headers["Authorization"] = accessToken;
-      setToLocalStorage(authKey, accessToken);
-      setAccessToken(accessToken);
-      return instance(config);
-    } else {
-      const responseObject: IGenericErrorResponse = {
-        statusCode: error?.response?.data?.statusCode || 500,
-        message: error?.response?.data?.message || "Something went wrong!!!",
-        errorMessages: error?.response?.data?.message,
-      };
-      return responseObject;
+    console.error("Response error:", error.response?.status);
+
+    const originalRequest = error.config;
+
+    if (error?.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => instance(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await instance.post("/auth/refresh-token", {});
+        processQueue(null);
+        return instance(originalRequest);
+      } catch (refreshError: any) {
+        processQueue(refreshError);
+        if (typeof window !== "undefined") {
+          window.location.href = "/";
+        }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
-  }
+    const responseObject: IGenericErrorResponse = {
+      statusCode: error?.response?.data?.statusCode || 500,
+      message: error?.response?.data?.message || "Something went wrong!!!",
+      errorMessages: error?.response?.data?.message,
+    };
+    return Promise.reject(responseObject);
+  },
 );
 
 export { instance };

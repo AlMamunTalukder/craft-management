@@ -30,20 +30,13 @@ import {
 import { useState } from "react";
 import PaymentHistory from "./PaymentHistory";
 import ReceiptHistory from "./ReceiptHistory";
-import StudentFee from "./StudentFee";
 import StudentOverview from "./StudentOverview";
 import { getStatusColor } from "./Utils";
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
+import DueStudentFee from "./DueStudentFee";
+import PaidStudentFee from "./PaidStudentFee";
+import { PageProps, TabPanelProps } from "@/interface/student";
+import { LoadingState } from "@/components/common/LoadingState";
+import StudentMealAttendance from "./StudentMealAttendance";
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
@@ -65,11 +58,15 @@ const StudentProfile = ({ params }: PageProps) => {
   const { id } = params;
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
-  const { data: singleStudent } = useGetSingleStudentQuery({ id });
+  const { data: singleStudent, isLoading } = useGetSingleStudentQuery({ id });
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
+  if (isLoading) {
+    return <LoadingState />;
+  }
 
+  console.log('meal atttendance', singleStudent)
   return (
     <Container maxWidth="xl" sx={{ p: { xs: "4px" } }}>
       <Card sx={{ mb: 3, overflow: "visible" }}>
@@ -219,8 +216,10 @@ const StudentProfile = ({ params }: PageProps) => {
           >
             <Tab icon={<Info />} label="Overview" />
             <Tab icon={<Book />} label="Receipt History" />
-            <Tab icon={<Payment />} label="Fees" />
+            <Tab icon={<Payment />} label="Paid Fees" />
+            <Tab icon={<Payment />} label="Due Fees" />
             <Tab icon={<Payment />} label="Payment History" />
+              <Tab icon={<Payment />} label="Meal Attendance" />
           </Tabs>
         </Box>
         <TabPanel value={tabValue} index={0}>
@@ -234,13 +233,23 @@ const StudentProfile = ({ params }: PageProps) => {
           />
         </TabPanel>
         <TabPanel value={tabValue} index={2}>
-          <StudentFee
+          <PaidStudentFee
             studentFees={singleStudent?.data?.fees}
             student={singleStudent?.data}
           />
         </TabPanel>
         <TabPanel value={tabValue} index={3}>
+          <DueStudentFee
+            studentFees={singleStudent?.data?.fees}
+            student={singleStudent?.data}
+          />
+          
+        </TabPanel>
+        <TabPanel value={tabValue} index={4}>
           <PaymentHistory singleStudent={singleStudent} />
+        </TabPanel>
+           <TabPanel value={tabValue} index={5}>
+          <StudentMealAttendance singleStudent={singleStudent} />
         </TabPanel>
       </Card>
     </Container>

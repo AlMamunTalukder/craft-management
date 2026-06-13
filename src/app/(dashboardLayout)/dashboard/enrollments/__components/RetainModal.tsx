@@ -50,7 +50,7 @@ interface RetainModalProps {
 const RetainModal: React.FC<RetainModalProps> = ({
   open,
   onClose,
-  onSuccess,
+
   classOptions,
 }) => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -144,7 +144,6 @@ const RetainModal: React.FC<RetainModalProps> = ({
           setSourceClassId("");
           setSearchTerm("");
           onClose();
-          if (onSuccess) onSuccess();
         } catch (error: any) {
           console.error("Retention error:", error);
           Swal.fire({
@@ -276,7 +275,7 @@ const RetainModal: React.FC<RetainModalProps> = ({
                             checked={
                               filteredStudents.length > 0 &&
                               selectedStudents.length ===
-                                filteredStudents.length
+                              filteredStudents.length
                             }
                             onChange={handleSelectAll}
                             disabled={retaining || loading}

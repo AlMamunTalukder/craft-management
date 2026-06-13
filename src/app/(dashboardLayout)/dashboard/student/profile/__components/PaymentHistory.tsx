@@ -1,15 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import CraftTable, { Column, RowAction } from "@/components/Table";
-import { Download, Print, Visibility } from "@mui/icons-material";
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Typography,
-  useTheme
-} from "@mui/material";
+import { Visibility } from "@mui/icons-material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
+
+import PaymentDetailsModal from "./PaymentDetailsModal";
 import ReceiptViewer, { ReceiptData } from "./ReceiptViewer";
 
 const PaymentHistory = ({ singleStudent }: any) => {
@@ -22,6 +17,10 @@ const PaymentHistory = ({ singleStudent }: any) => {
   const [selectedReceiptData, setSelectedReceiptData] =
     useState<ReceiptData | null>(null);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>("");
+
+  // State for payment details modal
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
   useEffect(() => {
     if (!payments || !Array.isArray(payments)) {
@@ -62,36 +61,20 @@ const PaymentHistory = ({ singleStudent }: any) => {
     }
   }, [payments]);
 
-  const handlePrintReceipt = () => { };
+  const handleViewDetails = (payment: any) => {
+    setSelectedPayment(payment);
+    setDetailsModalOpen(true);
+  };
 
-  const handleDownloadReceipt = () => { };
-
-  const handleViewDetails = () => { };
+  const handleCloseDetailsModal = () => {
+    setDetailsModalOpen(false);
+    setSelectedPayment(null);
+  };
 
   const handleCloseReceiptViewer = () => {
     setReceiptViewerOpen(false);
     setSelectedReceiptData(null);
     setSelectedPaymentId("");
-  };
-
-  const summary = {
-    totalPayments: processedPayments.length,
-    totalAmount: processedPayments.reduce(
-      (sum, payment) => sum + (payment.amountPaid || 0),
-      0
-    ),
-    completedPayments: processedPayments.filter(
-      (payment) => payment.status === "completed" || payment.status === "paid"
-    ).length,
-    partialPayments: processedPayments.filter(
-      (payment) => payment.status === "partial"
-    ).length,
-    pendingPayments: processedPayments.filter(
-      (payment) => payment.status === "pending"
-    ).length,
-    unpaidPayments: processedPayments.filter(
-      (payment) => payment.status === "unpaid"
-    ).length,
   };
 
   const columns: Column[] = [
@@ -112,14 +95,7 @@ const PaymentHistory = ({ singleStudent }: any) => {
       filterable: true,
       type: "text",
     },
-    {
-      id: "student",
-      label: "Student",
-      minWidth: 180,
-      sortable: true,
-      filterable: true,
-      type: "text",
-    },
+
     {
       id: "feeType",
       label: "Fee Type",
@@ -169,62 +145,19 @@ const PaymentHistory = ({ singleStudent }: any) => {
         });
       },
     },
-    {
-      id: "collectedBy",
-      label: "Collected By",
-      minWidth: 140,
-      sortable: true,
-      filterable: true,
-      type: "text",
-    },
-    {
-      id: "status",
-      label: "Status",
-      minWidth: 120,
-      sortable: true,
-      filterable: true,
-      type: "status",
-      format: (value: string) => {
-        const statusColors: any = {
-          completed: "success",
-          paid: "success",
-          partial: "warning",
-          pending: "warning",
-          unpaid: "error",
-        };
-        return statusColors[value] || "default";
-      },
-    },
   ];
 
   const rowActions: RowAction[] = [
     {
       label: "View Details",
       icon: <Visibility fontSize="small" />,
-      onClick: () => handleViewDetails(),
+      onClick: (row) => handleViewDetails(row),
       color: "info",
       tooltip: "View payment details",
     },
-    {
-      label: "Download Receipt",
-      icon: <Download fontSize="small" />,
-      onClick: () => handleDownloadReceipt(),
-      color: "primary",
-      tooltip: "Download payment receipt",
-    },
-    {
-      label: "Print Receipt",
-      icon: <Print fontSize="small" />,
-      onClick: () => handlePrintReceipt(),
-      color: "secondary",
-      tooltip: "Print payment receipt",
-    },
   ];
 
-
-  const handlePrint = () => {
-    console.log("Print all payments");
-  };
+  const handlePrint = () => {};
 
   const handleRefresh = () => {
     setIsLoading(true);
@@ -233,9 +166,7 @@ const PaymentHistory = ({ singleStudent }: any) => {
     }, 1000);
   };
 
-  const handleAddPayment = () => {
-    console.log("Add new payment");
-  };
+  const handleAddPayment = () => {};
 
   return (
     <Box>
@@ -254,71 +185,8 @@ const PaymentHistory = ({ singleStudent }: any) => {
         Payment History
       </Typography>
 
-      <Box sx={{ mb: 4 }}>
-        <Card
-          variant="outlined"
-          sx={{
-            borderRadius: 3,
-            background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
-            border: `1px solid ${theme.palette.divider}`,
-          }}
-        >
-          <CardContent>
-            <Typography variant="h6" gutterBottom fontWeight="600">
-              Payment Summary
-            </Typography>
-
-            <Box
-              sx={{ display: "flex", flexWrap: "wrap", gap: 4, mt: 2, mb: 2 }}
-            >
-              <Box sx={{ display: "flex", flexDirection: "column" }}>
-                <Typography variant="body2" color="text.secondary">
-                  Total Payments
-                </Typography>
-                <Typography variant="h5" fontWeight="bold">
-                  {summary.totalPayments}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: "flex", flexDirection: "column" }}>
-                <Typography variant="body2" color="text.secondary">
-                  Total Amount
-                </Typography>
-                <Typography variant="h5" fontWeight="bold" color="primary.main">
-                  ৳{summary.totalAmount.toLocaleString()}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 2 }}>
-              <Chip
-                label={`${summary.completedPayments} Paid`}
-                color="success"
-                variant="outlined"
-              />
-              <Chip
-                label={`${summary.partialPayments} Partial`}
-                color="warning"
-                variant="outlined"
-              />
-              <Chip
-                label={`${summary.pendingPayments} Pending`}
-                color="warning"
-                variant="outlined"
-              />
-              <Chip
-                label={`${summary.unpaidPayments} Unpaid`}
-                color="error"
-                variant="outlined"
-              />
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-
       <CraftTable
         title="Payment Transactions"
-        subtitle={`${processedPayments.length} payment records found`}
         columns={columns}
         data={processedPayments}
         loading={isLoading}
@@ -342,9 +210,14 @@ const PaymentHistory = ({ singleStudent }: any) => {
         onRefresh={handleRefresh}
         onPrint={handlePrint}
         onAdd={handleAddPayment}
-
       />
 
+      <PaymentDetailsModal
+        open={detailsModalOpen}
+        onClose={handleCloseDetailsModal}
+        payment={selectedPayment}
+        student={singleStudent?.data}
+      />
       {selectedReceiptData && (
         <ReceiptViewer
           open={receiptViewerOpen}

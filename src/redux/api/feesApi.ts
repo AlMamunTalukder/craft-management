@@ -2,34 +2,53 @@ import { baseApi } from "./baseApi";
 
 export const feesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    createFee: build.mutation({
-      query: ({ studentId, ...data }) => ({
-        url: `/fees/students/${studentId}/fees`,
+    generateFees: build.mutation({
+      query: (data: { month: number; year: number }) => ({
+        url: "/fees/generate",
         method: "POST",
-        data,
+        data: data,
       }),
       invalidatesTags: ["fees", "students"],
     }),
-    payFee: build.mutation({
-      query: (data) => ({
-        url: "/fees/pay",
+
+    generateMealBalance: build.mutation({
+      query: ({ month, year, mealRate }) => ({
+        url: "/meal-fee/generate-all",
         method: "POST",
-        data,
+        data: { month, year, mealRate },
       }),
-      invalidatesTags: ["fees"],
+      invalidatesTags: ["fees", "students", "mealAttendances"],
     }),
 
-    getAllFees: build.query({
+    getFeeGenerationStatus: build.query({
+      query: () => ({
+        url: "/fees/status",
+        method: "GET",
+      }),
+      providesTags: ["fees"],
+    }),
+
+    getStudentMealBalance: build.query({
+      query: ({ studentId, month, year }) => ({
+        url: `/meal-balance/student/${studentId}`,
+        method: "GET",
+        params: { month, year },
+      }),
+      providesTags: ["mealAttendances"],
+    }),
+
+    getDueFees: build.query({
       query: ({ limit, page, searchTerm }) => ({
-        url: "/fees",
+        url: "/fees/due",
         method: "GET",
         params: { page, limit, searchTerm },
       }),
       providesTags: ["fees"],
     }),
-    getDueFees: build.query({
+
+    getAllFees: build.query({
       query: ({ limit, page, searchTerm }) => ({
-        url: "/fees/due",
+        url: "/fees",
         method: "GET",
         params: { page, limit, searchTerm },
       }),
@@ -60,15 +79,56 @@ export const feesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["fees"],
     }),
+
+    payFee: build.mutation({
+      query: (data) => ({
+        url: "/fees/pay",
+        method: "POST",
+        data,
+      }),
+      invalidatesTags: ["fees"],
+    }),
+
+    createFee: build.mutation({
+      query: ({ studentId, ...data }) => ({
+        url: `/fees/students/${studentId}/fees`,
+        method: "POST",
+        data,
+      }),
+      invalidatesTags: ["fees", "students"],
+    }),
+
+    getClassWiseFeeSummary: build.query({
+      query: ({ academicYear }) => ({
+        url: "/fees/class-summary",
+        method: "GET",
+        params: { academicYear },
+      }),
+      providesTags: ["fees"],
+    }),
+    applyFeeAdjustment: build.mutation({
+      query: (data) => ({
+        url: "/fee-adjustments",
+        method: "POST",
+        data: data,
+      }),
+      invalidatesTags: ["fees"],
+    }),
   }),
 });
 
 export const {
-  useCreateFeeMutation,
+  useGenerateFeesMutation,
+  useApplyFeeAdjustmentMutation,
+  useGenerateMealBalanceMutation,
+  useGetFeeGenerationStatusQuery,
+  useGetStudentMealBalanceQuery,
+  useGetDueFeesQuery,
   useGetAllFeesQuery,
   useGetSingleFeeQuery,
   useUpdateFeeMutation,
   useDeleteFeeMutation,
-  useGetDueFeesQuery,
   usePayFeeMutation,
+  useCreateFeeMutation,
+  useGetClassWiseFeeSummaryQuery,
 } = feesApi;
