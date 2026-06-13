@@ -1,67 +1,40 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  Chip,
-  Avatar,
-  Card,
-  CardContent,
-  alpha,
-  useTheme,
-  Skeleton,
+  Box, Paper, Typography, Grid, FormControl, InputLabel, Select, MenuItem,
+  Button, Card, CardContent, alpha, useTheme, Skeleton, Avatar, Divider, Chip
 } from '@mui/material';
 import {
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  Edit as EditIcon,
-  Restaurant as FoodIcon,
-  Person as PersonIcon,
-  BreakfastDining as BreakfastIcon,
-  LunchDining as LunchIcon,
-  DinnerDining as DinnerIcon,
-  CalendarMonth as CalendarIcon,
+  Edit as EditIcon, Delete as DeleteIcon, Restaurant as FoodIcon, Person as PersonIcon,
+  BreakfastDining as BreakfastIcon, LunchDining as LunchIcon, DinnerDining as DinnerIcon,
+  CalendarMonth as CalendarIcon, Today as TodayIcon,
+  Add, MoneyOff as MoneyOffIcon, Savings as SavingsIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { useGetAllAttendanceRecordsQuery, useDeleteAttendanceMutation, useGetMonthlyAttendanceSheetQuery } from '@/redux/api/mealAttendanceApi';
+import { useGetMonthlyAttendanceSheetQuery, useDeleteMonthlyAttendanceMutation } from '@/redux/api/mealAttendanceApi';
 import { useAcademicOption } from '@/hooks/useAcademicOption';
-import CraftTable, { BulkAction, Column, RowAction } from '@/components/Table';
-import AttendanceDetailsModal from './add/__components/AttendanceDetailsModal';
-
-import { AttendanceRecord, ClassItem } from '@/interface/meal';
-import Swal from 'sweetalert2';
+import CraftTable, { Column } from '@/components/Table';
 import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
+import Link from 'next/link';
 
 const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toString() }) => {
   const theme = useTheme();
   const { classData } = useAcademicOption();
-  const [deleteAttendance] = useDeleteAttendanceMutation();
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedClassId, setSelectedClassId] = useState<string>('One');
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs());
-  const [sortColumn, setSortColumn] = useState('date');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const router = useRouter();
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+  const [deleteMonthly] = useDeleteMonthlyAttendanceMutation();
 
-  const allClasses = useMemo((): { classes: ClassItem[] } => {
+  // State - Default to 'ALL'
+  const [selectedClassId, setSelectedClassId] = useState<string>('ALL');
+  const [selectedMonth, setSelectedMonth] = useState<Dayjs>(dayjs());
+
+  // Extract Classes
+  const allClasses = useMemo((): { classes: any[] } => {
     const defaultReturn = { classes: [] };
     try {
       if (classData?.data?.data?.classes) return { classes: classData.data.data.classes };
@@ -70,666 +43,194 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       else if (Array.isArray(classData)) return { classes: classData };
       return defaultReturn;
     } catch (error) {
-      console.error('Error extracting classes:', error);
       return defaultReturn;
     }
   }, [classData]);
 
   const classDropdownOptions = useMemo(() => {
     if (!allClasses.classes || allClasses.classes.length === 0) return [];
-    return allClasses.classes.map((cls: ClassItem) => ({
-      label: cls.className,
-      value: cls.className,
-    }));
+    return [
+      { label: 'All Classes', value: 'ALL' },
+      ...allClasses.classes.map((cls: any) => ({
+        label: cls.className,
+        value: cls.className,
+      }))
+    ];
   }, [allClasses]);
 
-  const getClassName = useCallback((classIds: string[] | any): string => {
-    if (!classIds || !classIds.length || !allClasses.classes || allClasses.classes.length === 0) return 'N/A';
-    if (Array.isArray(classIds) && classIds.length > 0) {
-      const classObj = allClasses.classes.find((c: ClassItem) => c._id === classIds[0]);
-      return classObj?.className || 'N/A';
-    }
-    if (typeof classIds === 'string') return classIds;
-    return 'N/A';
-  }, [allClasses]);
-
-  // Fetch monthly statistics for cards
-  const selectedClassName = selectedClassId;
-  const currentMonth = selectedMonth?.format('YYYY-MM') || dayjs().format('YYYY-MM');
+  // API Call
+  const classNameQuery = selectedClassId === 'ALL' ? undefined : selectedClassId;
 
   const {
     data: monthlyStats,
     isLoading: isLoadingStats,
-    refetch: refetchStats,
+    refetch,
   } = useGetMonthlyAttendanceSheetQuery(
     {
-      className: selectedClassName || undefined,
-      month: currentMonth,
+      className: classNameQuery,
+      month: selectedMonth.format('YYYY-MM'),
       academicYear,
     },
-    { skip: !selectedClassName }
+    { skip: !selectedMonth }
   );
 
-  // Extract stats from monthly data
+  // ✅ UPDATED: include Free Meal stats
   const monthlySummary = useMemo(() => {
     const statsData = monthlyStats?.data || monthlyStats;
-
-    if (!statsData || !statsData.students) {
-      return {
-        totalStudents: 0,
-        totalMeals: 0,
-        totalCost: 0,
-        totalBreakfast: 0,
-        totalLunch: 0,
-        totalDinner: 0,
-        averagePerStudent: 0,
-        mealRate: 55,
-      };
-    }
-
-    let totalMeals = 0;
-    let totalBreakfast = 0;
-    let totalLunch = 0;
-    let totalDinner = 0;
-
-    statsData.students.forEach((student: any) => {
-      if (student.attendance) {
-        student.attendance.forEach((att: any) => {
-          if (att.breakfast) totalBreakfast++;
-          if (att.lunch) totalLunch++;
-          if (att.dinner) totalDinner++;
-          totalMeals += att.totalMeals || 0;
-        });
-      }
-    });
-
-    const totalCost = totalMeals * (statsData.mealRate || 55);
-    const totalStudents = statsData.totalStudents || statsData.students?.length || 0;
-
+    if (!statsData) return {
+      totalStudents: 0,
+      totalMeals: 0,
+      totalCost: 0,
+      totalBreakfast: 0,
+      totalLunch: 0,
+      totalDinner: 0,
+      totalFreeMeals: 0,
+      totalFreeMealCostSaved: 0,
+      mealRate: 55
+    };
     return {
-      totalStudents,
-      totalMeals,
-      totalCost,
-      totalBreakfast,
-      totalLunch,
-      totalDinner,
-      averagePerStudent: totalStudents > 0 ? Math.round(totalMeals / totalStudents) : 0,
+      totalStudents: statsData.totalStudents || 0,
+      totalMeals: statsData.grandTotalMeals || 0,
+      totalCost: statsData.grandTotalCost || 0,
+      totalBreakfast: statsData.grandTotalBreakfast || 0,
+      totalLunch: statsData.grandTotalLunch || 0,
+      totalDinner: statsData.grandTotalDinner || 0,
+      totalFreeMeals: statsData.grandTotalFreeMeals || 0,
+      totalFreeMealCostSaved: statsData.grandTotalFreeMealCostSaved || 0,
       mealRate: statsData.mealRate || 55,
     };
   }, [monthlyStats]);
 
-  // Refetch stats when class or month changes
-  useEffect(() => {
-    if (selectedClassName) {
-      refetchStats();
-    }
-  }, [selectedClassName, currentMonth, academicYear, refetchStats]);
+  const todayStats = useMemo(() => {
+    const statsData = monthlyStats?.data || monthlyStats;
+    const todayDate = dayjs().format('YYYY-MM-DD');
+    const todayEntry = statsData?.dailyTotals?.find((d: any) => d.date === todayDate);
+    if (!todayEntry) return { date: todayDate, totalMeals: 0, totalCost: 0, totalBreakfast: 0, totalLunch: 0, totalDinner: 0, totalFreeMeals: 0, freeMealCostSaved: 0, found: false };
+    return { ...todayEntry, found: true };
+  }, [monthlyStats]);
 
-  const handleEdit = useCallback((row: AttendanceRecord) => {
-    const student = row.student || {};
-    const recordDate = dayjs(row.date);
-    const month = recordDate.format('YYYY-MM');
+  const dailyTableData = useMemo(() => monthlyStats?.data?.dailyTotals || [], [monthlyStats]);
 
-    let classId = '';
-    let classNameStr = '';
-
-    if (Array.isArray(student.className) && student.className.length > 0) {
-      const firstClass = student.className[0];
-      if (typeof firstClass === 'object' && firstClass !== null) {
-        classId = firstClass._id || '';
-        classNameStr = firstClass.className || '';
-      } else {
-        classId = firstClass;
-        const foundClass = allClasses.classes.find((c: ClassItem) => c._id === firstClass);
-        classNameStr = foundClass?.className || '';
-      }
-    }
-
+  // Handlers
+  const handleEdit = useCallback(() => {
+    const classNameToSend = selectedClassId === 'ALL' ? '' : selectedClassId;
     const params = new URLSearchParams({
-      classId,
-      className: classNameStr,
-      month,
+      className: classNameToSend,
+      month: selectedMonth.format('YYYY-MM'),
       academicYear,
       mode: 'monthly-update',
     });
-
     router.push(`/dashboard/daily-meal-report/update?${params.toString()}`);
-  }, [router, allClasses, academicYear]);
+  }, [router, selectedClassId, selectedMonth, academicYear]);
 
-  const {
-    data: attendanceData,
-    isLoading,
-    refetch,
-  } = useGetAllAttendanceRecordsQuery({
-    page,
-    limit,
-    search: searchTerm,
-    className: selectedClassName,
-    date: selectedDate?.format('YYYY-MM-DD') || '',
-    month: selectedMonth?.format('YYYY-MM') || '',
-    academicYear,
-    sortColumn,
-    sortDirection,
-  });
-
-  // Sweet Alert for delete confirmation
-  const handleDelete = useCallback(async (row: AttendanceRecord) => {
-    const student = row.student || {};
-    const studentName = student?.name || 'this student';
-    const date = dayjs(row.date).format('DD MMM YYYY');
+  const handleDelete = useCallback(async () => {
+    const classText = selectedClassId === 'ALL' ? 'ALL CLASSES' : `Class: ${selectedClassId}`;
 
     const result = await Swal.fire({
       title: 'Are you sure?',
-      html: `You are about to delete attendance record for <strong>${studentName}</strong> on <strong>${date}</strong>.<br/><br/>This action cannot be undone!`,
+      html: `Delete all meal records for <strong>${classText}</strong> in <strong>${selectedMonth.format('MMMM YYYY')}</strong>?<br/><br/>This cannot be undone.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, delete it!',
-      cancelButtonText: 'Cancel',
     });
 
     if (result.isConfirmed) {
       try {
-        await deleteAttendance(row._id).unwrap();
+        const payload: any = {
+          month: selectedMonth.format('YYYY-MM'),
+          academicYear,
+        };
 
-        await Swal.fire({
-          title: 'Deleted!',
-          html: `Attendance record for <strong>${studentName}</strong> has been deleted successfully.`,
-          icon: 'success',
-          confirmButtonColor: '#3085d6',
-          timer: 2000,
-        });
+        if (selectedClassId !== 'ALL') {
+          payload.className = selectedClassId;
+        }
 
+        await deleteMonthly(payload).unwrap();
+
+        Swal.fire('Deleted!', 'Monthly attendance has been deleted.', 'success');
         refetch();
-        refetchStats();
       } catch (error: any) {
-        console.error('Delete failed:', error);
-        await Swal.fire({
-          title: 'Error!',
-          html: `Failed to delete attendance record: <br/>${error?.data?.message || 'Unknown error occurred'}`,
-          icon: 'error',
-          confirmButtonColor: '#3085d6',
-        });
+        Swal.fire('Error!', error?.data?.message || 'Failed to delete', 'error');
       }
     }
-  }, [deleteAttendance, refetch, refetchStats]);
+  }, [deleteMonthly, selectedClassId, selectedMonth, academicYear, refetch]);
 
-  const handleView = useCallback((row: AttendanceRecord) => {
-    setSelectedRecord(row);
-    setViewModalOpen(true);
+  const handleMonthChange = useCallback((newValue: Dayjs | null) => {
+    if (newValue) setSelectedMonth(newValue);
   }, []);
 
-  const handleAdd = useCallback(() => {
-    router.push('/dashboard/daily-meal-report/add');
-  }, [router]);
-
-  const handleSearch = useCallback((term: string) => {
-    setSearchTerm(term);
-    setPage(1);
-  }, []);
-
-  const handleSort = useCallback((column: string, direction: 'asc' | 'desc') => {
-    setSortColumn(column);
-    setSortDirection(direction);
-    setPage(1);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage + 1);
-  }, []);
-
-  const handleRowsPerPageChange = useCallback((newLimit: number) => {
-    setLimit(newLimit);
-    setPage(1);
-  }, []);
+  const handleClassChange = useCallback((e: any) => setSelectedClassId(e.target.value), []);
 
   const columns: Column[] = useMemo(() => [
     {
-      id: 'studentInfo',
-      label: 'Student',
-      minWidth: 250,
-      sortable: true,
-      render: (row: AttendanceRecord) => {
-        const student = row.student || {};
-        const studentId = student?.studentId || 'N/A';
-        const nameBangla = student?.nameBangla || '';
-
+      id: 'date', label: 'Date', minWidth: 150, sortable: true,
+      render: (row: any) => {
+        const isToday = row.date === dayjs().format('YYYY-MM-DD');
         return (
-          <Box display="flex" alignItems="center" gap={1.5}>
-            <Avatar sx={{ width: 40, height: 40, bgcolor: theme.palette.primary.main }}>
-              <PersonIcon />
-            </Avatar>
-            <Box>
-              <Typography variant="body2" fontWeight="bold">{student?.name || 'N/A'}</Typography>
-              {nameBangla && (
-                <Typography variant="caption" color="text.secondary">{nameBangla}</Typography>
-              )}
-              <Typography variant="caption" display="block" color="primary.main">
-                ID: {studentId}
-              </Typography>
-            </Box>
+          <Box display="flex" alignItems="center" gap={1}>
+            <CalendarIcon fontSize="small" color={isToday ? "primary" : "disabled"} />
+            <Typography variant="body2" fontWeight={isToday ? "bold" : "normal"}>
+              {dayjs(row.date).format('DD MMM YYYY')}
+              {isToday && <Chip label="Today" size="small" color="primary" sx={{ ml: 1 }} />}
+            </Typography>
           </Box>
         );
       },
     },
-    {
-      id: 'studentClassRoll',
-      label: 'Roll No',
-      minWidth: 100,
-      sortable: false,
-      render: (row: AttendanceRecord) => {
-        const student = row.student || {};
-        const rollNumber = student?.studentId || student?.studentClassRoll || 'N/A';
-        return (
-          <Chip
-            label={rollNumber}
-            size="small"
-            variant="outlined"
-            sx={{ fontWeight: 'bold' }}
-          />
-        );
-      },
-    },
-    {
-      id: 'className',
-      label: 'Class',
-      minWidth: 120,
-      sortable: false,
-      render: (row: AttendanceRecord) => {
-        const student = row.student || {};
-        const className = getClassName(student?.className || []);
-        return <Chip label={className} size="small" color="primary" variant="outlined" />;
-      },
-    },
-    {
-      id: 'date',
-      label: 'Date',
-      minWidth: 120,
-      sortable: true,
-      render: (row: AttendanceRecord) => (
-        <Typography variant="body2">{dayjs(row.date).format('DD MMM YYYY')}</Typography>
-      ),
-    },
-    {
-      id: 'breakfast',
-      label: 'Breakfast',
-      minWidth: 100,
-      align: 'center',
-      sortable: true,
-      type: 'boolean',
-      render: (row: AttendanceRecord) => (
-        <Chip
-          label={row.breakfast ? 'Yes' : 'No'}
-          size="small"
-          color={row.breakfast ? 'success' : 'default'}
-        />
-      ),
-    },
-    {
-      id: 'lunch',
-      label: 'Lunch',
-      minWidth: 100,
-      align: 'center',
-      sortable: true,
-      type: 'boolean',
-      render: (row: AttendanceRecord) => (
-        <Chip
-          label={row.lunch ? 'Yes' : 'No'}
-          size="small"
-          color={row.lunch ? 'success' : 'default'}
-        />
-      ),
-    },
-    {
-      id: 'dinner',
-      label: 'Dinner',
-      minWidth: 100,
-      align: 'center',
-      sortable: true,
-      type: 'boolean',
-      render: (row: AttendanceRecord) => (
-        <Chip
-          label={row.dinner ? 'Yes' : 'No'}
-          size="small"
-          color={row.dinner ? 'success' : 'default'}
-        />
-      ),
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      minWidth: 120,
-      align: 'center',
-      sortable: true,
-      type: 'status',
-      render: (row: AttendanceRecord) => {
-        const total = [row.breakfast, row.lunch, row.dinner].filter(Boolean).length;
-        let status = 'Absent';
-        let color: 'success' | 'warning' | 'error' = 'error';
-        if (total === 3) {
-          status = 'Full Day';
-          color = 'success';
-        } else if (total === 2) {
-          status = 'Partial (2 meals)';
-          color = 'warning';
-        } else if (total === 1) {
-          status = 'Single Meal';
-          color = 'warning';
-        }
-        return <Chip label={`${status}`} size="small" color={color} variant="filled" />;
-      },
-    },
-  ], [theme, getClassName]);
+    { id: 'totalBreakfast', label: 'Breakfast', minWidth: 100, align: 'center', render: (r: any) => <Chip label={r.totalBreakfast} size="small" variant="outlined" color="info" /> },
+    { id: 'totalLunch', label: 'Lunch', minWidth: 100, align: 'center', render: (r: any) => <Chip label={r.totalLunch} size="small" variant="outlined" color="secondary" /> },
+    { id: 'totalDinner', label: 'Dinner', minWidth: 100, align: 'center', render: (r: any) => <Chip label={r.totalDinner} size="small" variant="outlined" color="error" /> },
+    { id: 'totalMeals', label: 'Total Meals', minWidth: 120, align: 'center', render: (r: any) => <Typography variant="body2" fontWeight="bold">{r.totalMeals}</Typography> },
+    // ✅ NEW: Free Meals column
+    { id: 'totalFreeMeals', label: 'Free Meals', minWidth: 100, align: 'center', render: (r: any) => <Chip label={r.totalFreeMeals || 0} size="small" variant="outlined" color="warning" /> },
+    { id: 'totalCost', label: 'Cost (BDT)', minWidth: 120, align: 'right', render: (r: any) => <Typography variant="body2" color="success.main" fontWeight="bold">৳{r.totalCost?.toLocaleString()}</Typography> },
+  ], []);
 
-  const rowActions: RowAction[] = useMemo(() => [
-    {
-      label: 'View',
-      icon: <ViewIcon fontSize="small" />,
-      onClick: handleView,
-      color: 'info',
-      tooltip: 'View Details',
-      inMenu: false,
-    },
-    {
-      label: 'Edit',
-      icon: <EditIcon fontSize="small" />,
-      onClick: handleEdit,
-      color: 'warning',
-      tooltip: 'Edit Full Month Record for This Class',
-      inMenu: false,
-    },
-    {
-      label: 'Delete',
-      icon: <DeleteIcon fontSize="small" />,
-      onClick: handleDelete,
-      color: 'error',
-      tooltip: 'Delete Record',
-      inMenu: true,
-    },
-  ], [handleView, handleEdit, handleDelete]);
-
-  const bulkActions: BulkAction[] = useMemo(() => [
-    {
-      label: 'Delete Selected',
-      icon: <DeleteIcon />,
-      onClick: async (selectedRows) => {
-        if (selectedRows.length === 0) return;
-
-        const result = await Swal.fire({
-          title: 'Are you sure?',
-          html: `You are about to delete <strong>${selectedRows.length}</strong> attendance record(s).<br/><br/>This action cannot be undone!`,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#d33',
-          cancelButtonColor: '#3085d6',
-          confirmButtonText: 'Yes, delete them!',
-          cancelButtonText: 'Cancel',
-        });
-
-        if (result.isConfirmed) {
-          try {
-            for (const row of selectedRows) {
-              await deleteAttendance(row._id).unwrap();
-            }
-
-            await Swal.fire({
-              title: 'Deleted!',
-              html: `<strong>${selectedRows.length}</strong> attendance record(s) have been deleted successfully.`,
-              icon: 'success',
-              confirmButtonColor: '#3085d6',
-              timer: 2000,
-            });
-
-            refetch();
-            refetchStats();
-          } catch (error: any) {
-            await Swal.fire({
-              title: 'Error!',
-              html: `Failed to delete records: <br/>${error?.data?.message || 'Unknown error occurred'}`,
-              icon: 'error',
-              confirmButtonColor: '#3085d6',
-            });
-          }
-        }
-      },
-      color: 'error',
-      disabled: (selectedRows) => selectedRows.length === 0,
-    },
-    {
-      label: 'Bulk Update Selected',
-      icon: <EditIcon />,
-      onClick: async (selectedRows) => {
-        if (selectedRows.length === 0) return;
-        const firstRow = selectedRows[0];
-        const student = firstRow.student || {};
-        const month = dayjs(firstRow.date).format('YYYY-MM');
-        let classId = '';
-        let classNameStr = '';
-
-        if (Array.isArray(student.className) && student.className.length > 0) {
-          const firstClass = student.className[0];
-          if (typeof firstClass === 'object') {
-            classId = firstClass._id || '';
-            classNameStr = firstClass.className || '';
-          } else {
-            classId = firstClass;
-            const foundClass = allClasses.classes.find((c: ClassItem) => c._id === firstClass);
-            classNameStr = foundClass?.className || '';
-          }
-        }
-
-        const params = new URLSearchParams({
-          classId,
-          className: classNameStr,
-          month,
-          academicYear,
-          mode: 'monthly-update'
-        });
-        router.push(`/dashboard/daily-meal-report/update?${params.toString()}`);
-      },
-      color: 'primary',
-      disabled: (selectedRows) => selectedRows.length === 0,
-    },
-  ], [router, allClasses, academicYear, deleteAttendance, refetch, refetchStats]);
-
-  const records = attendanceData?.data?.data || [];
-  const totalRecords = attendanceData?.data?.total || 0;
-
-  const CustomFilters = () => (
-    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-      <FormControl size="small" sx={{ minWidth: 180 }}>
-        <InputLabel>Filter by Class</InputLabel>
-        <Select
-          value={selectedClassId}
-          label="Filter by Class"
-          onChange={(e) => { setSelectedClassId(e.target.value); setPage(1); }}
-        >
-          {classDropdownOptions?.map((option: any) => (
-            <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <DatePicker
-        label="Filter by Date"
-        value={selectedDate}
-        onChange={(newValue) => { setSelectedDate(newValue); setSelectedMonth(null); setPage(1); }}
-        slotProps={{ textField: { size: 'small', sx: { minWidth: 180 } } }}
-      />
-
-      <DatePicker
-        label="Filter by Month"
-        views={['year', 'month']}
-        value={selectedMonth}
-        onChange={(newValue) => { setSelectedMonth(newValue); setSelectedDate(null); setPage(1); }}
-        slotProps={{ textField: { size: 'small', sx: { minWidth: 180 } } }}
-      />
-
-      {(selectedClassId !== 'One' || selectedDate || (selectedMonth && selectedMonth.format('YYYY-MM') !== dayjs().format('YYYY-MM'))) && (
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => {
-            setSelectedClassId('One');
-            setSelectedDate(null);
-            setSelectedMonth(dayjs());
-            setPage(1);
-          }}
-        >
-          Reset to Class One
-        </Button>
-      )}
-    </Box>
-  );
-
-  // Stats Card Component
-  const StatsCards = () => {
-    if (!selectedClassId) {
-      return (
-        <Paper sx={{ p: 3, mb: 3, textAlign: 'center', bgcolor: '#fff3e0', borderRadius: 2 }}>
-          <Typography variant="body1" color="text.secondary">
-            👈 Please select a class to view monthly statistics
-          </Typography>
-        </Paper>
-      );
-    }
-
-    if (isLoadingStats) {
-      return (
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Grid item xs={12} sm={6} md={4} lg={2} key={i}>
-              <Card sx={{ borderRadius: 3 }}>
-                <CardContent>
-                  <Skeleton variant="rectangular" height={80} />
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      );
-    }
-
+  // Stats Component
+  const MonthlyStatsCards = () => {
+    if (isLoadingStats) return <Grid container spacing={3} sx={{ mb: 3 }}><Skeleton variant="rectangular" height={100} /></Grid>;
     return (
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        {/* Total Students */}
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#E3F2FD' }}>
+        <Grid item xs={12} sm={6} md={4} lg={1.7}>
+          <Card sx={{ borderRadius: 3, bgcolor: alpha(theme.palette.primary.main, 0.1), border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`, height: '100%' }}>
+            <CardContent><Box display="flex" justifyContent="space-between"><Box><Typography color="text.secondary" variant="caption" fontWeight="bold">TOTAL PEOPLE</Typography><Typography variant="h4" fontWeight="bold" color="primary.main">{monthlySummary.totalStudents}</Typography></Box><Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.2) }}><PersonIcon sx={{ color: theme.palette.primary.main }} /></Avatar></Box></CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4} lg={1.7}>
+          <Card sx={{ borderRadius: 3, bgcolor: alpha('#ED6C02', 0.1), border: `1px solid ${alpha('#ED6C02', 0.2)}`, height: '100%' }}>
+            <CardContent><Box display="flex" justifyContent="space-between"><Box><Typography color="text.secondary" variant="caption" fontWeight="bold">MONTHLY MEALS</Typography><Typography variant="h4" fontWeight="bold" color="#ED6C02">{monthlySummary.totalMeals}</Typography></Box><Avatar sx={{ bgcolor: alpha('#ED6C02', 0.2) }}><FoodIcon sx={{ color: '#ED6C02' }} /></Avatar></Box></CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4} lg={1.7}><Card sx={{ borderRadius: 3, bgcolor: '#E8F5E9', height: '100%' }}><CardContent><Typography color="text.secondary" variant="caption" fontWeight="bold">BREAKFAST</Typography><Typography variant="h4" fontWeight="bold" color="#2E7D32">{monthlySummary.totalBreakfast}</Typography></CardContent></Card></Grid>
+        <Grid item xs={12} sm={6} md={4} lg={1.7}><Card sx={{ borderRadius: 3, bgcolor: '#F3E5F5', height: '100%' }}><CardContent><Typography color="text.secondary" variant="caption" fontWeight="bold">LUNCH</Typography><Typography variant="h4" fontWeight="bold" color="#9C27B0">{monthlySummary.totalLunch}</Typography></CardContent></Card></Grid>
+        <Grid item xs={12} sm={6} md={4} lg={1.7}><Card sx={{ borderRadius: 3, bgcolor: '#FFEBEE', height: '100%' }}><CardContent><Typography color="text.secondary" variant="caption" fontWeight="bold">DINNER</Typography><Typography variant="h4" fontWeight="bold" color="#D32F2F">{monthlySummary.totalDinner}</Typography></CardContent></Card></Grid>
+
+        {/* ✅ NEW: Free Meals card */}
+        <Grid item xs={12} sm={6} md={4} lg={1.7}>
+          <Card sx={{ borderRadius: 3, bgcolor: '#FFF3E0', height: '100%' }}>
             <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box display="flex" justifyContent="space-between">
                 <Box>
-                  <Typography color="text.secondary" variant="body2">Total Students</Typography>
-                  <Typography variant="h4" fontWeight="bold" color="#1976D2">{monthlySummary.totalStudents}</Typography>
+                  <Typography color="text.secondary" variant="caption" fontWeight="bold">FREE MEALS</Typography>
+                  <Typography variant="h4" fontWeight="bold" color="#EF6C00">{monthlySummary.totalFreeMeals}</Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: alpha('#1976D2', 0.1), width: 48, height: 48 }}>
-                  <PersonIcon sx={{ color: '#1976D2' }} />
-                </Avatar>
+                <Avatar sx={{ bgcolor: alpha('#EF6C00', 0.2) }}><MoneyOffIcon sx={{ color: '#EF6C00' }} /></Avatar>
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Total Meals */}
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#FFF3E0' }}>
+        {/* ✅ NEW: Cost Saved card */}
+        <Grid item xs={12} sm={6} md={4} lg={1.7}>
+          <Card sx={{ borderRadius: 3, bgcolor: '#E0F2F1', height: '100%' }}>
             <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box display="flex" justifyContent="space-between">
                 <Box>
-                  <Typography color="text.secondary" variant="body2">Total Meals</Typography>
-                  <Typography variant="h4" fontWeight="bold" color="#ED6C02">{monthlySummary.totalMeals}</Typography>
+                  <Typography color="text.secondary" variant="caption" fontWeight="bold">COST SAVED</Typography>
+                  <Typography variant="h5" fontWeight="bold" color="#00796B">৳{monthlySummary.totalFreeMealCostSaved.toLocaleString()}</Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: alpha('#ED6C02', 0.1), width: 48, height: 48 }}>
-                  <FoodIcon sx={{ color: '#ED6C02' }} />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Total Breakfast */}
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#E8F5E9' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">Breakfast</Typography>
-                  <Typography variant="h4" fontWeight="bold" color="#2E7D32">{monthlySummary.totalBreakfast}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#2E7D32', 0.1), width: 48, height: 48 }}>
-                  <BreakfastIcon sx={{ color: '#2E7D32' }} />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Total Lunch */}
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#F3E5F5' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">Lunch</Typography>
-                  <Typography variant="h4" fontWeight="bold" color="#9C27B0">{monthlySummary.totalLunch}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#9C27B0', 0.1), width: 48, height: 48 }}>
-                  <LunchIcon sx={{ color: '#9C27B0' }} />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Total Dinner */}
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#FFEBEE' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">Dinner</Typography>
-                  <Typography variant="h4" fontWeight="bold" color="#D32F2F">{monthlySummary.totalDinner}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#D32F2F', 0.1), width: 48, height: 48 }}>
-                  <DinnerIcon sx={{ color: '#D32F2F' }} />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Total Cost */}
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#E0F7FA' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">Total Cost</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="#00838F">৳{monthlySummary.totalCost.toLocaleString()}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    @ ৳{monthlySummary.mealRate}/meal
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#00838F', 0.1), width: 48, height: 48 }}>
-                  <FoodIcon sx={{ color: '#00838F' }} />
-                </Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Average per Student */}
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#FCE4EC' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
-                  <Typography color="text.secondary" variant="body2">Avg Meals/Student</Typography>
-                  <Typography variant="h4" fontWeight="bold" color="#C2185B">{monthlySummary.averagePerStudent}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#C2185B', 0.1), width: 48, height: 48 }}>
-                  <PersonIcon sx={{ color: '#C2185B' }} />
-                </Avatar>
+                <Avatar sx={{ bgcolor: alpha('#00796B', 0.2) }}><SavingsIcon sx={{ color: '#00796B' }} /></Avatar>
               </Box>
             </CardContent>
           </Card>
@@ -741,81 +242,50 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
-        {/* Month Info Header */}
-        {selectedClassId && (
-          <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: '#E8EAF6' }}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <CalendarIcon color="primary" />
-              <Typography variant="subtitle1" fontWeight="bold">
-                Statistics for {selectedClassId} - {dayjs(currentMonth).format('MMMM YYYY')}
-              </Typography>
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={4}><Typography variant="h5" fontWeight="bold" color="primary.main">Meal Attendance Dashboard</Typography></Grid>
+            <Grid item xs={12} md={8}>
+              <Box display="flex" gap={2} justifyContent="flex-end">
+                <FormControl size="small" sx={{ minWidth: 150 }}><InputLabel>Class</InputLabel><Select value={selectedClassId} label="Class" onChange={handleClassChange}>{classDropdownOptions?.map((o: any) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}</Select></FormControl>
+                <DatePicker label="Select Month" views={['year', 'month']} value={selectedMonth} onChange={handleMonthChange} maxDate={dayjs()} slotProps={{ textField: { size: 'small', sx: { minWidth: 180 } } }} />
+                <Button variant="contained" onClick={() => refetch()} disabled={isLoadingStats}>Refresh</Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+        <MonthlyStatsCards />
+        {todayStats.found && !isLoadingStats && (
+          <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: '#E3F2FD', border: '1px solid #90CAF9' }}>
+            <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+              <Box display="flex" alignItems="center" gap={1}><TodayIcon color="primary" /><Typography variant="h6" fontWeight="bold" color="primary.dark">Today: {dayjs().format('DD MMM YYYY')}</Typography></Box>
+              <Box display="flex" gap={3} flexWrap="wrap">
+                <Box textAlign="center"><Typography variant="caption">Total Meals</Typography><Typography variant="h6" fontWeight="bold">{todayStats.totalMeals}</Typography></Box>
+                <Divider orientation="vertical" flexItem />
+                <Box textAlign="center"><Typography variant="caption">Breakfast</Typography><Typography variant="h6" fontWeight="bold" color="#2E7D32">{todayStats.totalBreakfast}</Typography></Box>
+                <Box textAlign="center"><Typography variant="caption">Lunch</Typography><Typography variant="h6" fontWeight="bold" color="#9C27B0">{todayStats.totalLunch}</Typography></Box>
+                <Box textAlign="center"><Typography variant="caption">Dinner</Typography><Typography variant="h6" fontWeight="bold" color="#D32F2F">{todayStats.totalDinner}</Typography></Box>
+                <Divider orientation="vertical" flexItem />
+                {/* ✅ NEW: Today's free meals + saved */}
+                <Box textAlign="center"><Typography variant="caption">Free Meals</Typography><Typography variant="h6" fontWeight="bold" color="#EF6C00">{todayStats.totalFreeMeals || 0}</Typography></Box>
+                <Box textAlign="center"><Typography variant="caption">Saved</Typography><Typography variant="h6" fontWeight="bold" color="#00796B">৳{(todayStats.freeMealCostSaved || 0).toLocaleString()}</Typography></Box>
+                <Divider orientation="vertical" flexItem />
+                <Box textAlign="center"><Typography variant="caption">Cost</Typography><Typography variant="h6" fontWeight="bold" color="#00838F">৳{todayStats.totalCost.toLocaleString()}</Typography></Box>
+              </Box>
             </Box>
           </Paper>
         )}
-
-        {/* Stats Cards */}
-        <StatsCards />
-
-        {/* Active Filters Display */}
-        {(selectedClassId !== 'One' || selectedDate || (selectedMonth && selectedMonth.format('YYYY-MM') !== dayjs().format('YYYY-MM'))) && (
-          <Paper sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: 'white' }}>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Typography variant="caption" color="text.secondary" fontWeight="bold">Active Filters:</Typography>
-              {selectedClassId !== 'One' && <Chip label={`Class: ${selectedClassId}`} size="small" onDelete={() => setSelectedClassId('One')} />}
-              {selectedDate && <Chip label={`Date: ${selectedDate.format('DD MMM YYYY')}`} size="small" onDelete={() => setSelectedDate(null)} />}
-              {selectedMonth && selectedMonth.format('YYYY-MM') !== dayjs().format('YYYY-MM') && (
-                <Chip label={`Month: ${selectedMonth.format('MMMM YYYY')}`} size="small" onDelete={() => setSelectedMonth(dayjs())} />
-              )}
+        <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Box p={2} bgcolor="white" borderBottom="1px solid #e0e0e0" display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6" fontWeight="bold">Daily Breakdown - {selectedMonth.format('MMMM YYYY')}</Typography>
+            <Box display="flex" gap={1}>
+              <Button variant="contained" startIcon={<Add />} component={Link} href='/dashboard/daily-meal-report/add' color="primary" size="small">Add Meal Report </Button>
+              <Button variant="contained" startIcon={<EditIcon />} onClick={handleEdit} color="primary" size="small">Edit Month</Button>
+              <Button variant="outlined" startIcon={<DeleteIcon />} onClick={handleDelete} color="error" size="small">Delete Month</Button>
             </Box>
-          </Paper>
-        )}
-
-        <CraftTable
-          columns={columns}
-          data={records}
-          loading={isLoading}
-          rowCount={totalRecords}
-          page={page - 1}
-          rowsPerPage={limit}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          onAdd={handleAdd}
-          onSearchChange={handleSearch}
-          onSortChange={handleSort}
-          rowActions={rowActions}
-          bulkActions={bulkActions}
-          selectable={true}
-          searchable={true}
-          filterable={false}
-          sortable={true}
-          pagination={true}
-          serverSideSorting={true}
-          emptyStateMessage="No attendance records found"
-          idField="_id"
-          defaultSortColumn="date"
-          defaultSortDirection="desc"
-
-          stickyHeader={true}
-          dense={false}
-          striped={true}
-          hover={true}
-          showToolbar={true}
-          showRowNumbers={true}
-          rowNumberHeader="SL"
-          actionColumnWidth={150}
-          actionMenuLabel="Actions"
-          elevation={0}
-          borderRadius={3}
-          customToolbar={<CustomFilters />}
-        />
-
-        <AttendanceDetailsModal
-          open={viewModalOpen}
-          setOpen={setViewModalOpen}
-          selectedRecord={selectedRecord}
-          onDelete={handleDelete}
-          getClassName={getClassName}
-        />
+          </Box>
+          <CraftTable columns={columns} data={dailyTableData} rowCount={dailyTableData.length} page={0} rowsPerPage={100} rowActions={[]} selectable={false} pagination={false} idField="date" stickyHeader dense />
+        </Paper>
       </Box>
     </LocalizationProvider>
   );

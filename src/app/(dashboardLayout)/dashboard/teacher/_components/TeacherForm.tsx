@@ -26,7 +26,7 @@ import {
   useUpdateTeacherMutation,
 } from "@/redux/api/teacherApi";
 import {
-  Add,
+
   Apartment,
   ArrowBack,
   AttachMoney,
@@ -262,7 +262,7 @@ export default function TeacherForm({ id }: TeacherFormProps = {}) {
           ) {
             input.value =
               currentAddressFields[
-                fieldName as keyof typeof currentAddressFields
+              fieldName as keyof typeof currentAddressFields
               ];
             // Trigger React state update if needed
             const event = new Event("input", { bubbles: true });
@@ -333,25 +333,25 @@ export default function TeacherForm({ id }: TeacherFormProps = {}) {
 
         currentAddress: data.sameAsPermanent
           ? {
-              address: data.address,
-              village: data.village,
-              postOffice: data.postOffice,
-              thana: data.thana,
-              district: data.district,
-              state: data.state,
-              country: data.country,
-              zipCode: data.zipCode,
-            }
+            address: data.address,
+            village: data.village,
+            postOffice: data.postOffice,
+            thana: data.thana,
+            district: data.district,
+            state: data.state,
+            country: data.country,
+            zipCode: data.zipCode,
+          }
           : {
-              address: data.currentAddress?.address || "",
-              village: data.currentAddress?.village || "",
-              postOffice: data.currentAddress?.postOffice || "",
-              thana: data.currentAddress?.thana || "",
-              district: data.currentAddress?.district || "",
-              state: data.currentAddress?.state || "",
-              country: data.currentAddress?.country || "",
-              zipCode: data.currentAddress?.zipCode || "",
-            },
+            address: data.currentAddress?.address || "",
+            village: data.currentAddress?.village || "",
+            postOffice: data.currentAddress?.postOffice || "",
+            thana: data.currentAddress?.thana || "",
+            district: data.currentAddress?.district || "",
+            state: data.currentAddress?.state || "",
+            country: data.currentAddress?.country || "",
+            zipCode: data.currentAddress?.zipCode || "",
+          },
 
         sameAsPermanent: data.sameAsPermanent || false,
         designation: data.designation,
@@ -362,36 +362,36 @@ export default function TeacherForm({ id }: TeacherFormProps = {}) {
 
         educationalQualifications: data.degree
           ? [
-              {
-                degree: data.degree,
-                institution: data.institution,
-                year: data.year,
-                specialization: data.specialization,
-              },
-            ]
+            {
+              degree: data.degree,
+              institution: data.institution,
+              year: data.year,
+              specialization: data.specialization,
+            },
+          ]
           : [],
 
         certifications: data.certificateName
           ? [
-              {
-                name: data.certificateName,
-                issuedBy: data.issuedBy,
-                year: data.certificateYear,
-                description: data.certificateDescription,
-              },
-            ]
+            {
+              name: data.certificateName,
+              issuedBy: data.issuedBy,
+              year: data.certificateYear,
+              description: data.certificateDescription,
+            },
+          ]
           : [],
 
         workExperience: data.organization
           ? [
-              {
-                organization: data.organization,
-                position: data.position,
-                from: data.from,
-                to: data.to,
-                description: data.description,
-              },
-            ]
+            {
+              organization: data.organization,
+              position: data.position,
+              from: data.from,
+              to: data.to,
+              description: data.description,
+            },
+          ]
           : [],
 
         status: data.status || "Active",
