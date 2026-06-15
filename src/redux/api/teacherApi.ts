@@ -1,4 +1,4 @@
-// teacherApi.ts
+
 import { baseApi } from "./baseApi";
 
 export const teacherApi = baseApi.injectEndpoints({
@@ -13,10 +13,10 @@ export const teacherApi = baseApi.injectEndpoints({
     }),
 
     getAllTeachers: build.query({
-      query: ({ limit, page, searchTerm, department }) => ({
+      query: ({ limit, page, searchTerm, department, sort }) => ({
         url: "/teacher",
         method: "GET",
-        params: { page, limit, searchTerm, department },
+        params: { page, limit, searchTerm, department, sort },
       }),
       providesTags: ["teacher"],
     }),

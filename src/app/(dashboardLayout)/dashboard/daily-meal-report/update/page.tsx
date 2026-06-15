@@ -13,7 +13,7 @@ const UpdateContent = () => {
     return <Paper sx={{ p: 4, textAlign: 'center', m: 3 }}><Typography variant="h6" color="error">Invalid Access</Typography></Paper>;
   }
 
-
+  const personType = (searchParams.get('personType') as 'student' | 'teacher' | 'staff') || 'student';
   const className = searchParams.get('className') || '';
   const month = searchParams.get('month') || '';
   const academicYear = searchParams.get('academicYear') || '';
@@ -24,7 +24,7 @@ const UpdateContent = () => {
 
   return (
     <UpdateMealForm
-      isMonthlyUpdate={true}
+      initialPersonType={personType}
       monthlyUpdateClassName={className}
       monthlyUpdateMonth={month}
       monthlyUpdateAcademicYear={academicYear}

@@ -1,4 +1,3 @@
-
 import { baseApi } from "./baseApi";
 
 export const mealAttendanceApi = baseApi.injectEndpoints({
@@ -12,25 +11,6 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             invalidatesTags: ["mealAttendance"],
         }),
 
-        bulkUpdateAttendance: build.mutation({
-            query: (data) => ({
-                url: "/meal-attendance/bulk",
-                method: "PUT",
-                data,
-            }),
-            invalidatesTags: ["mealAttendance"],
-        }),
-
-        createAttendance: build.mutation({
-            query: (data) => ({
-                url: "/meal-attendance",
-                method: "POST",
-                data,
-            }),
-            invalidatesTags: ["mealAttendance"],
-        }),
-
-
         updateAttendance: build.mutation({
             query: ({ id, data }) => ({
                 url: `/meal-attendance/${id}`,
@@ -41,19 +21,31 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
         }),
 
         getAllAttendanceRecords: build.query({
-            query: ({ page = 1, limit = 10, search = "", className = "", date = "", month = "", academicYear, sortColumn = "date", sortDirection = "desc" }) => ({
+            query: ({
+                page = 1,
+                limit = 10,
+                search = "",
+                personType = "student",
+                className = "",
+                date = "",
+                month = "",
+                academicYear,
+                sortColumn = "date",
+                sortDirection = "desc",
+            }) => ({
                 url: "/meal-attendance/all",
                 method: "GET",
                 params: {
                     page,
                     limit,
                     search,
+                    personType,
                     className,
                     date,
                     month,
                     academicYear,
                     sortColumn,
-                    sortDirection
+                    sortDirection,
                 },
             }),
             providesTags: ["mealAttendance"],
@@ -68,37 +60,27 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
         }),
 
         getMonthlyAttendanceSheet: build.query({
-            query: ({ className, month, academicYear }) => ({
+            query: ({ personType = "student", className, month, academicYear }) => ({
                 url: "/meal-attendance/sheet",
                 method: "GET",
-                params: { className, month, academicYear },
+                params: { personType, className, month, academicYear },
             }),
             providesTags: ["mealAttendance"],
         }),
 
         getMonthlySummary: build.query({
-            query: ({ className, month, academicYear }) => ({
+            query: ({ personType = "student", className, month, academicYear }) => ({
                 url: "/meal-attendance/summary",
                 method: "GET",
-                params: { className, month, academicYear },
+                params: { personType, className, month, academicYear },
             }),
             providesTags: ["mealAttendance"],
         }),
 
-        getAttendanceByDateRange: build.query({
-            query: ({ className, startDate, endDate, academicYear }) => ({
-                url: "/meal-attendance/date-range",
+        getAttendanceByStudentAndMonth: build.query({
+            query: ({ studentId, month, academicYear }) => ({
+                url: `/meal-attendance/student/${studentId}/${month}/${academicYear}`,
                 method: "GET",
-                params: { className, startDate, endDate, academicYear },
-            }),
-            providesTags: ["mealAttendance"],
-        }),
-
-        getAttendanceByDateRangeForAllStudents: build.query({
-            query: ({ startDate, endDate, academicYear }) => ({
-                url: "/meal-attendance/date-range/all",
-                method: "GET",
-                params: { startDate, endDate, academicYear },
             }),
             providesTags: ["mealAttendance"],
         }),
@@ -110,11 +92,12 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ["mealAttendance"],
         }),
+
         deleteMonthlyAttendance: build.mutation({
-            query: ({ className, month, academicYear }) => ({
+            query: ({ personType = "student", className, month, academicYear }) => ({
                 url: "/meal-attendance/bulk/month",
                 method: "DELETE",
-                params: { className, month, academicYear },
+                params: { personType, className, month, academicYear },
             }),
             invalidatesTags: ["mealAttendance"],
         }),
@@ -124,15 +107,12 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
 // Export hooks
 export const {
     useBulkCreateAttendanceMutation,
-    useBulkUpdateAttendanceMutation,
-    useCreateAttendanceMutation,
     useUpdateAttendanceMutation,
     useGetAllAttendanceRecordsQuery,
     useGetAttendanceByIdQuery,
     useGetMonthlyAttendanceSheetQuery,
     useGetMonthlySummaryQuery,
-    useGetAttendanceByDateRangeQuery,
-    useGetAttendanceByDateRangeForAllStudentsQuery,
+    useGetAttendanceByStudentAndMonthQuery,
     useDeleteAttendanceMutation,
-    useDeleteMonthlyAttendanceMutation, // Added this
+    useDeleteMonthlyAttendanceMutation,
 } = mealAttendanceApi;

@@ -46,7 +46,6 @@
 //   MenuItem,
 //   Paper,
 //   Select,
-//   Snackbar,
 //   Table, TableBody,
 //   TableCell, TableContainer, TableHead, TableRow,
 //   TextField,
@@ -61,6 +60,7 @@
 // import dayjs, { Dayjs } from 'dayjs';
 // import { useRouter } from 'next/navigation';
 // import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// import toast, { Toaster } from 'react-hot-toast'; // ✅ Added React Hot Toast
 
 // interface Student {
 //   _id: string; studentId: string; name: string; nameBangla: string;
@@ -96,7 +96,7 @@
 //   const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(dayjs());
 //   const [attendanceChanges, setAttendanceChanges] = useState<Record<string, any>>({});
 //   const [searchTerm, setSearchTerm] = useState('');
-//   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as any });
+//   // ❌ Removed snackbar state
 //   const [localAttendanceData, setLocalAttendanceData] = useState<Record<string, any>>({});
 //   const [isInitialized, setIsInitialized] = useState(false);
 //   const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
@@ -344,13 +344,13 @@
 //     return () => window.removeEventListener('mouseup', up);
 //   }, []);
 
-//   // ✅ UPDATED: Bulk Actions (Header Buttons)
+//   // ✅ UPDATED: Bulk Actions (Header Buttons) - using toast
 //   const applyMealAction = (action: 'full' | 'b' | 'l' | 'd' | 'free', value: boolean) => {
 //     const isRowMode = selectionMode === 'row';
 //     const hasSelection = isRowMode ? selectedRowIndices.size > 0 : selectedColIndices.size > 0;
 
 //     if (!hasSelection) {
-//       setSnackbar({ open: true, message: `Please select ${isRowMode ? 'student row(s)' : 'date column(s)'} first!`, severity: 'warning' });
+//       toast(`Please select ${isRowMode ? 'student row(s)' : 'date column(s)'} first!`, { icon: '⚠️' });
 //       return;
 //     }
 
@@ -391,7 +391,7 @@
 //     if (action === 'free') msg += `Marked as Free`;
 //     else if (action === 'full') msg += `Meals`;
 //     else msg += `Meal Type`;
-//     setSnackbar({ open: true, message: msg, severity: 'success' });
+//     toast.success(msg);
 //   };
 
 //   const setAllMealsValue = (value: boolean) => {
@@ -404,7 +404,7 @@
 //       });
 //     });
 //     setAttendanceChanges(nc); setLocalAttendanceData(nl);
-//     setSnackbar({ open: true, message: value ? '✅ All meals added!' : '❌ All meals removed!', severity: 'success' });
+//     toast.success(value ? '✅ All meals added!' : '❌ All meals removed!');
 //   };
 
 //   const assignMealAllDates = (meal: string, value: boolean) => {
@@ -418,7 +418,7 @@
 //     }));
 //     setAttendanceChanges(nc);
 //     setLocalAttendanceData(nl);
-//     setSnackbar({ open: true, message: `${meal} ${value ? 'added' : 'removed'} for all dates`, severity: 'success' });
+//     toast.success(`${meal} ${value ? 'added' : 'removed'} for all dates`);
 //   };
 
 //   // --- Save Logic ---
@@ -455,22 +455,32 @@
 //         attendancesToSave = allAttendanceData;
 //       }
 
-//       if (attendancesToSave.length === 0) { setSnackbar({ open: true, message: 'No data to save', severity: 'warning' }); return; }
+//       if (attendancesToSave.length === 0) { toast('No data to save', { icon: '⚠️' }); return; }
 
 //       const result = await bulkCreateAttendance({ academicYear: getCurrentAcademicYear(), attendances: attendancesToSave }).unwrap();
+//       console.log('result check', result)
+//       if (result) {
+//         const nl = { ...localAttendanceData };
+//         attendancesToSave.forEach((att: any) => {
+//           nl[`${att.studentId}_${att.date}`] = { breakfast: att.breakfast, lunch: att.lunch, dinner: att.dinner, isFreeMeal: att.isFreeMeal };
+//         });
 
-//       const nl = { ...localAttendanceData };
-//       attendancesToSave.forEach((att: any) => {
-//         nl[`${att.studentId}_${att.date}`] = { breakfast: att.breakfast, lunch: att.lunch, dinner: att.dinner, isFreeMeal: att.isFreeMeal };
-//       });
+//         setLocalAttendanceData(nl);
+//         setAttendanceChanges({});
 
-//       setLocalAttendanceData(nl);
-//       setAttendanceChanges({});
-//       setSnackbar({ open: true, message: `${result.totalProcessed || attendancesToSave.length} records saved`, severity: 'success' });
-//       refetchMonthly();
-//       setTimeout(() => { router.push('/dashboard/daily-meal-report'); }, 1500);
+//         // Use result.data.totalProcessed if available, else fallback
+//         const count = result?.data?.totalProcessed || result?.totalProcessed || attendancesToSave.length;
+//         toast.success(`${count} records saved successfully!`);
 
-//     } catch (err: any) { setSnackbar({ open: true, message: err?.data?.message || 'Failed to save', severity: 'error' }); }
+//         refetchMonthly();
+//         router.push('/dashboard/daily-meal-report')
+
+//       }
+
+//     } catch (err: any) {
+//       const errorMessage = err?.data?.message || err?.error || 'Failed to save';
+//       toast.error(errorMessage);
+//     }
 //   };
 
 //   const handleUpdateSave = async () => {
@@ -487,18 +497,22 @@
 //           breakfast: localAttendanceData[`${firstStudent._id}_${dates[0]}`]?.breakfast ?? false,
 //           lunch: localAttendanceData[`${firstStudent._id}_${dates[0]}`]?.lunch ?? false,
 //           dinner: localAttendanceData[`${firstStudent._id}_${dates[0]}`]?.dinner ?? false,
-//           isFreeMeal: localAttendanceData[`${firstStudent._id}_${dates[0]}`]?.isFreeMeal ?? false, // ✅ Ensure Free Meal is saved in update
+//           isFreeMeal: localAttendanceData[`${firstStudent._id}_${dates[0]}`]?.isFreeMeal ?? false,
 //         };
-//       } else { setSnackbar({ open: true, message: 'No data to save', severity: 'warning' }); return; }
+//       } else { toast('No data to save', { icon: '⚠️' }); return; }
 
 //       await updateAttendance({
 //         id: attendanceId,
 //         data: { student: attendanceToSave.studentId, date: attendanceToSave.date, breakfast: attendanceToSave.breakfast, lunch: attendanceToSave.lunch, dinner: attendanceToSave.dinner, isFreeMeal: attendanceToSave.isFreeMeal, academicYear: getCurrentAcademicYear() }
 //       }).unwrap();
-//       setSnackbar({ open: true, message: 'Attendance updated successfully!', severity: 'success' });
+
+//       toast.success('Attendance updated successfully!');
 //       setAttendanceChanges({});
 //       setTimeout(() => { router.push('/dashboard/daily-meal-report'); }, 1500);
-//     } catch (err: any) { setSnackbar({ open: true, message: err?.data?.message || 'Failed to update', severity: 'error' }); }
+//     } catch (err: any) {
+//       console.error("Update failed:", err);
+//       toast.error(err?.data?.message || 'Failed to update');
+//     }
 //   };
 
 //   const handleReset = () => {
@@ -506,13 +520,10 @@
 //     const nl = { ...localAttendanceData };
 //     studentsByClass.forEach((s: Student) => dates.forEach((d: string) => { nl[`${s._id}_${d}`] = { breakfast: true, lunch: true, dinner: true, isFreeMeal: false }; }));
 //     setLocalAttendanceData(nl);
-//     setSnackbar({ open: true, message: 'Reset — all meals set to present', severity: 'info' });
+//     toast('Reset — all meals set to present', { icon: 'ℹ️' });
 //   };
 
 //   const filteredStudents = useMemo(() => studentsByClass.filter((s: Student) => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.nameBangla?.toLowerCase().includes(searchTerm.toLowerCase()) || s.studentClassRoll?.toString().includes(searchTerm) || s.studentId?.toLowerCase().includes(searchTerm.toLowerCase())), [studentsByClass, searchTerm]);
-
-//   // if (isUpdate && isLoadingSingle) return <Box sx={{ p: 4 }}><Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}><CircularProgress /><Typography sx={{ mt: 2 }} color="text.secondary">Loading attendance data...</Typography></Paper></Box>;
-//   // if (!classDropdownOptions.length) return <Box sx={{ p: 4 }}><Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}><CircularProgress /><Typography sx={{ mt: 2 }} color="text.secondary">Loading class data…</Typography></Paper></Box>;
 
 //   const hasColSel = selectedColIndices.size > 0;
 //   const hasRowSel = selectedRowIndices.size > 0;
@@ -522,6 +533,9 @@
 
 //   return (
 //     <LocalizationProvider dateAdapter={AdapterDayjs}>
+//       {/* ✅ Added Toaster component */}
+//       <Toaster position="top-right" reverseOrder={false} />
+
 //       <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
 //         {/* Header */}
 //         <Paper sx={{ p: 3, mb: 3, borderRadius: 3, background: 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)', color: 'white' }}>
@@ -704,7 +718,6 @@
 //             </TableContainer>
 //           )}
 //         </Paper>
-//         <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar(s => ({ ...s, open: false }))}><Alert severity={snackbar.severity} onClose={() => setSnackbar(s => ({ ...s, open: false }))}>{snackbar.message}</Alert></Snackbar>
 //       </Box>
 //     </LocalizationProvider>
 //   );

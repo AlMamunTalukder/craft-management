@@ -2,7 +2,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { BulkAction, Column, EnhancedTableProps, RowAction } from "@/interface/table";
+import { ActionButton, GradientCard, SearchField, StyledTableHead, StyledTableRow } from "@/style/table";
 import {
+  Add,
   ArrowDownward,
   ArrowUpward,
   CheckCircle,
@@ -15,208 +18,47 @@ import {
   Print,
   Refresh,
   Search,
-  ViewColumn,
-  Visibility,
-  Edit,
-  Delete,
-  Add,
   Sort,
+  ViewColumn
 } from "@mui/icons-material";
 import {
   Avatar,
+  Backdrop,
+  Badge,
   Box,
   Button,
-  Card,
   Checkbox,
   Chip,
   CircularProgress,
   Divider,
+  Fade,
+  FormControl,
   IconButton,
   InputAdornment,
+  InputLabel,
   LinearProgress,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
+  Paper,
   Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TablePagination,
   TableRow,
   TextField,
   Tooltip,
   Typography,
-  useTheme,
-  FormControl,
-  InputLabel,
-  Badge,
-  Paper,
-  Fade,
   Zoom,
-  Fab,
-  Backdrop,
   alpha,
-  styled,
+  useTheme
 } from "@mui/material";
 import { format } from "date-fns";
 import React, { useEffect, useMemo, useState } from "react";
-const StyledTableHead = styled(TableHead)(({ theme }) => ({
-  "& .MuiTableCell-head": {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-    borderBottom: `2px solid ${alpha(theme.palette.primary.dark, 0.3)}`,
-    fontWeight: 700,
-    fontSize: "0.875rem",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-}));
 
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "&:last-child td, &:last-child th": { border: 0 },
-  "&.MuiTableRow-hover": {
-    transition: "all 0.2s ease-in-out",
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.primary.main, 0.04),
-      transform: "translateY(-1px)",
-      boxShadow: theme.shadows[1],
-    },
-  },
-  "&.Mui-selected": {
-    backgroundColor: alpha(theme.palette.primary.main, 0.12),
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.primary.main, 0.16),
-    },
-  },
-}));
-
-const GradientCard = styled(Card)(({ theme }) => ({
-  background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.background.default, 0.9)} 100%)`,
-  backdropFilter: "blur(10px)",
-  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-}));
-
-const SearchField = styled(TextField)(({ theme }) => ({
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "12px",
-    backgroundColor: alpha(theme.palette.background.paper, 0.8),
-    transition: "all 0.2s ease-in-out",
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.background.paper, 0.9),
-      boxShadow: theme.shadows[1],
-    },
-    "&.Mui-focused": {
-      backgroundColor: theme.palette.background.paper,
-      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-    },
-  },
-}));
-
-const ActionButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-  color: theme.palette.primary.main,
-  "&:hover": {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-    transform: "scale(1.1)",
-  },
-  transition: "all 0.2s ease-in-out",
-}));
-
-// Types for the table component
-export interface Column {
-  id: string;
-  label: string;
-  minWidth?: number;
-  align?: "left" | "center" | "right";
-  format?: (value: any) => string | React.ReactNode;
-  sortable?: boolean;
-  filterable?: boolean;
-  type?:
-    | "text"
-    | "number"
-    | "date"
-    | "boolean"
-    | "status"
-    | "avatar"
-    | "progress";
-  visible?: boolean;
-  render?: (row: any) => React.ReactNode;
-  filterOptions?: { label: string; value: string }[];
-}
-
-export interface RowAction {
-  label: string;
-  icon: React.ReactNode;
-  onClick: (row: any) => void;
-  color?: "primary" | "secondary" | "error" | "warning" | "info" | "success";
-  disabled?: (row: any) => boolean;
-  tooltip?: string;
-  inMenu?: boolean;
-  alwaysShow?: boolean;
-}
-
-export interface BulkAction {
-  label: string;
-  icon: React.ReactNode;
-  onClick: (selectedRows: any[]) => void;
-  color?: "primary" | "secondary" | "error" | "warning" | "info" | "success";
-  disabled?: (selectedRows: any[]) => boolean;
-}
-
-export interface EnhancedTableProps {
-  title?: string;
-  subtitle?: string;
-  columns: Column[];
-  data: any[];
-  loading?: boolean;
-  error?: string;
-  rowCount?: number;
-  page?: number;
-  rowsPerPage?: number;
-  onPageChange?: (page: number) => void;
-  onRowsPerPageChange?: (rowsPerPage: number) => void;
-  onRefresh?: () => void;
-  onExport?: () => void;
-  onPrint?: () => void;
-  onAdd?: () => void;
-  onSortChange?: (sortColumn: string, sortDirection: "asc" | "desc") => void;
-  onSearchChange?: (searchTerm: string) => void;
-  rowActions?: RowAction[];
-  bulkActions?: BulkAction[];
-  selectable?: boolean;
-  searchable?: boolean;
-  filterable?: boolean;
-  sortable?: boolean;
-  pagination?: boolean;
-  serverSideSorting?: boolean;
-  emptyStateMessage?: string;
-  className?: string;
-  idField?: string;
-  defaultSortColumn?: string;
-  defaultSortDirection?: "asc" | "desc";
-  height?: string | number;
-  maxHeight?: string | number;
-  stickyHeader?: boolean;
-  dense?: boolean;
-  striped?: boolean;
-  hover?: boolean;
-  showToolbar?: boolean;
-  customToolbar?: React.ReactNode;
-  elevation?: number;
-  borderRadius?: number;
-  cardSx?: object;
-  headerBackgroundColor?: string;
-  showRowNumbers?: boolean;
-  rowNumberHeader?: string;
-  actionColumnWidth?: number;
-  actionMenuLabel?: string;
-  loadingOverlay?: boolean;
-  fadeIn?: boolean;
-}
 
 const CraftTable: React.FC<EnhancedTableProps> = ({
   title,
@@ -1074,8 +916,8 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                           transition: "all 0.2s ease-in-out",
                           "&:hover": column.sortable
                             ? {
-                                backgroundColor: theme.palette.primary.dark,
-                              }
+                              backgroundColor: theme.palette.primary.dark,
+                            }
                             : {},
                         }}
                         onClick={() => column.sortable && handleSort(column.id)}
@@ -1270,9 +1112,9 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                                 sx={{
                                   backgroundColor: action.color
                                     ? alpha(
-                                        theme.palette[action.color].main,
-                                        0.1,
-                                      )
+                                      theme.palette[action.color].main,
+                                      0.1,
+                                    )
                                     : undefined,
                                   color: action.color
                                     ? theme.palette[action.color].main
@@ -1300,7 +1142,7 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                                 // CRITICAL FIX: Use idField instead of hardcoded 'id'
                                 open={Boolean(
                                   actionMenuAnchor &&
-                                    currentRow?.[idField] === row?.[idField],
+                                  currentRow?.[idField] === row?.[idField],
                                 )}
                                 onClose={handleActionMenuClose}
                                 PaperProps={{
@@ -1383,9 +1225,9 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                 py: 2,
               },
               "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
-                {
-                  fontWeight: 500,
-                },
+              {
+                fontWeight: 500,
+              },
             }}
           />
         )}

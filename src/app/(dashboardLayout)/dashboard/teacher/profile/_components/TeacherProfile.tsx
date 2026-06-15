@@ -3,391 +3,41 @@
 
 import type React from "react";
 
-import { useState } from "react";
-import {
-  Box,
-  Container,
-  Grid,
-  Paper,
-  Typography,
-  Avatar,
-  Tabs,
-  Tab,
-  Chip,
-  Button,
-  Badge,
-  Tooltip,
-  useTheme,
-  alpha,
-  IconButton,
-  Divider,
-  Fade,
-  useMediaQuery,
-} from "@mui/material";
-import {
-  School,
-  Schedule,
-  Class,
-  Assessment,
-  People,
-  Assignment,
-  Message,
-  CalendarMonth,
-  MenuBook,
-  EmojiEvents,
-  Settings,
-  Edit,
-  CheckCircle,
-  Info,
-  Star,
-  Notifications,
-  Mail,
-  Download,
-  QueryStats,
-  Description,
-} from "@mui/icons-material";
-import TeacherOverview from "../_components/TeacherOverview";
 import { useGetSingleTeacherQuery } from "@/redux/api/teacherApi";
 import { formatDate } from "@/utils/formateDate";
+import {
+  CalendarMonth,
+  CheckCircle,
+  Edit,
+  Info,
+  Message,
+  Restaurant,
+  School,
+  Star
+} from "@mui/icons-material";
+import {
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Chip,
+  Container,
+  Divider,
+  Fade,
+  Grid,
+  Paper,
+  Tab,
+  Tabs,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme
+} from "@mui/material";
+import { useState } from "react";
+import MealAttendance from "../_components/MealAttendance";
+import TeacherOverview from "../_components/TeacherOverview";
 
-export const teacherData = {
-  id: "T12345",
-  name: "Dr. Sarah Johnson",
-  avatar: "/placeholder.svg?height=150&width=150",
-  role: "Senior Mathematics Teacher",
-  department: "Mathematics",
-  joinDate: "August 15, 2018",
-  education: [
-    {
-      degree: "Ph.D. in Mathematics",
-      institution: "Stanford University",
-      year: "2015",
-    },
-    {
-      degree: "M.Sc. in Applied Mathematics",
-      institution: "MIT",
-      year: "2012",
-    },
-    {
-      degree: "B.Sc. in Mathematics",
-      institution: "Harvard University",
-      year: "2010",
-    },
-  ],
-  contact: {
-    email: "sarah.johnson@schoolerp.edu",
-    phone: "+1 (555) 123-4567",
-    address: "123 Faculty Lane, Academic City, CA 94305",
-    website: "www.sarahjohnson-math.edu",
-  },
-  socialMedia: {
-    linkedin: "linkedin.com/in/sarahjohnson",
-    twitter: "@DrSarahJohnson",
-    researchGate: "researchgate.net/profile/Sarah_Johnson",
-  },
-  bio: "Dr. Sarah Johnson is an award-winning mathematics educator with over 10 years of teaching experience. She specializes in advanced calculus and statistics, with research interests in mathematical modeling and educational technology. Dr. Johnson is passionate about making complex mathematical concepts accessible to students of all learning styles.",
-  expertise: [
-    "Calculus",
-    "Statistics",
-    "Algebra",
-    "Mathematical Modeling",
-    "Educational Technology",
-  ],
-  achievements: [
-    {
-      title: "Teacher of the Year",
-      year: "2022",
-      issuer: "National Education Association",
-    },
-    {
-      title: "Excellence in STEM Education Award",
-      year: "2021",
-      issuer: "State Department of Education",
-    },
-    {
-      title: "Best Research Paper",
-      year: "2020",
-      issuer: "International Conference on Mathematics Education",
-    },
-  ],
-  certifications: [
-    {
-      name: "Advanced Pedagogical Certification",
-      issuer: "National Board for Professional Teaching Standards",
-      year: "2019",
-    },
-    {
-      name: "Educational Technology Integration",
-      issuer: "EdTech Institute",
-      year: "2020",
-    },
-  ],
-  publications: [
-    {
-      title: "Innovative Approaches to Teaching Calculus",
-      journal: "Journal of Mathematics Education",
-      year: "2021",
-    },
-    {
-      title: "Technology Integration in Mathematics Classrooms",
-      journal: "Educational Technology Review",
-      year: "2020",
-    },
-  ],
-  currentClasses: [
-    {
-      id: "M101",
-      name: "Advanced Calculus",
-      grade: "12th Grade",
-      students: 24,
-      schedule: "Mon, Wed, Fri 9:00 AM - 10:30 AM",
-      room: "Science Block, Room 305",
-    },
-    {
-      id: "M202",
-      name: "Statistics & Probability",
-      grade: "11th Grade",
-      students: 28,
-      schedule: "Tue, Thu 11:00 AM - 12:30 PM",
-      room: "Science Block, Room 308",
-    },
-    {
-      id: "M303",
-      name: "Linear Algebra",
-      grade: "12th Grade",
-      students: 22,
-      schedule: "Mon, Wed 1:00 PM - 2:30 PM",
-      room: "Science Block, Room 301",
-    },
-  ],
-  upcomingEvents: [
-    {
-      title: "Parent-Teacher Conference",
-      date: "October 15, 2023",
-      time: "4:00 PM - 7:00 PM",
-      location: "Main Hall",
-    },
-    {
-      title: "Mathematics Department Meeting",
-      date: "October 10, 2023",
-      time: "3:30 PM - 5:00 PM",
-      location: "Conference Room B",
-    },
-    {
-      title: "STEM Fair Planning Committee",
-      date: "October 12, 2023",
-      time: "4:00 PM - 5:30 PM",
-      location: "Science Lab",
-    },
-  ],
-  performanceMetrics: {
-    studentSatisfaction: 92,
-    peerReview: 95,
-    administrativeReview: 94,
-    professionalDevelopment: 98,
-    researchContribution: 90,
-  },
-  pendingTasks: [
-    {
-      title: "Grade Calculus Mid-term Exams",
-      deadline: "October 8, 2023",
-      priority: "High",
-    },
-    {
-      title: "Submit Q3 Curriculum Plan",
-      deadline: "October 12, 2023",
-      priority: "Medium",
-    },
-    {
-      title: "Review Textbook Selections for Next Year",
-      deadline: "October 20, 2023",
-      priority: "Low",
-    },
-  ],
-  recentAnnouncements: [
-    {
-      title: "School Closure - Staff Development Day",
-      date: "October 18, 2023",
-      content:
-        "The school will be closed for students on October 18 for staff professional development.",
-    },
-    {
-      title: "New Grading Software Implementation",
-      date: "October 5, 2023",
-      content:
-        "Training sessions for the new grading software will be held next week. Please sign up for a slot.",
-    },
-  ],
-  resources: [
-    {
-      title: "Calculus Lecture Notes",
-      type: "PDF",
-      size: "2.4 MB",
-      lastUpdated: "September 28, 2023",
-    },
-    {
-      title: "Statistics Problem Set Solutions",
-      type: "PDF",
-      size: "1.8 MB",
-      lastUpdated: "September 25, 2023",
-    },
-    {
-      title: "Linear Algebra Visualization Tools",
-      type: "Software",
-      size: "15 MB",
-      lastUpdated: "September 20, 2023",
-    },
-  ],
-  studentPerformance: [
-    {
-      class: "Advanced Calculus",
-      averageGrade: 87,
-      passingRate: 95,
-      topPerformer: "Alex Chen",
-    },
-    {
-      class: "Statistics & Probability",
-      averageGrade: 84,
-      passingRate: 92,
-      topPerformer: "Maya Patel",
-    },
-    {
-      class: "Linear Algebra",
-      averageGrade: 82,
-      passingRate: 90,
-      topPerformer: "James Wilson",
-    },
-  ],
-  attendanceRecord: {
-    present: 45,
-    absent: 2,
-    late: 1,
-    leaveOfAbsence: 0,
-    attendanceRate: 98.5,
-  },
-  teachingSchedule: [
-    {
-      day: "Monday",
-      periods: [
-        { time: "9:00 AM - 10:30 AM", class: "Advanced Calculus", room: "305" },
-        {
-          time: "11:00 AM - 12:30 PM",
-          class: "Office Hours",
-          room: "Faculty Office",
-        },
-        { time: "1:00 PM - 2:30 PM", class: "Linear Algebra", room: "301" },
-      ],
-    },
-    {
-      day: "Tuesday",
-      periods: [
-        {
-          time: "9:00 AM - 10:30 AM",
-          class: "Department Planning",
-          room: "Conference Room",
-        },
-        {
-          time: "11:00 AM - 12:30 PM",
-          class: "Statistics & Probability",
-          room: "308",
-        },
-        {
-          time: "1:00 PM - 2:30 PM",
-          class: "Research Time",
-          room: "Faculty Office",
-        },
-      ],
-    },
-    {
-      day: "Wednesday",
-      periods: [
-        { time: "9:00 AM - 10:30 AM", class: "Advanced Calculus", room: "305" },
-        {
-          time: "11:00 AM - 12:30 PM",
-          class: "Student Mentoring",
-          room: "Faculty Office",
-        },
-        { time: "1:00 PM - 2:30 PM", class: "Linear Algebra", room: "301" },
-      ],
-    },
-    {
-      day: "Thursday",
-      periods: [
-        {
-          time: "9:00 AM - 10:30 AM",
-          class: "Professional Development",
-          room: "Faculty Lounge",
-        },
-        {
-          time: "11:00 AM - 12:30 PM",
-          class: "Statistics & Probability",
-          room: "308",
-        },
-        {
-          time: "1:00 PM - 2:30 PM",
-          class: "Math Club Supervision",
-          room: "305",
-        },
-      ],
-    },
-    {
-      day: "Friday",
-      periods: [
-        { time: "9:00 AM - 10:30 AM", class: "Advanced Calculus", room: "305" },
-        {
-          time: "11:00 AM - 12:30 PM",
-          class: "Faculty Meeting",
-          room: "Conference Room",
-        },
-        {
-          time: "1:00 PM - 2:30 PM",
-          class: "Office Hours",
-          room: "Faculty Office",
-        },
-      ],
-    },
-  ],
-  pendingGrading: [
-    {
-      assignment: "Calculus Mid-term Exam",
-      class: "Advanced Calculus",
-      dueDate: "October 8, 2023",
-      submissions: 24,
-    },
-    {
-      assignment: "Statistics Problem Set 3",
-      class: "Statistics & Probability",
-      dueDate: "October 10, 2023",
-      submissions: 26,
-    },
-    {
-      assignment: "Linear Algebra Quiz 2",
-      class: "Linear Algebra",
-      dueDate: "October 12, 2023",
-      submissions: 22,
-    },
-  ],
-  recentMessages: [
-    {
-      from: "Principal Williams",
-      subject: "Upcoming Accreditation Visit",
-      date: "October 3, 2023",
-      read: true,
-    },
-    {
-      from: "Alex Chen (Student)",
-      subject: "Question about Calculus Assignment",
-      date: "October 3, 2023",
-      read: false,
-    },
-    {
-      from: "Dr. Robert Lee (Colleague)",
-      subject: "STEM Fair Planning",
-      date: "October 2, 2023",
-      read: true,
-    },
-  ],
-};
+
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -440,6 +90,9 @@ export default function TeacherProfile({ params }: PageProps) {
       "aria-controls": `teacher-tabpanel-${index}`,
     };
   };
+
+  // Calculate meal attendance stats for badge
+  const mealCount = singleTeacher?.data?.mealAttendances?.length || 0;
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
@@ -523,7 +176,7 @@ export default function TeacherProfile({ params }: PageProps) {
                   {singleTeacher?.data?.name}
                 </Typography>
                 <Typography variant="h6" gutterBottom sx={{ opacity: 0.9 }}>
-                  • {singleTeacher?.data?.designation} Department
+                  {singleTeacher?.data?.designation} • {singleTeacher?.data?.department} Department
                 </Typography>
                 <Box
                   sx={{
@@ -563,8 +216,8 @@ export default function TeacherProfile({ params }: PageProps) {
                     }}
                   />
                   <Chip
-                    icon={<Star />}
-                    label="Teacher of the Year 2022"
+                    icon={<Restaurant />}
+                    label={`${mealCount} Meals`}
                     size="small"
                     sx={{
                       bgcolor: "rgba(255, 255, 255, 0.15)",
@@ -635,7 +288,7 @@ export default function TeacherProfile({ params }: PageProps) {
               <Grid item xs>
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    3
+                    {singleTeacher?.data?.class ? 1 : 0}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
                     Active Classes
@@ -650,10 +303,10 @@ export default function TeacherProfile({ params }: PageProps) {
               <Grid item xs>
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    74
+                    {singleTeacher?.data?.section ? 1 : 0}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    Students
+                    Sections
                   </Typography>
                 </Box>
               </Grid>
@@ -665,10 +318,10 @@ export default function TeacherProfile({ params }: PageProps) {
               <Grid item xs>
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    98.5%
+                    {mealCount}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    Attendance
+                    Meal Days
                   </Typography>
                 </Box>
               </Grid>
@@ -680,10 +333,10 @@ export default function TeacherProfile({ params }: PageProps) {
               <Grid item xs>
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    92%
+                    {singleTeacher?.data?.workExperience?.length || 0}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    Satisfaction
+                    Experience
                   </Typography>
                 </Box>
               </Grid>
@@ -695,10 +348,10 @@ export default function TeacherProfile({ params }: PageProps) {
               <Grid item xs>
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    3
+                    {singleTeacher?.data?.status || "Active"}
                   </Typography>
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    Pending Tasks
+                    Status
                   </Typography>
                 </Box>
               </Grid>
@@ -734,12 +387,21 @@ export default function TeacherProfile({ params }: PageProps) {
             iconPosition="start"
             {...getTabProps(0)}
           />
+          <Tab
+            icon={<Restaurant />}
+            label={isSmall ? "" : `Meal Attendance (${mealCount})`}
+            iconPosition="start"
+            {...getTabProps(1)}
+          />
         </Tabs>
       </Box>
 
       {/* Tab Panels */}
       <TabPanel value={tabValue} index={0}>
         <TeacherOverview teacher={singleTeacher?.data} />
+      </TabPanel>
+      <TabPanel value={tabValue} index={1}>
+        <MealAttendance teacher={singleTeacher?.data} />
       </TabPanel>
     </Container>
   );

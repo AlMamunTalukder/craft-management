@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import { useGetDueFeesQuery } from "@/redux/api/feesApi";
 import {
   Fee,
@@ -26,6 +26,7 @@ import PaymentModal from "../../student/profile/__components/PaymentModal";
 import PrintModal from "../../student/profile/__components/PrintModal";
 import StudentFeeDetailsModal from "./StudentFeeDetailsModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { Column, RowAction } from "@/interface/table";
 
 const FeeCollection = () => {
   const theme = useTheme();

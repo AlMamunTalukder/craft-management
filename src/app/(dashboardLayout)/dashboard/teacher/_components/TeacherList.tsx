@@ -26,8 +26,10 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import CraftTable, { Column, RowAction } from "@/components/Table";
+
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import { Column, RowAction } from "@/interface/table";
+import CraftTable from "@/components/Table";
 
 export default function TeacherList() {
   const theme = useTheme();
@@ -41,12 +43,6 @@ export default function TeacherList() {
   const [sortColumn, setSortColumn] = useState<string>("createdAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  // Build sort string for backend
-  const getSortString = () => {
-    if (!sortColumn) return "-createdAt";
-    return sortDirection === "desc" ? `-${sortColumn}` : sortColumn;
-  };
-
   const {
     data: teacherData,
     isLoading,
@@ -55,7 +51,7 @@ export default function TeacherList() {
     limit: rowsPerPage,
     page: page + 1,
     searchTerm: searchTerm,
-    sort: getSortString(), // Send sort to backend
+    sort: 'teacherSerial',
   });
 
   const [deleteTeacher] = useDeleteTeacherMutation();
@@ -107,6 +103,8 @@ export default function TeacherList() {
               teacher.professionalInfo?.designation ||
               "Teacher",
             teacherId: teacher.teacherId || "",
+            // FIX: Added teacherSerial here
+            teacherSerial: teacher.teacherSerial || "",
           };
         },
       );
@@ -168,7 +166,7 @@ export default function TeacherList() {
   const handleSortChange = (column: string, direction: "asc" | "desc") => {
     setSortColumn(column);
     setSortDirection(direction);
-    setPage(0); // Reset to first page when sorting changes
+    setPage(0);
   };
 
   const handleSearchChange = (term: string) => {
@@ -176,10 +174,7 @@ export default function TeacherList() {
     setPage(0);
   };
 
-  // Get unique departments for filter
-  const departments = ["all", ...new Set(teachers.map((t) => t.department))];
 
-  // Filter data on frontend (only for department filter)
   const getFilteredData = () => {
     if (filterDepartment === "all") return teachers;
     return teachers.filter(
@@ -189,13 +184,26 @@ export default function TeacherList() {
 
   const columns: Column[] = [
     {
+      id: "teacherSerial",
+      label: "Serial No",
+      minWidth: 180,
+      sortable: true,
+      render: (row: any) => (
+        <Box>
+          <Typography variant="body1" fontWeight={600}>
+            {row.teacherSerial}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
       id: "teacherPhoto",
       label: "Photo",
       minWidth: 70,
       align: "center",
       type: "avatar",
       sortable: false,
-      render: (row: Teacher) => (
+      render: (row: any) => (
         <Avatar
           src={row.teacherPhoto}
           sx={{
@@ -214,8 +222,8 @@ export default function TeacherList() {
       id: "name",
       label: "Teacher Name",
       minWidth: 180,
-      sortable: true, // Enable server-side sorting
-      render: (row: Teacher) => (
+      sortable: true,
+      render: (row: any) => (
         <Box>
           <Typography variant="body1" fontWeight={600}>
             {row.name}
@@ -226,12 +234,13 @@ export default function TeacherList() {
         </Box>
       ),
     },
+
     {
       id: "department",
       label: "Department",
       minWidth: 140,
       sortable: true,
-      render: (row: Teacher) => (
+      render: (row: any) => (
         <Typography variant="body2" fontWeight={500}>
           {row.department}
         </Typography>
@@ -242,7 +251,7 @@ export default function TeacherList() {
       label: "Qualification",
       minWidth: 150,
       sortable: false,
-      render: (row: Teacher) => (
+      render: (row: any) => (
         <Box>
           <Typography variant="body2">{row.qualifications}</Typography>
           <Typography variant="caption" color="text.secondary">
@@ -256,7 +265,7 @@ export default function TeacherList() {
       label: "Contact",
       minWidth: 200,
       sortable: false,
-      render: (row: Teacher) => (
+      render: (row: any) => (
         <Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
             <MailIcon fontSize="small" color="action" />
@@ -277,21 +286,21 @@ export default function TeacherList() {
     {
       label: "View",
       icon: <Visibility fontSize="small" />,
-      onClick: (row: Teacher) => handleViewTeacher(row),
+      onClick: (row: any) => handleViewTeacher(row),
       tooltip: "View Profile",
       color: "info",
     },
     {
       label: "Edit",
       icon: <Edit fontSize="small" />,
-      onClick: (row: Teacher) => handleEditTeacher(row),
+      onClick: (row: any) => handleEditTeacher(row),
       tooltip: "Edit Teacher",
       color: "warning",
     },
     {
       label: "Delete",
       icon: <Delete fontSize="small" />,
-      onClick: (row: Teacher) => handleDeleteTeacher(row),
+      onClick: (row: any) => handleDeleteTeacher(row),
       tooltip: "Delete Teacher",
       color: "error",
     },
@@ -328,8 +337,7 @@ export default function TeacherList() {
             setPage(0);
           }}
           emptyStateMessage="No teachers found matching your search criteria"
-          showRowNumbers={true}
-          rowNumberHeader="SN"
+          showRowNumbers={false}
           actionColumnWidth={140}
           actionMenuLabel="Actions"
           elevation={2}
@@ -338,31 +346,10 @@ export default function TeacherList() {
           striped={true}
           hover={true}
           stickyHeader={true}
-          serverSideSorting={true} // Enable server-side sorting
-          bulkActions={[
-            {
-              label: "Export Selected",
-              icon: <FileDownloadIcon />,
-              onClick: (selectedRows) => {
-                console.log("Export selected rows:", selectedRows);
-              },
-            },
-          ]}
+          serverSideSorting={true}
         />
 
-        {/* Optional: Department Filter UI */}
-        <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {departments.map((dept) => (
-            <Chip
-              key={dept}
-              label={dept === "all" ? "All Departments" : dept}
-              onClick={() => setFilterDepartment(dept)}
-              color={filterDepartment === dept ? "primary" : "default"}
-              variant={filterDepartment === dept ? "filled" : "outlined"}
-              sx={{ cursor: "pointer" }}
-            />
-          ))}
-        </Box>
+
       </Container>
     </Box>
   );
