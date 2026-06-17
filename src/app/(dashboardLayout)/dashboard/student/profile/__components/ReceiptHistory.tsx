@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import { useGetCompleteReceiptsQuery } from "@/redux/api/receiptApi";
 import { Delete, Download, Print, Visibility } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import ReceiptDetailsDialog from "./ReceiptDetailModal";
 import PrintModal from "./PrintModal";
 import { ReceiptHistoryProps } from "@/interface/student";
+import { Column, RowAction } from "@/interface/table";
 
 const ReceiptHistory: React.FC<ReceiptHistoryProps> = ({
   studentId,
@@ -53,7 +54,7 @@ const ReceiptHistory: React.FC<ReceiptHistoryProps> = ({
     }
   };
 
-  const handleDeleteReceipt = () => {};
+  const handleDeleteReceipt = () => { };
 
   const handlePrintReceipt = () => {
     // This can be called from ReceiptDetailsDialog
@@ -62,7 +63,7 @@ const ReceiptHistory: React.FC<ReceiptHistoryProps> = ({
     }
   };
 
-  const handleDownloadReceipt = () => {};
+  const handleDownloadReceipt = () => { };
 
   const handleViewReceipt = (receipt: any) => {
     setSelectedReceipt(receipt);

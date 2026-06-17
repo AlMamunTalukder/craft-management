@@ -37,7 +37,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import CraftTable, { Column, RowAction, BulkAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import Swal from "sweetalert2";
 import { AdmissionDetailModal } from "./AdmissionDetailModal";
 import { TAdmissionStatus } from "@/interface/admission";
@@ -45,6 +45,7 @@ import { formatDate, formatShortDate } from "@/utils/formateDate";
 import { AdmissionApplicationListProps, ApplicationRow } from "@/types/apply";
 import { generatePDFFromData } from "@/utils/pdfGenerator";
 import { classOrder } from "@/options";
+import { BulkAction, Column, RowAction } from "@/interface/table";
 
 const mapApplicationToFormData = (app: any): Record<string, any> => {
   const student = app.studentInfo || {};

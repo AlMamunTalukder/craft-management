@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import { StudentFeeProps } from "@/interface/student";
 import {
   Delete,
@@ -13,6 +13,7 @@ import AddFeeModal from "./Fees/AddFeeModal";
 import FeeSummaryCards from "./FeeSummaryCards";
 import PaymentModal from "./PaymentModal";
 import ViewFeeModal from "./ViewFeeModal";
+import { Column, RowAction } from "@/interface/table";
 
 const PaidStudentFee = ({
   studentFees,

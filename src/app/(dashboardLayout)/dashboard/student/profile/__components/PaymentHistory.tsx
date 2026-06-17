@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import { Visibility } from "@mui/icons-material";
 import { Box, Typography, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 
 import PaymentDetailsModal from "./PaymentDetailsModal";
 import ReceiptViewer, { ReceiptData } from "./ReceiptViewer";
+import { Column, RowAction } from "@/interface/table";
 
 const PaymentHistory = ({ singleStudent }: any) => {
   const theme = useTheme();
@@ -157,7 +158,7 @@ const PaymentHistory = ({ singleStudent }: any) => {
     },
   ];
 
-  const handlePrint = () => {};
+  const handlePrint = () => { };
 
   const handleRefresh = () => {
     setIsLoading(true);
@@ -166,7 +167,7 @@ const PaymentHistory = ({ singleStudent }: any) => {
     }, 1000);
   };
 
-  const handleAddPayment = () => {};
+  const handleAddPayment = () => { };
 
   return (
     <Box>

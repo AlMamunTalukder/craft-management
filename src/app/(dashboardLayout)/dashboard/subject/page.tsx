@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import {
   useCreateSubjectMutation,
   useDeleteSubjectMutation,
@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import type { FieldValues } from "react-hook-form";
 import SubjectFormModal from "./_components/SubjectFormModal";
+import { Column, RowAction } from "@/interface/table";
 
 export default function SubjectManagementPage() {
   const [page, setPage] = useState(0);

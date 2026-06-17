@@ -26,8 +26,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import { Column, RowAction } from "@/interface/table";
 
 
 
@@ -106,6 +107,7 @@ export default function StaffList() {
   }, [staffData, isLoading]);
 
   const handleViewStaff = (staff: any) => {
+    router.push(`/dashboard/staff/profile/${staff._id}`);
   };
 
   const handleEditStaff = (staff: any) => {

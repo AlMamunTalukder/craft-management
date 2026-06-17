@@ -7,6 +7,9 @@ export interface StudentMealAttendanceProps {
             studentId: string;
             studentClassRoll: string;
             mealAttendances?: any[];
+            mealCurrentBalance: any;
+            mealBalance: any;
+            category: any;
             mealStatistics?: {
                 totalMeals: number;
                 totalCost: number;

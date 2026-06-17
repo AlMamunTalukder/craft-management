@@ -2,50 +2,29 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from "@mui/material";
+import CraftTable from "@/components/Table";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import CraftTable, { Column, RowAction } from "@/components/Table";
 
-import type React from "react";
-import { useState } from "react";
 import {
   Box,
   Container,
-  Typography,
-  Button,
-  Fade,
-  alpha,
-  Chip,
-  Avatar,
-  Stack,
+  Fade
 } from "@mui/material";
+import { useState } from "react";
 
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
   Delete as DeleteIcon,
-  School as SchoolIcon,
-  Class as ClassIcon,
-  Group as GroupIcon,
-  Book as BookIcon,
-  Person as PersonIcon,
+  Edit as EditIcon
 } from "@mui/icons-material";
 
-import Link from "next/link";
 import {
   useDeleteClassMutation,
   useGetAllClassesQuery,
 } from "@/redux/api/classApi";
-import { theme } from "@/lib/Theme/Theme";
 
-import ClassModal from "./_components/ClassForm";
 import Swal from "sweetalert2";
+import ClassModal from "./_components/ClassForm";
+import { Column, RowAction } from "@/interface/table";
 
 const departmentColors: Record<string, string> = {
   Languages: "#3a7bd5",
@@ -80,9 +59,7 @@ export default function ClassesListPage() {
     searchTerm: searchTerm,
   });
 
-  const handleRefresh = () => {
-    refetch();
-  };
+
 
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
@@ -155,7 +132,7 @@ export default function ClassesListPage() {
     setEditingClassId(null); // Reset editing ID
   };
 
-  const handleExport = () => {};
+  const handleExport = () => { };
 
   const handlePrint = () => {
     window.print();
@@ -260,7 +237,7 @@ export default function ClassesListPage() {
                   {
                     label: "Export Selected",
                     icon: <FileDownloadIcon />,
-                    onClick: (selectedRows) => {},
+                    onClick: (selectedRows) => { },
                   },
                 ]}
               />

@@ -20,10 +20,11 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import { useGetMonthlyAttendanceSheetQuery, useDeleteMonthlyAttendanceMutation } from '@/redux/api/mealAttendanceApi';
 import { useAcademicOption } from '@/hooks/useAcademicOption';
-import CraftTable, { Column } from '@/components/Table';
+import CraftTable from '@/components/Table';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
+import { Column } from '@/interface/table';
 
 type PersonType = 'student' | 'teacher' | 'staff';
 

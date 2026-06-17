@@ -15,3 +15,17 @@ export const formatShortDate = (date: string | Date) => {
     return "Invalid date";
   }
 };
+
+export const formatAddress = (address: any) => {
+  if (!address) return "N/A";
+  const parts = [
+    address.address,
+    address.village,
+    address.postOffice,
+    address.thana,
+    address.district,
+    address.country,
+    address.zipCode,
+  ].filter(Boolean);
+  return parts.join(", ");
+};

@@ -2,32 +2,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
-import {
-  Box,
-  Avatar,
-  Card,
-  Chip,
-  CircularProgress,
-  Container,
-  Typography,
-  useTheme,
-  alpha,
-} from "@mui/material";
-import {
-  Delete,
-  Discount as DiscountIcon,
-  Edit,
-  Visibility,
-} from "@mui/icons-material";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import CraftTable from "@/components/Table";
+import { Column, RowAction } from "@/interface/table";
 import {
   useDeleteStudentMutation,
   useGetAllStudentsQuery,
 } from "@/redux/api/studentApi";
+import {
+  Discount as DiscountIcon,
+  Visibility
+} from "@mui/icons-material";
+import {
+  alpha,
+  Avatar,
+  Box,
+  Card,
+  Chip,
+  Container,
+  Typography,
+  useTheme
+} from "@mui/material";
+import { useMemo, useState } from "react";
 import Swal from "sweetalert2";
-import CraftTable, { Column, RowAction } from "@/components/Table";
 import DiscountSummaryModal from "../list/__components/DiscountSummaryModal";
-import LoadingSpinner from "@/components/LoadingSpinner";
 
 const DiscountedStudentList = () => {
   const theme = useTheme();

@@ -3,7 +3,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
+import { Column, RowAction } from "@/interface/table";
 import { useGetAllMetaQuery } from "@/redux/api/metaApi";
 import { useGetAllSectionsQuery } from "@/redux/api/sectionApi";
 import {

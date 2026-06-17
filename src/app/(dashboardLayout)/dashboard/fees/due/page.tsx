@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import { useGetDueFeesQuery } from "@/redux/api/feesApi";
 import { Payment, Search, Visibility } from "@mui/icons-material";
 import {
@@ -27,12 +27,13 @@ import {
   TableHead,
   TableRow,
   Typography,
-  useTheme,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import PaymentModal from "../../student/profile/__components/PaymentModal";
+import { Column, RowAction } from "@/interface/table";
 
 interface Student {
   _id: string;
