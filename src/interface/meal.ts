@@ -67,3 +67,28 @@ export interface ClassDataResponse {
         };
     };
 }
+
+
+export type PersonType = 'student' | 'teacher' | 'staff';
+
+export interface PersonRow {
+    _id: string;
+    name: string;
+    nameBangla?: string;
+    roll?: string;
+    personId?: string;
+    category?: string;
+    studentType?: string;
+    className?: any[];
+    admissionStatus?: string;
+    designation?: string;
+    department?: string;
+    status?: string;
+    staffDepartment?: string;
+}
+
+export interface MealRates {
+    breakfast: number;
+    lunch: number;
+    dinner: number;
+}

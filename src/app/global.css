@@ -29,6 +29,13 @@
   height: 100%;
 }
 
+
+
+@media print {
+  .receipt-preview {
+    transform: none !important;
+  }
+}
 @media print {
   @page {
     margin: 0px;

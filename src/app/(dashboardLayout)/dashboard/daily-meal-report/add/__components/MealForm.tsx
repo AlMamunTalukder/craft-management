@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import { COL_HEADER_BG, COL_SEL_BG, COL_SEL_BORDER, DEFAULT_MEAL_RATES, FREE_MEAL_BG, PERSON_AVATARS, PERSON_LABELS, ROW_SEL_BG, ROW_SEL_BORDER, TAB_COLORS } from '@/constant/meal';
 import { useAcademicOption } from '@/hooks/useAcademicOption';
+import { MealRates, PersonRow, PersonType } from '@/interface/meal';
 import {
     useBulkCreateAttendanceMutation,
     useGetMonthlyAttendanceSheetQuery,
@@ -64,66 +66,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 
-type PersonType = 'student' | 'teacher' | 'staff';
-
-interface PersonRow {
-    _id: string;
-    name: string;
-    nameBangla?: string;
-    roll?: string;
-    personId?: string;
-    category?: string;
-    studentType?: string;
-    className?: any[];
-    admissionStatus?: string;
-    designation?: string;
-    department?: string;
-    status?: string;
-    staffDepartment?: string;
-}
-
-interface MealRates {
-    breakfast: number;
-    lunch: number;
-    dinner: number;
-}
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const COL_SEL_BG = 'rgba(19,102,210,0.13)';
-const COL_SEL_BORDER = '#1366D2';
-const COL_HEADER_BG = 'rgba(19,102,210,0.28)';
-const ROW_SEL_BG = 'rgba(255, 152, 0, 0.15)';
-const ROW_SEL_BORDER = '#f57c00';
-const FREE_MEAL_BG = '#FFFDE7';
-
-// Fallback default meal rates
-const DEFAULT_MEAL_RATES: MealRates = { breakfast: 40, lunch: 45, dinner: 80 };
-
-const TAB_COLORS: Record<PersonType, string> = {
-    student: '#1976d2',
-    teacher: '#7b1fa2',
-    staff: '#2e7d32',
-};
-
-const PERSON_LABELS: Record<PersonType, string> = {
-    student: 'Students',
-    teacher: 'Teachers',
-    staff: 'Staff',
-};
-
-const PERSON_AVATARS: Record<PersonType, string> = {
-    student: '#4caf50',
-    teacher: '#9c27b0',
-    staff: '#ff9800',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface UpdateMealFormProps {
     monthlyUpdateClassName?: string;
@@ -207,18 +152,6 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
         return studentsByClass;
     }, [personType, studentsByClass, allTeachers, allStaff]);
 
-    const allClasses = useMemo(() => {
-        let c: any[] = [];
-        if (classData?.data?.data?.classes) c = classData.data.data.classes;
-        else if (classData?.data?.classes) c = classData.data.classes;
-        else if (classData?.classes) c = classData.classes;
-        else if (classData?.data?.data) c = classData.data.data;
-        else if (classData?.data) c = classData.data;
-        else if (Array.isArray(classData)) c = classData;
-        return c;
-    }, [classData]);
-
-    // ─── Sheet API query ────────────────────────────────────────────────────────
 
     const { data: monthlyData, isLoading: loadMonthly, refetch: refetchMonthly } =
         useGetMonthlyAttendanceSheetQuery(
@@ -231,10 +164,7 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
             { skip: !monthlyUpdateMonth },
         );
 
-    // The API response is sometimes wrapped as `{ data: {...sheet} }` (standard
-    // sendResponse envelope) and sometimes returned raw. Unwrap it once here so
-    // every consumer below (`dates`, `persons`, `mealRates`, ...) reads from the
-    // correct place regardless of how the query hook returns it.
+
     const sheetData = useMemo(() => monthlyData?.data || monthlyData, [monthlyData]);
 
     // Default rates from API
@@ -299,14 +229,6 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
         setHasLoadedInitialData(false);
         setCustomRates(null);
     };
-
-    // ─── Sync props coming from the meal-list page (URL params) ────────────────
-    // `initialPersonType` / `monthlyUpdateMonth` are only used as the initial
-    // `useState` value, so if the parent page resolves these from the URL
-    // *after* the first render (e.g. via useSearchParams), the change would
-    // otherwise be silently ignored. These effects keep this form in sync with
-    // whatever student/teacher/staff + month was selected on the meal-list page.
-
     useEffect(() => {
         setPersonType(initialPersonType);
         setAttendanceChanges({});
@@ -594,12 +516,15 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
                 academicYear: monthlyUpdateAcademicYear,
                 attendances: attendancesToSave,
             }).unwrap();
+            if (result) {
+                const count = result?.data?.totalProcessed || result?.totalProcessed || attendancesToSave.length;
+                toast.success("`Updated ${count} record(s) successfully!`, severity: 'success'");
+                setAttendanceChanges({});
+                refetchMonthly();
+                router.push('/dashboard/daily-meal-report')
+            }
 
-            const count = result?.data?.totalProcessed || result?.totalProcessed || attendancesToSave.length;
-            setSnackbar({ open: true, message: `Updated ${count} record(s) successfully!`, severity: 'success' });
-            setAttendanceChanges({});
-            refetchMonthly();
-            setTimeout(() => router.back(), 1200);
+
         } catch (err: any) {
             setSnackbar({ open: true, message: err?.data?.message || err?.error || 'Failed to update', severity: 'error' });
         }

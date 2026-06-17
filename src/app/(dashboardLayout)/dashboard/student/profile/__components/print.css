@@ -1,0 +1,74 @@
+@media print {
+
+  @page {
+    size: 130mm 210mm;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .receipt-preview {
+    transform: scale(0.86);
+    transform-origin: top left;
+  }
+
+  .printable-area,
+  .printable-area * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+       transform: scale(0.86);
+    transform-origin: top left;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+  
+}
+@media print {
+
+  @page {
+    size: 130mm 210mm;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .receipt-preview {
+    width: 130mm !important;
+    height: 210mm !important;
+
+    margin: 0 auto !important;
+    padding: 0 !important;
+
+    overflow: hidden !important;
+    box-shadow: none !important;
+    background: white !important;
+
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .receipt-preview * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+
+}

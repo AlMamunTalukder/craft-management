@@ -2,6 +2,7 @@
 "use client";
 
 import CraftModal from "@/components/Shared/Modal";
+import { banglaMonths, englishMonths } from "@/constant/month";
 import { Description, MapRounded, Phone } from "@mui/icons-material";
 import { Box, Button } from "@mui/material";
 import { useRef, useMemo } from "react";
@@ -21,57 +22,62 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
-    documentTitle: `Money Receipt - ${receipt?.receiptNo || "Unknown"}`,
+
+    documentTitle: `Money-Receipt-${receipt?.receiptNo || "Receipt"}`,
+
     onAfterPrint: () => {
       setOpen(false);
+
       if (hasNavigationCallback) {
         onClose();
       }
     },
-    // KEY FIX: lock the page to your exact size so the printer does NOT use A4
+
     pageStyle: `
-      @page {
-        size: 150mm 230mm;   /* exact printable area, no A4 fallback */
-        margin: 0;
+    @page {
+      size: 130mm 150mm;
+      margin: 0;
+
+    }
+
+    @media print {
+
+      html,
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
 
-      @media print {
-        html,
-        body {
-          margin: 0 !important;
-          padding: 0 !important;
-          background: #fff !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-
-        .no-print {
-          display: none !important;
-        }
-
-        /* The cloned print root react-to-print injects */
-        .printable-area {
-          box-sizing: border-box !important;
-          width: 150mm !important;
-          height: 230mm !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          overflow: hidden !important;
-          box-shadow: none !important;
-          background: #fff !important;
-          /* prevent spilling onto a 2nd page */
-          page-break-after: avoid !important;
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-
-        /* never let any child force a page break */
-        .printable-area * {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
+      .no-print {
+        display: none !important;
       }
-    `,
+
+      .receipt-preview {
+        transform: none !important;
+      }
+
+      .printable-area {
+        width: 130mm !important;
+        height: 150mm !important;
+    font-size:12px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+
+        overflow: hidden !important;
+        box-shadow: none !important;
+        background: white !important;
+      }
+
+      .printable-area * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  `,
   });
 
   const handlePrintClick = () => {
@@ -110,15 +116,7 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
     ];
   };
 
-  const months = [
-    "জানু.", "ফেব্রু.", "মার্চ", "এপ্রিল", "মে", "জুন",
-    "জুলাই", "আগস্ট", "সেপ্ট.", "অক্টো.", "নভে.", "ডিসে.",
-  ];
 
-  const englishMonths = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
 
   const extractMonthFromFeeType = (feeType: string) => {
     const monthlyFeeMatch = feeType.match(/Monthly Fee - (\w+)/i);
@@ -179,32 +177,19 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
 
   const getRoll = () =>
     receipt?.rollNumber || receipt?.studentRoll || student?.rollNumber || "N/A";
+  const fees = getDisplayFees();
+  const MIN_ROWS = 10;
+  const emptyRowCount = Math.max(0, MIN_ROWS - fees.length);
+
 
   return (
     <CraftModal
       open={open}
       setOpen={setOpen}
       title="Print Money Receipt"
-      size="lg"
+      size="md"
       onClose={handleClose}
-      sx={{
-        "& .MuiDialog-paper": {
-          height: "auto",
-          maxHeight: "100vh",
-          width: "500px",
-          maxWidth: "300px",
-          background: "#f5f5f5",
-          display: "flex",
-          flexDirection: "column",
-        },
-        "& .MuiDialogContent-root": {
-          padding: 0,
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        },
-      }}
+
     >
       <Box
         sx={{
@@ -217,17 +202,35 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
         {/* Scrollable Preview Area (screen only) */}
         <Box
           className="bg-gray-100 overflow-y-auto flex justify-center py-4 px-2"
-          sx={{ height: "700px", flexShrink: 0, width: "100%" }}
+          sx={{ flexShrink: 0, width: "100%" }}
         >
-          <div style={{ transform: "scale(0.85)", transformOrigin: "top center" }}>
-            {/* PRINTABLE AREA START */}
+          <div style={{ transform: "scale(0.82)", transformOrigin: "top center" }}>
+
+
+            <style>{`
+              @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+              .font-bengali { font-family: 'Hind Siliguri', sans-serif; }
+              .fee-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+              .fee-table thead tr { background-color: #4c2a70; color: white; }
+              .fee-table th { padding: 6px 8px; font-size: 12px; font-weight: 600; }
+              .fee-table th:first-child { text-align: left; width: 50%; border-right: 1px solid rgba(255,255,255,0.3); }
+              .fee-table th:nth-child(2) { text-align: center; width: 25%; border-right: 1px solid rgba(255,255,255,0.3); }
+              .fee-table th:last-child { text-align: center; width: 25%; }
+              .fee-table td { padding: 5px 8px; font-size: 11px; border-bottom: 1px solid #e5e7eb; height: 26px; }
+              .fee-table td:first-child { border-right: 1px solid #e5e7eb; font-weight: 500; }
+              .fee-table td:nth-child(2) { border-right: 1px solid #e5e7eb; text-align: center; }
+              .fee-table td:last-child { text-align: right; }
+              .fee-row-even { background-color: #f3f4f6; }
+              .fee-row-odd { background-color: #f9fafb; }
+            `}</style>
+
             <div
               ref={componentRef}
-              className="printable-area bg-white text-black font-bengali"
+              className="receipt-preview bg-white text-black font-bengali"
               style={{
                 boxSizing: "border-box",
-                width: "150mm",
-                height: "230mm",
+                // width: "150mm",
+                height: "210mm",
                 overflow: "hidden",
                 backgroundColor: "white",
                 display: "flex",
@@ -235,7 +238,7 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
               }}
             >
               {/* use h-full instead of a second h-[230mm] so padding stays inside */}
-              <div className="p-8 pb-4 relative z-10 flex justify-between flex-col h-full box-border">
+              <div className=" p-8 pb-4 relative z-10 flex justify-between flex-col h-full box-border">
                 {/* Header */}
                 <div>
                   <div className="flex items-center gap-4 mb-6 flex-shrink-0">
@@ -293,41 +296,32 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
 
                   {/* Fee Table */}
                   <div className="w-full mb-2 flex-shrink-0">
-                    <table className="w-full text-sm border-collapse">
+                    <table className="fee-table">
                       <thead>
-                        <tr className="bg-[#4c2a70] text-white">
-                          <th className="p-2 text-left w-1/2 border-r border-white/30">বিবরণ</th>
-                          <th className="p-2 text-center w-1/4 border-r border-white/30">পরিমাণ</th>
-                          <th className="p-2 text-center w-1/4">মোট টাকা</th>
+                        <tr>
+                          <th style={{ textAlign: "left", width: "50%", padding: "6px 8px", borderRight: "1px solid rgba(255,255,255,0.3)" }}>বিবরণ</th>
+                          <th style={{ textAlign: "center", width: "25%", padding: "6px 8px", borderRight: "1px solid rgba(255,255,255,0.3)" }}>পরিমাণ</th>
+                          <th style={{ textAlign: "center", width: "25%", padding: "6px 8px" }}>মোট টাকা</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {getDisplayFees().map((fee: any, index: number) => (
-                          <tr
-                            key={index}
-                            className="even:bg-gray-100 odd:bg-gray-50 border-b border-gray-200"
-                          >
-                            <td className="p-2 border-r border-gray-200 font-medium">
-                              {fee.feeType || `ফি ${index + 1}`}
-                            </td>
-                            <td className="p-2 border-r border-gray-200 text-center">
-                              {fee.quantity || "1"}
-                            </td>
-                            <td className="p-2 text-right">
-                              ৳{(fee.paidAmount || fee.amount || 0).toLocaleString()}
-                            </td>
+                        {fees.map((fee: any, index: number) => (
+                          <tr key={index} className={index % 2 === 0 ? "fee-row-odd" : "fee-row-even"}>
+                            <td>{fee.feeType || `ফি ${index + 1}`}</td>
+                            <td>{fee.quantity || "1"}</td>
+                            <td>৳{(fee.paidAmount || fee.amount || 0).toLocaleString()}</td>
                           </tr>
                         ))}
-                        {getDisplayFees().length > 0 && (
-                          <tr className="font-bold bg-gray-200">
-                            <td colSpan={2} className="p-2 border-r border-gray-300 text-right">
-                              সর্বমোট
-                            </td>
-                            <td className="p-2 text-right">
-                              ৳{calculateTotal().toLocaleString()}
-                            </td>
-                          </tr>
-                        )}
+                        {Array.from({ length: emptyRowCount }).map((_, index) => {
+                          const realIndex = fees.length + index;
+                          return (
+                            <tr key={`empty-${index}`} className={realIndex % 2 === 0 ? "fee-row-odd" : "fee-row-even"}>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -339,8 +333,8 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
                     <div className="col-span-8 flex flex-col">
                       <div className="p-3 bg-gray-50 border-b border-gray-200">
                         <div className="grid grid-cols-6 gap-2 text-xs font-semibold">
-                          {months.map((m, i) => {
-                            const isSelected = isMonthSelected(i);
+                          {banglaMonths.map((m, i) => {
+                            const isSelected = isMonthSelected(i) || (getSelectedMonths.size === 0 && i === new Date().getMonth());
                             return (
                               <label key={i} className="flex items-center gap-1 cursor-pointer">
                                 <input
@@ -418,6 +412,7 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
                 </div>
               </div>
             </div>
+
             {/* PRINTABLE AREA END */}
             <style>{`@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap'); .font-bengali { font-family: 'Hind Siliguri', sans-serif; }`}</style>
           </div>
