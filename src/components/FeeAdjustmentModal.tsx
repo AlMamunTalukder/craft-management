@@ -90,41 +90,65 @@ const FeeAdjustmentModal = ({
   };
 
   const handleSubmit = async () => {
-    if (!fee || !formData.reason.trim() || !formData.value || Number(formData.value) <= 0) {
-      toast.error("Please fill all required fields with valid values");
+    if (
+      !fee ||
+      !formData.reason.trim() ||
+      !formData.value ||
+      Number(formData.value) <= 0
+    ) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    const studentId =
+      fee?.student?._id ||
+      fee?.studentId ||
+      fee?.student;
+
+    if (!studentId) {
+      toast.error("Student ID not found");
+      console.log("Fee object =", fee);
       return;
     }
 
     const numericValue = Number(formData.value);
-    if (formData.adjustmentType === "percentage" && numericValue > 100) {
-      toast.error("Percentage cannot exceed 100%");
-      return;
-    }
-
-    if (formData.adjustmentType === "flat" && numericValue > (fee.dueAmount || fee.amount)) {
-      toast.error("Flat amount cannot exceed due amount");
-      return;
-    }
 
     const adjustmentData = {
-      student: fee.student?._id || fee.student?.id || fee.student,
+      student: studentId,
       fee: fee._id,
-      ...formData,
+      type: formData.type,
+      adjustmentType: formData.adjustmentType,
       value: numericValue,
-      academicYear: fee.academicYear || new Date().getFullYear().toString(),
+      reason: formData.reason,
+      isRecurring: formData.isRecurring,
+      startMonth: formData.startMonth,
+      endMonth: formData.endMonth,
+      academicYear:
+        fee?.academicYear ||
+        new Date().getFullYear().toString(),
     };
 
-    try {
-      const result = await applyFeeAdjustment(adjustmentData).unwrap();
+    console.log("Sending adjustment =", adjustmentData);
 
-      if (result) {
-        toast.success(`${formData.type === "discount" ? "Discount" : "Waiver"} applied successfully!`);
-        onSuccess?.();
-        onClose();
-      }
+    try {
+      const result = await applyFeeAdjustment(
+        adjustmentData
+      ).unwrap();
+
+      toast.success(
+        `${formData.type === "discount" ? "Discount" : "Waiver"} applied successfully`
+      );
+
+      onSuccess?.();
+      onClose();
     } catch (error: any) {
-      console.error("Error applying adjustment:", error);
-      toast.error(error?.data?.message || error?.message || "Failed to apply adjustment");
+      console.error(error);
+
+      toast.error(
+        error?.data?.message ||
+        error?.message ||
+        "Failed to apply adjustment"
+      );
     }
   };
 

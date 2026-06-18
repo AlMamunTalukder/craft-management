@@ -275,7 +275,7 @@ export default function StaffList() {
   ];
 
   const handleAddStaff = () => {
-    window.location.href = "/dashboard/staff/new";
+    window.location.href = "/dashboard/staff/add";
   };
 
   return (
