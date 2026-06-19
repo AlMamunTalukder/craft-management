@@ -90,7 +90,6 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
     const { data: staffApiData } = useGetAllStaffQuery({ category: category });
     const { data: teacherApiData } = useGetAllTeachersQuery({ category: category });
 
-    // ─── Core state ────────────────────────────────────────────────────────────
     const [personType, setPersonType] = useState<PersonType>(initialPersonType);
     const [selectedMonth, setSelectedMonth] = useState(dayjs(monthlyUpdateMonth || undefined));
     const [attendanceChanges, setAttendanceChanges] = useState<Record<string, any>>({});
@@ -99,7 +98,7 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
     const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as any });
 
-    // Selection state
+
     const [selectionMode, setSelectionMode] = useState<'row' | 'col'>('col');
     const [selectedColIndices, setSelectedColIndices] = useState<Set<number>>(new Set());
     const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
