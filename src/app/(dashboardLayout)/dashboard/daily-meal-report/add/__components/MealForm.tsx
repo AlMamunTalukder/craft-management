@@ -477,13 +477,11 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
     const handleSaveAll = async () => {
         if (!personsByClass.length || !dates.length) return;
         try {
-            const rateOverrides = customRates
-                ? {
-                    breakfastRate: customRates.breakfast,
-                    lunchRate: customRates.lunch,
-                    dinnerRate: customRates.dinner,
-                }
-                : {};
+            const rateOverrides = {
+                breakfastRate: mealRates.breakfast,
+                lunchRate: mealRates.lunch,
+                dinnerRate: mealRates.dinner,
+            };
 
             const attendancesToSave: any[] = [];
             personsByClass.forEach((person: PersonRow) => {
@@ -515,7 +513,7 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
             }).unwrap();
             if (result) {
                 const count = result?.data?.totalProcessed || result?.totalProcessed || attendancesToSave.length;
-                toast.success("`Updated ${count} record(s) successfully!`, severity: 'success'");
+                toast.success(`Updated ${count} record(s) successfully!`);
                 setAttendanceChanges({});
                 refetchMonthly();
                 router.push('/dashboard/daily-meal-report')

@@ -51,6 +51,24 @@ export const mealAttendanceApi = baseApi.injectEndpoints({
             providesTags: ["mealAttendance"],
         }),
 
+        // ── FIXED: was using `builder` (undefined) — must use `build` to match
+        // the destructured parameter name of this endpoints function.
+        // Also fixed tag name to "mealAttendance" (lowercase) to match every
+        // other endpoint in this file, so cache invalidation actually works
+        // together with bulkCreateAttendance / updateAttendance / deleteMonthlyAttendance.
+        getCombinedMonthlySheet: build.query<
+            any,
+            { month: string; academicYear: string; className?: string }
+        >({
+            query: ({ month, academicYear, className }) => ({
+                url: "/meal-attendance/monthly-sheet/combined",
+                method: "GET",
+                params: { month, academicYear, ...(className ? { className } : {}) },
+            }),
+            transformResponse: (response: any) => response.data,
+            providesTags: ["mealAttendance"],
+        }),
+
         getAttendanceById: build.query({
             query: (id) => ({
                 url: `/meal-attendance/${id}`,
@@ -109,6 +127,7 @@ export const {
     useBulkCreateAttendanceMutation,
     useUpdateAttendanceMutation,
     useGetAllAttendanceRecordsQuery,
+    useGetCombinedMonthlySheetQuery,
     useGetAttendanceByIdQuery,
     useGetMonthlyAttendanceSheetQuery,
     useGetMonthlySummaryQuery,

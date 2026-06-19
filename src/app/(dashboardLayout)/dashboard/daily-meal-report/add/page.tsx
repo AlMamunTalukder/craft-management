@@ -495,13 +495,11 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
       let toSave: any[];
 
       // Custom per-meal rates to attach to every saved record (if user customized them)
-      const rateOverrides = customRates
-        ? {
-          breakfastRate: customRates.breakfast,
-          lunchRate: customRates.lunch,
-          dinnerRate: customRates.dinner,
-        }
-        : {};
+      const rateOverrides = {
+        breakfastRate: mealRates.breakfast,
+        lunchRate: mealRates.lunch,
+        dinnerRate: mealRates.dinner,
+      };
 
       if (changes.length > 0) {
         toSave = changes.map((c: any) => ({

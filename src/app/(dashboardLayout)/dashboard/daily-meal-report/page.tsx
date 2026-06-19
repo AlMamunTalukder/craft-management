@@ -4,46 +4,37 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box, Paper, Typography, Grid, FormControl, InputLabel, Select, MenuItem,
-  Button, Card, CardContent, alpha, useTheme, Skeleton, Avatar, Divider, Chip,
-  Tabs, Tab,
+  Button, Divider, Chip, Tabs, Tab,
+  Avatar,
 } from '@mui/material';
 import {
-  Edit as EditIcon, Delete as DeleteIcon, Restaurant as FoodIcon, Person as PersonIcon,
+  Edit as EditIcon, Delete as DeleteIcon,
   CalendarMonth as CalendarIcon, Today as TodayIcon,
-  Add, MoneyOff as MoneyOffIcon, Savings as SavingsIcon,
+  Add,
   School as SchoolIcon, Group as GroupIcon, Engineering as StaffIcon,
-  AttachMoney as RateIcon, ReceiptLong as GrossIcon, Payments as PayableIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { useGetMonthlyAttendanceSheetQuery, useDeleteMonthlyAttendanceMutation } from '@/redux/api/mealAttendanceApi';
+import {
+  useGetMonthlyAttendanceSheetQuery,
+  useDeleteMonthlyAttendanceMutation,
+  useGetCombinedMonthlySheetQuery,
+} from '@/redux/api/mealAttendanceApi';
 import { useAcademicOption } from '@/hooks/useAcademicOption';
 import CraftTable from '@/components/Table';
+import CombinedMealStatsSection from '@/components/dashboard/CombinedMealStatsSection';
+import MealStatsCards from '@/components/dashboard/MealStatsCards';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import Link from 'next/link';
 import { Column } from '@/interface/table';
+import { PersonType } from '@/interface/meal';
+import { DEFAULT_MEAL_RATES, PERSON_LABELS, TAB_COLORS } from '@/constant/meal';
 
-type PersonType = 'student' | 'teacher' | 'staff';
-
-const TAB_COLORS: Record<PersonType, string> = {
-  student: '#1976d2',
-  teacher: '#7b1fa2',
-  staff: '#2e7d32',
-};
-
-const PERSON_LABELS: Record<PersonType, string> = {
-  student: 'Students',
-  teacher: 'Teachers',
-  staff: 'Staff',
-};
-
-const DEFAULT_MEAL_RATES = { breakfast: 40, lunch: 45, dinner: 80 };
 
 const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toString() }) => {
-  const theme = useTheme();
   const { classData } = useAcademicOption();
   const router = useRouter();
   const [deleteMonthly] = useDeleteMonthlyAttendanceMutation();
@@ -101,6 +92,41 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
     },
     { skip: !selectedMonth }
   );
+
+  // ── NEW: Combined (Student + Teacher + Staff) totals for the same month ──
+  // className filter only applies to the student portion inside the combined sheet.
+  const combinedClassName = selectedClassId !== 'ALL' ? selectedClassId : undefined;
+
+  const {
+    data: combinedStats,
+    isLoading: isLoadingCombined,
+    refetch: refetchCombined,
+  } = useGetCombinedMonthlySheetQuery(
+    {
+      month: selectedMonth.format('YYYY-MM'),
+      academicYear,
+      className: combinedClassName,
+    },
+    { skip: !selectedMonth }
+  );
+
+  const combinedSummary = useMemo(() => {
+    const c = combinedStats?.data || combinedStats;
+    if (!c) return null;
+    return {
+      totalPersons: c.totalPersons || 0,
+      totalMeals: c.grandTotalMeals || 0,
+      totalGrossCost: c.grandTotalGrossCost || 0,
+      totalCost: c.grandTotalCost || 0,
+      totalBreakfast: c.grandTotalBreakfast || 0,
+      totalLunch: c.grandTotalLunch || 0,
+      totalDinner: c.grandTotalDinner || 0,
+      totalFreeMeals: c.grandTotalFreeMeals || 0,
+      totalFreeMealCostSaved: c.grandTotalFreeMealCostSaved || 0,
+      byPersonType: c.byPersonType || null,
+      today: c.today || null,
+    };
+  }, [combinedStats]);
 
   const monthlySummary = useMemo(() => {
     const statsData = monthlyStats?.data || monthlyStats;
@@ -184,17 +210,23 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
 
         Swal.fire('Deleted!', 'Monthly attendance has been deleted.', 'success');
         refetch();
+        refetchCombined();
       } catch (error: any) {
         Swal.fire('Error!', error?.data?.message || 'Failed to delete', 'error');
       }
     }
-  }, [deleteMonthly, personType, selectedClassId, selectedMonth, academicYear, refetch]);
+  }, [deleteMonthly, personType, selectedClassId, selectedMonth, academicYear, refetch, refetchCombined]);
 
   const handleMonthChange = useCallback((newValue: Dayjs | null) => {
     if (newValue) setSelectedMonth(newValue);
   }, []);
 
   const handleClassChange = useCallback((e: any) => setSelectedClassId(e.target.value), []);
+
+  const handleRefreshAll = useCallback(() => {
+    refetch();
+    refetchCombined();
+  }, [refetch, refetchCombined]);
 
   const columns: Column[] = useMemo(() => [
     {
@@ -233,103 +265,6 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
 
   const tabColor = TAB_COLORS[personType];
 
-  // Stats Component
-  const MonthlyStatsCards = () => {
-    if (isLoadingStats) return <Grid container spacing={3} sx={{ mb: 3 }}><Skeleton variant="rectangular" height={100} /></Grid>;
-    return (
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={4} lg={1.5}>
-          <Card sx={{ borderRadius: 3, bgcolor: alpha(theme.palette.primary.main, 0.1), border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`, height: '100%' }}>
-            <CardContent><Box display="flex" justifyContent="space-between"><Box><Typography color="text.secondary" variant="caption" fontWeight="bold">TOTAL {PERSON_LABELS[personType].toUpperCase()}</Typography><Typography variant="h4" fontWeight="bold" color="primary.main">{monthlySummary.totalStudents}</Typography></Box><Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.2) }}><PersonIcon sx={{ color: theme.palette.primary.main }} /></Avatar></Box></CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={1.5}>
-          <Card sx={{ borderRadius: 3, bgcolor: alpha('#ED6C02', 0.1), border: `1px solid ${alpha('#ED6C02', 0.2)}`, height: '100%' }}>
-            <CardContent><Box display="flex" justifyContent="space-between"><Box><Typography color="text.secondary" variant="caption" fontWeight="bold">MONTHLY MEALS</Typography><Typography variant="h4" fontWeight="bold" color="#ED6C02">{monthlySummary.totalMeals}</Typography></Box><Avatar sx={{ bgcolor: alpha('#ED6C02', 0.2) }}><FoodIcon sx={{ color: '#ED6C02' }} /></Avatar></Box></CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={1.5}><Card sx={{ borderRadius: 3, bgcolor: '#E8F5E9', height: '100%' }}><CardContent><Typography color="text.secondary" variant="caption" fontWeight="bold">BREAKFAST</Typography><Typography variant="h4" fontWeight="bold" color="#2E7D32">{monthlySummary.totalBreakfast}</Typography></CardContent></Card></Grid>
-        <Grid item xs={12} sm={6} md={4} lg={1.5}><Card sx={{ borderRadius: 3, bgcolor: '#F3E5F5', height: '100%' }}><CardContent><Typography color="text.secondary" variant="caption" fontWeight="bold">LUNCH</Typography><Typography variant="h4" fontWeight="bold" color="#9C27B0">{monthlySummary.totalLunch}</Typography></CardContent></Card></Grid>
-        <Grid item xs={12} sm={6} md={4} lg={1.5}><Card sx={{ borderRadius: 3, bgcolor: '#FFEBEE', height: '100%' }}><CardContent><Typography color="text.secondary" variant="caption" fontWeight="bold">DINNER</Typography><Typography variant="h4" fontWeight="bold" color="#D32F2F">{monthlySummary.totalDinner}</Typography></CardContent></Card></Grid>
-
-        <Grid item xs={12} sm={6} md={4} lg={1.5}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#FFF3E0', height: '100%' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="caption" fontWeight="bold">FREE MEALS</Typography>
-                  <Typography variant="h4" fontWeight="bold" color="#EF6C00">{monthlySummary.totalFreeMeals}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#EF6C00', 0.2) }}><MoneyOffIcon sx={{ color: '#EF6C00' }} /></Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Gross Cost — total as if NOTHING were free */}
-        <Grid item xs={12} sm={6} md={4} lg={1.5}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#ECEFF1', height: '100%' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="caption" fontWeight="bold">GROSS COST</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="#455A64">৳{monthlySummary.totalGrossCost.toLocaleString()}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#455A64', 0.2) }}><GrossIcon sx={{ color: '#455A64' }} /></Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Free Meal Cost Saved */}
-        <Grid item xs={12} sm={6} md={4} lg={1.5}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#E0F2F1', height: '100%' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="caption" fontWeight="bold">COST SAVED (FREE)</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="#00796B">৳{monthlySummary.totalFreeMealCostSaved.toLocaleString()}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#00796B', 0.2) }}><SavingsIcon sx={{ color: '#00796B' }} /></Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Payable Cost — actual amount to be charged */}
-        <Grid item xs={12} sm={6} md={4} lg={1.5}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#E8F5E9', height: '100%' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="caption" fontWeight="bold">PAYABLE COST</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="#2E7D32">৳{monthlySummary.totalCost.toLocaleString()}</Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#2E7D32', 0.2) }}><PayableIcon sx={{ color: '#2E7D32' }} /></Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4} lg={1.5}>
-          <Card sx={{ borderRadius: 3, bgcolor: '#EDE7F6', height: '100%' }}>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between">
-                <Box>
-                  <Typography color="text.secondary" variant="caption" fontWeight="bold">MEAL RATES (৳)</Typography>
-                  <Typography variant="body2" fontWeight="bold" color="#5E35B1" sx={{ mt: 0.5 }}>
-                    B: {monthlySummary.mealRates.breakfast} &nbsp;|&nbsp; L: {monthlySummary.mealRates.lunch} &nbsp;|&nbsp; D: {monthlySummary.mealRates.dinner}
-                  </Typography>
-                </Box>
-                <Avatar sx={{ bgcolor: alpha('#5E35B1', 0.2) }}><RateIcon sx={{ color: '#5E35B1' }} /></Avatar>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    );
-  };
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
@@ -347,7 +282,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
                   </FormControl>
                 )}
                 <DatePicker label="Select Month" views={['year', 'month']} value={selectedMonth} onChange={handleMonthChange} maxDate={dayjs()} slotProps={{ textField: { size: 'small', sx: { minWidth: 180 } } }} />
-                <Button variant="contained" onClick={() => refetch()} disabled={isLoadingStats}>Refresh</Button>
+                <Button variant="contained" onClick={handleRefreshAll} disabled={isLoadingStats || isLoadingCombined}>Refresh</Button>
               </Box>
             </Grid>
           </Grid>
@@ -373,38 +308,262 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
           </Box>
         </Paper>
 
-        <MonthlyStatsCards />
 
-        {/* Formula caption — explains the relationship between the three cost cards */}
-        <Box sx={{ mb: 3, px: 1 }}>
-          <Typography variant="caption" color="text.secondary">
-            Gross Cost = Payable Cost + Cost Saved (Free) &nbsp;•&nbsp;
-            Payable Cost = Gross Cost − Cost Saved (Free) &nbsp;•&nbsp;
-            Cost Saved (Free) = total value of meals marked as free
-          </Typography>
-        </Box>
+
+        <MealStatsCards
+          personType={personType}
+          monthlySummary={monthlySummary}
+          isLoadingStats={isLoadingStats}
+        />
+
+
 
         {todayStats.found && !isLoadingStats && (
-          <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: '#E3F2FD', border: '1px solid #90CAF9' }}>
-            <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-              <Box display="flex" alignItems="center" gap={1}><TodayIcon color="primary" /><Typography variant="h6" fontWeight="bold" color="primary.dark">Today: {dayjs().format('DD MMM YYYY')}</Typography></Box>
-              <Box display="flex" gap={3} flexWrap="wrap">
-                <Box textAlign="center"><Typography variant="caption">Total Meals</Typography><Typography variant="h6" fontWeight="bold">{todayStats.totalMeals}</Typography></Box>
-                <Divider orientation="vertical" flexItem />
-                <Box textAlign="center"><Typography variant="caption">Breakfast</Typography><Typography variant="h6" fontWeight="bold" color="#2E7D32">{todayStats.totalBreakfast}</Typography></Box>
-                <Box textAlign="center"><Typography variant="caption">Lunch</Typography><Typography variant="h6" fontWeight="bold" color="#9C27B0">{todayStats.totalLunch}</Typography></Box>
-                <Box textAlign="center"><Typography variant="caption">Dinner</Typography><Typography variant="h6" fontWeight="bold" color="#D32F2F">{todayStats.totalDinner}</Typography></Box>
-                <Divider orientation="vertical" flexItem />
-                <Box textAlign="center"><Typography variant="caption">Free Meals</Typography><Typography variant="h6" fontWeight="bold" color="#EF6C00">{todayStats.totalFreeMeals || 0}</Typography></Box>
-                <Box textAlign="center"><Typography variant="caption">Gross Cost</Typography><Typography variant="h6" fontWeight="bold" color="#455A64">৳{(todayStats.grossCost || 0).toLocaleString()}</Typography></Box>
-                <Box textAlign="center"><Typography variant="caption">Saved</Typography><Typography variant="h6" fontWeight="bold" color="#00796B">৳{(todayStats.freeMealCostSaved || 0).toLocaleString()}</Typography></Box>
-                <Divider orientation="vertical" flexItem />
-                <Box textAlign="center"><Typography variant="caption">Payable</Typography><Typography variant="h6" fontWeight="bold" color="#00838F">৳{(todayStats.totalCost || 0).toLocaleString()}</Typography></Box>
+          <Paper
+            sx={{
+              p: 3,
+              mb: 3,
+              borderRadius: 4,
+              bgcolor: "#F8F5FC",
+              border: "1px solid rgba(79,1,135,.08)",
+              boxShadow: "0 8px 24px rgba(79,1,135,.08)",
+            }}
+          >
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              flexWrap="wrap"
+              gap={3}
+              mb={3}
+            >
+              <Box display="flex" alignItems="center" gap={1.5}>
+                <Avatar
+                  sx={{
+                    bgcolor: "primary.main",
+                    width: 45,
+                    height: 45,
+                  }}
+                >
+                  <TodayIcon />
+                </Avatar>
+
+                <Box>
+                  <Typography variant="h6" fontWeight={700}>
+                    Today's Meal Summary
+                  </Typography>
+
+                  <Typography variant="body2" color="text.secondary">
+                    {dayjs().format("DD MMM YYYY")} • {PERSON_LABELS[personType]}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
+
+            <Grid container spacing={2}>
+              <Grid item xs={6} md={2}>
+                <Box
+                  sx={{
+                    bgcolor: "#fff",
+                    p: 2,
+                    borderRadius: 3,
+                    textAlign: "center",
+                    border: "1px solid rgba(79,1,135,.08)",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    TOTAL MEALS
+                  </Typography>
+
+                  <Typography variant="h4" fontWeight={700} color="primary.main">
+                    {todayStats.totalMeals}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={6} md={2}>
+                <Box
+                  sx={{
+                    bgcolor: "#fff",
+                    p: 2,
+                    borderRadius: 3,
+                    textAlign: "center",
+                    border: "1px solid rgba(37,99,235,.1)",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    BREAKFAST
+                  </Typography>
+
+                  <Typography variant="h4" fontWeight={700} color="#2563EB">
+                    {todayStats.totalBreakfast}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={6} md={2}>
+                <Box
+                  sx={{
+                    bgcolor: "#fff",
+                    p: 2,
+                    borderRadius: 3,
+                    textAlign: "center",
+                    border: "1px solid rgba(79,1,135,.1)",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    LUNCH
+                  </Typography>
+
+                  <Typography variant="h4" fontWeight={700} color="#7B2CBF">
+                    {todayStats.totalLunch}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={6} md={2}>
+                <Box
+                  sx={{
+                    bgcolor: "#fff",
+                    p: 2,
+                    borderRadius: 3,
+                    textAlign: "center",
+                    border: "1px solid rgba(220,38,38,.1)",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    DINNER
+                  </Typography>
+
+                  <Typography variant="h4" fontWeight={700} color="#DC2626">
+                    {todayStats.totalDinner}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={6} md={2}>
+                <Box
+                  sx={{
+                    bgcolor: "#fff",
+                    p: 2,
+                    borderRadius: 3,
+                    textAlign: "center",
+                    border: "1px solid rgba(245,158,11,.1)",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    FREE MEALS
+                  </Typography>
+
+                  <Typography variant="h4" fontWeight={700} color="#F59E0B">
+                    {todayStats.totalFreeMeals || 0}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={6} md={2}>
+                <Box
+                  sx={{
+                    background:
+                      "linear-gradient(135deg,#4F0187,#7B2CBF)",
+                    color: "#fff",
+                    p: 2,
+                    borderRadius: 3,
+                    textAlign: "center",
+                    boxShadow: "0 10px 30px rgba(79,1,135,.2)",
+                  }}
+                >
+                  <Typography variant="caption">
+                    PAYABLE COST
+                  </Typography>
+
+                  <Typography variant="h5" fontWeight={700}>
+                    ৳{(todayStats.totalCost || 0).toLocaleString()}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 3 }} />
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    bgcolor: "#fff",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Gross Cost
+                  </Typography>
+
+                  <Typography variant="h6" fontWeight={700}>
+                    ৳{(todayStats.grossCost || 0).toLocaleString()}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    bgcolor: "#ECFDF5",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Saved From Free Meals
+                  </Typography>
+
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    color="#059669"
+                  >
+                    ৳{(todayStats.freeMealCostSaved || 0).toLocaleString()}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    bgcolor: "#FFF7ED",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Meal Type
+                  </Typography>
+
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    color="primary.main"
+                  >
+                    {PERSON_LABELS[personType]}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
           </Paper>
         )}
+        <CombinedMealStatsSection
+          isLoadingCombined={isLoadingCombined}
+          combinedSummary={combinedSummary}
+          selectedMonth={selectedMonth}
+          combinedClassName={combinedClassName}
+        />
 
+        <Divider sx={{ mb: 3 }}>
+          <Chip label={`${PERSON_LABELS[personType]} Breakdown`} sx={{ bgcolor: tabColor, color: 'white', fontWeight: 'bold' }} />
+        </Divider>
         <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
           <Box p={2} bgcolor="white" borderBottom="1px solid #e0e0e0" display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
             <Typography variant="h6" fontWeight="bold">
