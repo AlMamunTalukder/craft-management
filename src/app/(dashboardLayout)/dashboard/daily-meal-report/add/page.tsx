@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import { ALL_CLASSES, COL_HEADER_BG, COL_SEL_BG, COL_SEL_BORDER, DEFAULT_MEAL_RATES, FREE_MEAL_BG, getCurrentAcademicYear, PERSON_AVATARS, PERSON_LABELS, ROW_SEL_BG, ROW_SEL_BORDER, TAB_COLORS } from '@/constant/meal';
 import { useAcademicOption } from '@/hooks/useAcademicOption';
+import { ClassItem, MealRates, PersonRow, PersonType } from '@/interface/meal';
 import {
   useBulkCreateAttendanceMutation,
   useGetAttendanceByIdQuery,
@@ -73,88 +75,15 @@ import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type PersonType = 'student' | 'teacher' | 'staff';
-
-interface PersonRow {
-  _id: string;
-  name: string;
-  nameBangla?: string;
-  roll?: string;
-  personId?: string; // studentId / teacherId / staffId
-  category?: string;
-  studentType?: string;
-  // student-specific
-  className?: any[];
-  admissionStatus?: string;
-  // teacher-specific
-  designation?: string;
-  department?: string;
-  status?: string;
-  // staff-specific
-  staffDepartment?: string;
-}
-
-interface ClassItem { _id: string; className: string;[k: string]: any }
-
-interface MealRates {
-  breakfast: number;
-  lunch: number;
-  dinner: number;
-}
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const COL_SEL_BG = 'rgba(19,102,210,0.13)';
-const COL_SEL_BORDER = '#1366D2';
-const COL_HEADER_BG = 'rgba(19,102,210,0.28)';
-const ROW_SEL_BG = 'rgba(255, 152, 0, 0.15)';
-const ROW_SEL_BORDER = '#f57c00';
-const FREE_MEAL_BG = '#FFFDE7';
-const ALL_CLASSES = 'ALL';
-
-// Fallback default meal rates (must mirror backend DEFAULT_MEAL_RATES)
-const DEFAULT_MEAL_RATES: MealRates = { breakfast: 40, lunch: 45, dinner: 80 };
-
-const getCurrentAcademicYear = () => dayjs().year().toString();
-
-// ─── Tab colours ─────────────────────────────────────────────────────────────
-
-const TAB_COLORS: Record<PersonType, string> = {
-  student: '#1976d2',
-  teacher: '#7b1fa2',
-  staff: '#2e7d32',
-};
-
-const PERSON_LABELS: Record<PersonType, string> = {
-  student: 'Students',
-  teacher: 'Teachers',
-  staff: 'Staff',
-};
-
-const PERSON_AVATARS: Record<PersonType, string> = {
-  student: '#4caf50',
-  teacher: '#9c27b0',
-  staff: '#ff9800',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────────────────────
 
 const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
   const router = useRouter();
   const { classData, studentData } = useAcademicOption();
   const [bulkCreateAttendance, { isLoading: isSaving }] = useBulkCreateAttendanceMutation();
-  const [updateAttendance, { isLoading: isUpdating }] = useUpdateAttendanceMutation();
+  const category = 'Residential'
 
-  const { data: singleAttendanceData, isLoading: isLoadingSingle } = useGetAttendanceByIdQuery(
-    attendanceId,
-    { skip: !isUpdate || !attendanceId },
-  );
-  const { data: staffApiData } = useGetAllStaffQuery({});
-  const { data: teacherApiData } = useGetAllTeachersQuery({});
+  const { data: staffApiData } = useGetAllStaffQuery({ category: category });
+  const { data: teacherApiData } = useGetAllTeachersQuery({ category: category });
 
   // ─── Core state ────────────────────────────────────────────────────────────
   const [personType, setPersonType] = useState<PersonType>('student');
@@ -163,7 +92,7 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
   const [attendanceChanges, setAttendanceChanges] = useState<Record<string, any>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [localAttendanceData, setLocalAttendanceData] = useState<Record<string, any>>({});
-  const [isInitialized, setIsInitialized] = useState(false);
+
   const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
 
   // Selection state
@@ -364,10 +293,7 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
       setLocalAttendanceData(init);
       clearSelection();
     }
-  }, [monthlyData, personsByClass, dates, isUpdate]); // eslint-disable-line
-
-  // ─── Meal status helpers ─────────────────────────────────────────────────────
-
+  }, [monthlyData, personsByClass, dates, isUpdate]);
   const getMealStatus = useCallback(
     (pid: string, date: string, meal: string): boolean => {
       const k = `${pid}_${date}`;
@@ -708,16 +634,14 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
 
           {/* ── Custom Meal Rate Editor ── */}
           {showRateEditor && (
-            <Box sx={{ mt: 2, p: 2, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+            <Box sx={{ mt: 2, p: 2, borderRadius: 2, width: '500px' }}>
               <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1} mb={1.5}>
-                <Typography variant="body2" fontWeight="bold">
-                  Custom Meal Rates {isCustomRate ? '(Active — overrides default)' : '(Using default rates)'}
-                </Typography>
+
                 <Button
                   size="small"
                   startIcon={<RestartAltIcon fontSize="small" />}
                   onClick={resetRatesToDefault}
-                  disabled={!isCustomRate}
+
                   sx={{ color: 'white', textTransform: 'none' }}
                 >
                   Reset to Default
@@ -770,9 +694,7 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
                   />
                 </Grid>
               </Grid>
-              <Typography variant="caption" sx={{ mt: 1, display: 'block', opacity: 0.85 }}>
-                These rates apply to all records saved in this session. Default rates come from system settings (B:৳{apiMealRates.breakfast} L:৳{apiMealRates.lunch} D:৳{apiMealRates.dinner}).
-              </Typography>
+
             </Box>
           )}
         </Paper>
@@ -780,7 +702,7 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
         <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
 
           {/* ── Person Type Tabs ── */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'white' }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'white', }}>
             <Tabs
               value={personType}
               onChange={handlePersonTypeChange}
@@ -818,101 +740,95 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
           </Box>
 
           {/* ── Toolbar ── */}
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'white' }}>
-            <Grid container spacing={2} alignItems="center">
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'white', }}>
+            <Box >
 
-              {/* Class selector (students only) */}
-              {personType === 'student' && (
+              <Grid container spacing={2} alignItems="center">
+
+                {/* Class selector (students only) */}
+                {personType === 'student' && (
+                  <Grid item xs={12} sm={3}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Select Class</InputLabel>
+                      <Select
+                        value={selectedClassId}
+                        label="Select Class"
+                        onChange={e => {
+                          setSelectedClassId(e.target.value);
+                          setAttendanceChanges({});
+                          clearSelection();
+                          setLocalAttendanceData({});
+                        }}
+                      >
+                        <MenuItem value={ALL_CLASSES}><em>All Classes</em></MenuItem>
+                        {classDropdownOptions.map((o: any) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
+
+                {/* Month picker */}
                 <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Select Class</InputLabel>
-                    <Select
-                      value={selectedClassId}
-                      label="Select Class"
-                      onChange={e => {
-                        setSelectedClassId(e.target.value);
-                        setAttendanceChanges({});
-                        clearSelection();
-                        setLocalAttendanceData({});
-                      }}
-                    >
-                      <MenuItem value={ALL_CLASSES}><em>All Classes</em></MenuItem>
-                      {classDropdownOptions.map((o: any) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-                    </Select>
-                  </FormControl>
+                  <DatePicker
+                    label="Select Month"
+                    views={['year', 'month']}
+                    value={selectedMonth}
+                    onChange={v => {
+                      setSelectedMonth(v);
+                      setAttendanceChanges({});
+                      clearSelection();
+                      setLocalAttendanceData({});
+                    }}
+                    slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                  />
                 </Grid>
-              )}
 
-              {/* Month picker */}
-              <Grid item xs={12} sm={3}>
-                <DatePicker
-                  label="Select Month"
-                  views={['year', 'month']}
-                  value={selectedMonth}
-                  onChange={v => {
-                    setSelectedMonth(v);
-                    setAttendanceChanges({});
-                    clearSelection();
-                    setLocalAttendanceData({});
-                  }}
-                  slotProps={{ textField: { size: 'small', fullWidth: true } }}
-                />
+                {/* Search */}
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth size="small"
+                    placeholder={`Search ${PERSON_LABELS[personType].toLowerCase()}…`}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>,
+                      endAdornment: searchTerm && (
+                        <InputAdornment position="end">
+                          <IconButton size="small" onClick={() => setSearchTerm('')}><ClearIcon fontSize="small" /></IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                {/* Refresh */}
+                <Grid item xs={6} sm={1.5}>
+                  <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => { setAttendanceChanges({}); clearSelection(); refetchMonthly(); }} size="small" fullWidth>Refresh</Button>
+                </Grid>
+
+                {/* Row / Col toggle */}
+                <Grid item xs={6} sm={1.5}>
+                  <ToggleButtonGroup value={selectionMode} exclusive onChange={(e, val) => val && setSelectionMode(val)} size="small" fullWidth sx={{ bgcolor: '#f5f5f5' }}>
+                    <ToggleButton value="col"><Tooltip title="Select Columns (Dates)"><ColumnIcon fontSize="small" /></Tooltip></ToggleButton>
+                    <ToggleButton value="row"><Tooltip title="Select Rows (Persons)"><RowIcon fontSize="small" /></Tooltip></ToggleButton>
+                  </ToggleButtonGroup>
+                </Grid>
               </Grid>
 
-              {/* Search */}
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  fullWidth size="small"
-                  placeholder={`Search ${PERSON_LABELS[personType].toLowerCase()}…`}
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>,
-                    endAdornment: searchTerm && (
-                      <InputAdornment position="end">
-                        <IconButton size="small" onClick={() => setSearchTerm('')}><ClearIcon fontSize="small" /></IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-
-              {/* Refresh */}
-              <Grid item xs={6} sm={1.5}>
-                <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => { setAttendanceChanges({}); clearSelection(); refetchMonthly(); }} size="small" fullWidth>Refresh</Button>
-              </Grid>
-
-              {/* Row / Col toggle */}
-              <Grid item xs={6} sm={1.5}>
-                <ToggleButtonGroup value={selectionMode} exclusive onChange={(e, val) => val && setSelectionMode(val)} size="small" fullWidth sx={{ bgcolor: '#f5f5f5' }}>
-                  <ToggleButton value="col"><Tooltip title="Select Columns (Dates)"><ColumnIcon fontSize="small" /></Tooltip></ToggleButton>
-                  <ToggleButton value="row"><Tooltip title="Select Rows (Persons)"><RowIcon fontSize="small" /></Tooltip></ToggleButton>
-                </ToggleButtonGroup>
-              </Grid>
-            </Grid>
-
+            </Box>
             {/* ── Column action toolbar ── */}
             {personsByClass.length > 0 && dates.length > 0 && selectionMode === 'col' && (
               <Box sx={{ mt: 2, p: '10px 16px', bgcolor: hasColSel ? '#EBF3FF' : '#f8f9fa', border: hasColSel ? `1.5px solid ${COL_SEL_BORDER}` : '1px solid #e0e0e0', borderRadius: 2, display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
-                <Typography variant="caption" fontWeight="bold" color="text.secondary">Column Actions (All {PERSON_LABELS[personType]}):</Typography>
+
                 <Button variant="contained" color="success" size="small" startIcon={<AddIcon />} onClick={() => hasColSel ? applyMealAction('full', true) : setAllMealsValue(true)} sx={{ textTransform: 'none', fontWeight: 'bold' }}>{hasColSel ? `Add Full Meal (${selectedColIndices.size} col)` : 'Add All Meals'}</Button>
                 <Button variant="contained" color="error" size="small" startIcon={<RemoveCircleIcon />} onClick={() => hasColSel ? applyMealAction('full', false) : setAllMealsValue(false)} sx={{ textTransform: 'none', fontWeight: 'bold' }}>{hasColSel ? `Remove Full Meal (${selectedColIndices.size} col)` : 'Remove All Meals'}</Button>
-                <Divider orientation="vertical" flexItem />
-                <Button size="small" variant="outlined" onClick={() => hasColSel ? applyMealAction('b', true) : assignMealAllDates('breakfast', true)}><BreakfastIcon fontSize="small" sx={{ mr: 0.4 }} />+B</Button>
-                <Button size="small" variant="outlined" onClick={() => hasColSel ? applyMealAction('l', true) : assignMealAllDates('lunch', true)}><LunchIcon fontSize="small" sx={{ mr: 0.4 }} />+L</Button>
-                <Button size="small" variant="outlined" onClick={() => hasColSel ? applyMealAction('d', true) : assignMealAllDates('dinner', true)}><DinnerIcon fontSize="small" sx={{ mr: 0.4 }} />+D</Button>
+
+
                 <Divider orientation="vertical" flexItem />
                 <Button size="small" variant="outlined" color="warning" onClick={() => applyMealAction('free', true)}><MoneyOff fontSize="small" sx={{ mr: 0.4 }} />Mark Free</Button>
                 <Button size="small" variant="outlined" onClick={() => applyMealAction('free', false)}><MoneyOffCsred fontSize="small" sx={{ mr: 0.4 }} />Unmark Free</Button>
                 <Box flexGrow={1} />
-                {!hasColSel
-                  ? <Typography variant="body2" color="text.secondary"><strong>Click</strong> a date column header or drag to select multiple dates.</Typography>
-                  : <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                    <Typography variant="body2" fontWeight="bold" color={COL_SEL_BORDER}>{selectedColIndices.size} column(s):</Typography>
-                    {selLabels.slice(0, 10).map(lbl => <Chip key={lbl} label={lbl} size="small" sx={{ bgcolor: COL_HEADER_BG, color: COL_SEL_BORDER, fontWeight: 'bold', height: 22 }} />)}
-                    {selLabels.length > 10 && <Chip label={`+${selLabels.length - 10} more`} size="small" variant="outlined" />}
-                  </Box>
-                }
+
                 <Button size="small" onClick={clearSelection} sx={{ minWidth: 60 }}>Clear</Button>
               </Box>
             )}
@@ -927,6 +843,7 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
                 <Button size="small" variant="outlined" onClick={() => applyMealAction('b', true)}><BreakfastIcon fontSize="small" sx={{ mr: 0.4 }} />+B</Button>
                 <Button size="small" variant="outlined" onClick={() => applyMealAction('l', true)}><LunchIcon fontSize="small" sx={{ mr: 0.4 }} />+L</Button>
                 <Button size="small" variant="outlined" onClick={() => applyMealAction('d', true)}><DinnerIcon fontSize="small" sx={{ mr: 0.4 }} />+D</Button>
+
                 <Divider orientation="vertical" flexItem />
                 <Button size="small" variant="outlined" color="warning" onClick={() => applyMealAction('free', true)}><MoneyOff fontSize="small" sx={{ mr: 0.4 }} />Mark Free</Button>
                 <Button size="small" variant="outlined" onClick={() => applyMealAction('free', false)}><MoneyOffCsred fontSize="small" sx={{ mr: 0.4 }} />Unmark Free</Button>

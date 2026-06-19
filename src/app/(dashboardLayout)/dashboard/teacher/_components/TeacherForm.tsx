@@ -26,7 +26,6 @@ import {
   useUpdateTeacherMutation,
 } from "@/redux/api/teacherApi";
 import {
-
   Apartment,
   ArrowBack,
   AttachMoney,
@@ -37,11 +36,9 @@ import {
   CardMembership,
   CheckCircle,
   Clear,
-  ContactPhone,
   DriveFileRenameOutline,
   Email,
   Group,
-  Home,
   Language,
   LocationOn,
   Person,
@@ -50,11 +47,10 @@ import {
   School,
   VerifiedUser,
   Wc,
-  Work,
+  Work
 } from "@mui/icons-material";
 import {
   Alert,
-  alpha,
   Backdrop,
   Box,
   Button,
@@ -64,13 +60,12 @@ import {
   Divider,
   FormControlLabel,
   Grid,
-  IconButton,
   Paper,
   Snackbar,
   Switch,
   Typography,
   useMediaQuery,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -81,9 +76,6 @@ interface TeacherFormProps {
   id?: string;
 }
 
-interface FileWithPreview extends File {
-  preview?: string;
-}
 
 export default function TeacherForm({ id }: TeacherFormProps = {}) {
   const router = useRouter();
@@ -91,11 +83,11 @@ export default function TeacherForm({ id }: TeacherFormProps = {}) {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Responsive column settings
+
   const getGridSize = () => {
     if (isMobile) return 12;
     if (isTablet) return 6;
-    return 3; // 4 columns on desktop (12/3 = 4)
+    return 3;
   };
 
   const gridSize = getGridSize();
@@ -111,10 +103,6 @@ export default function TeacherForm({ id }: TeacherFormProps = {}) {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [defaultValues, setDefaultValues] = useState<any>({});
 
-  const [profileImages] = useState<FileWithPreview[]>([]);
-  const [cvFiles] = useState<File[]>([]);
-  const [certificateFiles] = useState<File[]>([]);
-  const [nidFiles] = useState<File[]>([]);
 
   const [createTeacher] = useCreateTeacherMutation();
   const [updateTeacher] = useUpdateTeacherMutation({});
@@ -152,6 +140,7 @@ export default function TeacherForm({ id }: TeacherFormProps = {}) {
         postOffice: teacher.permanentAddress?.postOffice || "",
         thana: teacher.permanentAddress?.thana || "",
         district: teacher.permanentAddress?.district || "",
+        category: teacher?.category || "",
         state: teacher.permanentAddress?.state || "",
         country: teacher.permanentAddress?.country || "",
         zipCode: teacher.permanentAddress?.zipCode || "",
@@ -308,6 +297,7 @@ export default function TeacherForm({ id }: TeacherFormProps = {}) {
         englishName: data.englishName,
         phone: data.phone,
         email: data.email,
+        category: data.category,
         dateOfBirth: data.dateOfBirth,
         bloodGroup: data.bloodGroup,
         gender: data.gender,
@@ -1395,6 +1385,17 @@ export default function TeacherForm({ id }: TeacherFormProps = {}) {
                     label="Status"
                     placeholder="Select Status"
                     items={statusOptions}
+                    adornment={<VerifiedUser color="action" />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={gridSize}>
+                  <CraftSelectWithIcon
+                    name="category"
+                    size="small"
+                    label="Select Category"
+                    placeholder="Select Category"
+                    items={['Residential',
+                      'Non-Residential']}
                     adornment={<VerifiedUser color="action" />}
                   />
                 </Grid>

@@ -1,4 +1,5 @@
 import { MealRates, PersonType } from "@/interface/meal";
+import dayjs from "dayjs";
 
 export const COL_SEL_BG = 'rgba(19,102,210,0.13)';
 export const COL_SEL_BORDER = '#1366D2';
@@ -27,3 +28,40 @@ export const PERSON_AVATARS: Record<PersonType, string> = {
     teacher: '#9c27b0',
     staff: '#ff9800',
 };
+
+
+export const ALL_CLASSES = 'ALL';
+
+
+export const getCurrentAcademicYear = () => dayjs().year().toString();
+
+
+
+// type PersonType = 'student' | 'teacher' | 'staff';
+
+// interface PersonRow {
+//   _id: string;
+//   name: string;
+//   nameBangla?: string;
+//   roll?: string;
+//   personId?: string; // studentId / teacherId / staffId
+//   category?: string;
+//   studentType?: string;
+//   // student-specific
+//   className?: any[];
+//   admissionStatus?: string;
+//   // teacher-specific
+//   designation?: string;
+//   department?: string;
+//   status?: string;
+//   // staff-specific
+//   staffDepartment?: string;
+// }
+
+// interface ClassItem { _id: string; className: string;[k: string]: any }
+
+// interface MealRates {
+//   breakfast: number;
+//   lunch: number;
+//   dinner: number;
+// }

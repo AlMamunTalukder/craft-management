@@ -86,8 +86,9 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
     const router = useRouter();
     const { classData, studentData } = useAcademicOption();
     const [bulkCreateAttendance, { isLoading: isSaving }] = useBulkCreateAttendanceMutation();
-    const { data: staffApiData } = useGetAllStaffQuery({});
-    const { data: teacherApiData } = useGetAllTeachersQuery({});
+    const category = 'Residential'
+    const { data: staffApiData } = useGetAllStaffQuery({ category: category });
+    const { data: teacherApiData } = useGetAllTeachersQuery({ category: category });
 
     // ─── Core state ────────────────────────────────────────────────────────────
     const [personType, setPersonType] = useState<PersonType>(initialPersonType);
@@ -196,10 +197,6 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
         }));
     };
 
-    const resetRatesToDefault = () => {
-        setCustomRates(null);
-        setSnackbar({ open: true, message: 'Meal rates reset to default', severity: 'success' });
-    };
 
     // ─── Dates ──────────────────────────────────────────────────────────────────
 
@@ -574,7 +571,6 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
         );
     }
 
-    // ─── Render ──────────────────────────────────────────────────────────────────
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -632,23 +628,9 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
                         </Button>
                     </Box>
 
-                    {/* ── Custom Meal Rate Editor ── */}
                     {showRateEditor && (
-                        <Box sx={{ mt: 2, p: 2, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
-                            <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1} mb={1.5}>
-                                <Typography variant="body2" fontWeight="bold">
-                                    Custom Meal Rates {isCustomRate ? '(Active — overrides default)' : '(Using default rates)'}
-                                </Typography>
-                                <Button
-                                    size="small"
-                                    startIcon={<RestartAltIcon fontSize="small" />}
-                                    onClick={resetRatesToDefault}
-                                    disabled={!isCustomRate}
-                                    sx={{ color: 'white', textTransform: 'none' }}
-                                >
-                                    Reset to Default
-                                </Button>
-                            </Box>
+                        <Box sx={{ mt: 2, p: 2, borderRadius: 2, width: '500px' }}>
+
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={4}>
                                     <TextField
@@ -696,9 +678,7 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
                                     />
                                 </Grid>
                             </Grid>
-                            <Typography variant="caption" sx={{ mt: 1, display: 'block', opacity: 0.85 }}>
-                                These rates apply to all records saved in this session. Default rates come from system settings (B:৳{apiMealRates.breakfast} L:৳{apiMealRates.lunch} D:৳{apiMealRates.dinner}).
-                            </Typography>
+
                         </Box>
                     )}
                 </Paper>
@@ -726,7 +706,7 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
                     </Box>
 
                     {/* ── Toolbar ── */}
-                    <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'white' }}>
+                    <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'white', width: '1050px' }}>
                         <Grid container spacing={2} alignItems="center">
                             <Grid item xs={12} sm={4}>
                                 <TextField
@@ -756,25 +736,16 @@ const UpdateMealForm: React.FC<UpdateMealFormProps> = ({
                         {/* ── Column action toolbar ── */}
                         {personsByClass.length > 0 && dates.length > 0 && selectionMode === 'col' && (
                             <Box sx={{ mt: 2, p: '10px 16px', bgcolor: hasColSel ? '#EBF3FF' : '#f8f9fa', border: hasColSel ? `1.5px solid ${COL_SEL_BORDER}` : '1px solid #e0e0e0', borderRadius: 2, display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
-                                <Typography variant="caption" fontWeight="bold" color="text.secondary">Column Actions:</Typography>
+
                                 <Button variant="contained" color="success" size="small" startIcon={<AddIcon />} onClick={() => applyMealAction('full', true)} sx={{ textTransform: 'none', fontWeight: 'bold' }} disabled={!hasColSel}>Add Full Meal {hasColSel && `(${selectedColIndices.size} col)`}</Button>
                                 <Button variant="contained" color="error" size="small" startIcon={<RemoveCircleIcon />} onClick={() => applyMealAction('full', false)} sx={{ textTransform: 'none', fontWeight: 'bold' }} disabled={!hasColSel}>Remove Full Meal {hasColSel && `(${selectedColIndices.size} col)`}</Button>
                                 <Divider orientation="vertical" flexItem />
-                                <Button size="small" variant="outlined" onClick={() => applyMealAction('b', true)} disabled={!hasColSel}><BreakfastIcon fontSize="small" sx={{ mr: 0.4 }} />+B</Button>
-                                <Button size="small" variant="outlined" onClick={() => applyMealAction('l', true)} disabled={!hasColSel}><LunchIcon fontSize="small" sx={{ mr: 0.4 }} />+L</Button>
-                                <Button size="small" variant="outlined" onClick={() => applyMealAction('d', true)} disabled={!hasColSel}><DinnerIcon fontSize="small" sx={{ mr: 0.4 }} />+D</Button>
+
                                 <Divider orientation="vertical" flexItem />
                                 <Button size="small" variant="outlined" color="warning" onClick={() => applyMealAction('free', true)} disabled={!hasColSel}><MoneyOff fontSize="small" sx={{ mr: 0.4 }} />Mark Free</Button>
                                 <Button size="small" variant="outlined" onClick={() => applyMealAction('free', false)} disabled={!hasColSel}><MoneyOffCsred fontSize="small" sx={{ mr: 0.4 }} />Unmark Free</Button>
                                 <Box flexGrow={1} />
-                                {!hasColSel
-                                    ? <Typography variant="body2" color="text.secondary"><strong>Click</strong> a date column header or drag to select multiple dates.</Typography>
-                                    : <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                                        <Typography variant="body2" fontWeight="bold" color={COL_SEL_BORDER}>{selectedColIndices.size} column(s):</Typography>
-                                        {selLabels.slice(0, 10).map(lbl => <Chip key={lbl} label={lbl} size="small" sx={{ bgcolor: COL_HEADER_BG, color: COL_SEL_BORDER, fontWeight: 'bold', height: 22 }} />)}
-                                        {selLabels.length > 10 && <Chip label={`+${selLabels.length - 10} more`} size="small" variant="outlined" />}
-                                    </Box>
-                                }
+
                                 <Button size="small" onClick={clearSelection} sx={{ minWidth: 60 }}>Clear</Button>
                             </Box>
                         )}

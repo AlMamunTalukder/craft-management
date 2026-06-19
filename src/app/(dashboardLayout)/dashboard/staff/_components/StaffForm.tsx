@@ -167,7 +167,7 @@ export default function StaffForm({ id }: StaffFormProps = {}) {
         to: staff.workExperience?.[0]?.to || "",
         description: staff.workExperience?.[0]?.description || "",
 
-        // Additional Information
+        category: staff.category || "",
         status: staff.status || "Active",
 
         // Files
@@ -273,6 +273,7 @@ export default function StaffForm({ id }: StaffFormProps = {}) {
         bloodGroup: data.bloodGroup,
         gender: data.gender,
         nationality: data.nationality,
+        category: data.category,
         religion: data.religion,
         maritalStatus: data.maritalStatus,
 
@@ -1299,6 +1300,17 @@ export default function StaffForm({ id }: StaffFormProps = {}) {
               </Typography>
               <Divider sx={{ mb: 3 }} />
               <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
+                <Grid item xs={12} sm={6} md={gridSize}>
+                  <CraftSelectWithIcon
+                    name="category"
+                    size="small"
+                    label="Select Category"
+                    placeholder="Select Category"
+                    items={['Residential',
+                      'Non-Residential']}
+                    adornment={<VerifiedUser color="action" />}
+                  />
+                </Grid>
                 <Grid item xs={12} sm={6} md={gridSize}>
                   <CraftSelectWithIcon
                     name="status"

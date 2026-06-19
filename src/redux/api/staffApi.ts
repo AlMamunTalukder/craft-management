@@ -6,25 +6,21 @@ export const staffApi = baseApi.injectEndpoints({
       query: (data) => ({
         url: "/staff",
         method: "POST",
-        // Note: If you are using standard fetchBaseQuery, change 'data' to 'body'
-        // If using axios or a custom wrapper, 'data' is usually correct.
         data,
       }),
       invalidatesTags: ["staff"],
     }),
 
     getAllStaff: build.query({
-      // Added 'sort' to arguments to support table sorting
-      query: ({ limit, page, searchTerm, sort }) => ({
+      query: ({ limit, page, searchTerm, sort, category }) => ({
         url: "/staff",
         method: "GET",
-        params: { page, limit, searchTerm, sort },
+        params: { page, limit, searchTerm, sort, category },
       }),
       providesTags: ["staff"],
     }),
 
     getSingleStaff: build.query({
-      // Expects an object like { id: "xyz" } from the component
       query: ({ id }) => ({
         url: `/staff/${id}`,
         method: "GET",

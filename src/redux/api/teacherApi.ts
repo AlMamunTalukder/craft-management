@@ -13,10 +13,10 @@ export const teacherApi = baseApi.injectEndpoints({
     }),
 
     getAllTeachers: build.query({
-      query: ({ limit, page, searchTerm, department, sort }) => ({
+      query: ({ limit, page, searchTerm, department, sort, category }) => ({
         url: "/teacher",
         method: "GET",
-        params: { page, limit, searchTerm, department, sort },
+        params: { page, limit, searchTerm, department, sort, category },
       }),
       providesTags: ["teacher"],
     }),
