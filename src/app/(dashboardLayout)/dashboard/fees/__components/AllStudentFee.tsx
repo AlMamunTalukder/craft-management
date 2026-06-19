@@ -4,7 +4,7 @@
 
 import FeeAdjustmentModal from "@/components/FeeAdjustmentModal";
 import StatsGrid from "@/components/StatsCard/StatsGrid";
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
 import { useDeleteFeeMutation, useGetAllFeesQuery } from "@/redux/api/feesApi";
 import {
   AccountBalance as AccountBalanceIcon,
@@ -19,6 +19,7 @@ import { Box, Chip, Container, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import FeeDetailsModal from "../__components/FeeDetailsModal";
+import { Column, RowAction } from "@/interface/table";
 
 export default function AllStudentFee() {
   const { data: feesData, isLoading, error, refetch } = useGetAllFeesQuery({});

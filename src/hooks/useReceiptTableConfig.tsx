@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Column, RowAction, BulkAction } from "@/components/Table";
+
+import { BulkAction, Column, RowAction } from "@/interface/table";
 import {
   Delete,
   Download,
@@ -269,7 +270,7 @@ export const useReceiptTableConfig = ({
     {
       label: "More Actions",
       icon: <MoreVert fontSize="small" />,
-      onClick: () => {},
+      onClick: () => { },
       inMenu: false,
       alwaysShow: false,
     },

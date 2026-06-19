@@ -4,42 +4,38 @@
 
 import type React from "react";
 
-import { useState } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  IconButton,
-  Avatar,
-  Chip,
-  Snackbar,
-  Alert,
-  alpha,
-  createTheme,
-  ThemeProvider,
-} from "@mui/material";
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as VisibilityIcon,
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  AccessTime as AccessTimeIcon,
-  Person,
-  AdminPanelSettings,
-  School,
-  SupervisorAccount,
-  Engineering,
-} from "@mui/icons-material";
+import CraftTable from "@/components/Table";
+import { Column, RowAction } from "@/interface/table";
 import {
   useDeleteUserMutation,
   useGetAllUsersQuery,
 } from "@/redux/api/userApi";
-import CraftTable, { Column, RowAction } from "@/components/Table";
-import { formatDate } from "@/utils/formateDate";
 import { customTheme } from "@/ThemeStyle";
+import { formatDate } from "@/utils/formateDate";
+import {
+  AccessTime as AccessTimeIcon,
+  AdminPanelSettings,
+  Cancel as CancelIcon,
+  CheckCircle as CheckCircleIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Engineering,
+  Person,
+  School,
+  SupervisorAccount,
+  Visibility as VisibilityIcon
+} from "@mui/icons-material";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Chip,
+  Container,
+  Snackbar,
+  ThemeProvider,
+  Typography
+} from "@mui/material";
+import { useState } from "react";
 import Swal from "sweetalert2";
 
 const roleConfig: Record<
@@ -47,13 +43,13 @@ const roleConfig: Record<
   {
     icon: React.ReactNode;
     color:
-      | "primary"
-      | "secondary"
-      | "success"
-      | "error"
-      | "warning"
-      | "info"
-      | "default";
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "warning"
+    | "info"
+    | "default";
     label: string;
   }
 > = {
@@ -326,7 +322,7 @@ export default function UserManagementPage() {
     {
       label: "View",
       icon: <VisibilityIcon fontSize="small" />,
-      onClick: (row: any) => {},
+      onClick: (row: any) => { },
       color: "info",
       tooltip: "View Details",
       inMenu: false,

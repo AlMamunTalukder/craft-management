@@ -24,7 +24,8 @@ import {
   useDeleteSectionMutation,
   useGetAllSectionsQuery,
 } from "@/redux/api/sectionApi";
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
+import { Column, RowAction } from "@/interface/table";
 
 export default function SectionsListPage() {
   const router = useRouter();

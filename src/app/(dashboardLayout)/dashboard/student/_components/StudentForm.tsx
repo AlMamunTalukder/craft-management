@@ -269,7 +269,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
   const [searchTerm] = useState("");
 
   const { data: classData } = useGetAllClassesQuery({
-    limit: rowsPerPage,
+    limit: 20,
     page: page + 1,
     searchTerm: searchTerm,
   });
@@ -1354,7 +1354,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                         'Non-Residential',
                         'Day Care',
                         'Non-Residential One Meal',
-                        'Day Care One Meal',]}
+                        'Day Care One Meal', 'Residential No Meal',]}
                       adornment={<Person color="action" />}
                     />
                   </Grid>

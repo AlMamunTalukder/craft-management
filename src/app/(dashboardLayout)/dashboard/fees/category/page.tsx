@@ -11,7 +11,8 @@ import { Box, Container, Chip, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import FeeCategoryModal from "../__components/FeeCategoryModal";
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
+import { Column, RowAction } from "@/interface/table";
 
 export interface FeeCategory {
   _id: string;
@@ -37,7 +38,8 @@ const FeeCategoriesPage = () => {
     data: feesData,
     refetch,
     isLoading,
-  } = useGetAllFeeCategoriesQuery({});
+
+  } = useGetAllFeeCategoriesQuery({ limit: 500 });
   const [deleteFeeCategory] = useDeleteFeeCategoryMutation();
 
   const feeCategories: FeeCategory[] = feesData?.data?.data || [];
@@ -288,7 +290,7 @@ const FeeCategoriesPage = () => {
     },
   ];
 
-  const handleExport = () => {};
+  const handleExport = () => { };
 
   const handlePrint = () => {
     window.print();

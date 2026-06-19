@@ -3,24 +3,22 @@
 "use client";
 
 import LoadingSpinner from "@/components/LoadingSpinner";
-import Table, { BulkAction, Column, RowAction } from "@/components/Table";
+import Table from "@/components/Table";
 import { useAcademicOption } from "@/hooks/useAcademicOption";
+import { sortClassOptions } from "@/options/classReport";
 import {
   useDeleteEnrollmentMutation,
   useGetAllEnrollmentsQuery,
 } from "@/redux/api/enrollmentApi";
 import {
-  Add,
   ArrowForward,
-  AttachMoney,
   Delete,
   Edit,
-  FileDownload,
   History,
   Person,
   Refresh,
   RestartAlt,
-  Visibility,
+  Visibility
 } from "@mui/icons-material";
 import {
   Avatar,
@@ -38,7 +36,7 @@ import EnrollmentDetailsModal from "../__components/EnrollmentDetailsModal";
 import PromotionHistoryModal from "../__components/PromotionHistoryModal";
 import PromotionModal from "../__components/PromotionModal";
 import RetainModal from "../__components/RetainModal";
-import { sortClassOptions } from "@/options/classReport";
+import { Column, RowAction } from "@/interface/table";
 
 const getStatusColor = (status: string) => {
   switch (status?.toLowerCase()) {

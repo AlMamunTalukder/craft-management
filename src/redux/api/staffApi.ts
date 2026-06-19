@@ -1,4 +1,3 @@
-// staffApi.ts
 import { baseApi } from "./baseApi";
 
 export const staffApi = baseApi.injectEndpoints({
@@ -13,10 +12,10 @@ export const staffApi = baseApi.injectEndpoints({
     }),
 
     getAllStaff: build.query({
-      query: ({ limit, page, searchTerm }) => ({
+      query: ({ limit, page, searchTerm, sort, category }) => ({
         url: "/staff",
-        method: "GET", 
-        params: { page, limit, searchTerm },
+        method: "GET",
+        params: { page, limit, searchTerm, sort, category },
       }),
       providesTags: ["staff"],
     }),

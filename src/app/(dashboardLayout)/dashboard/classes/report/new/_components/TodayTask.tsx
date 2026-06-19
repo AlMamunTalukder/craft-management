@@ -70,7 +70,7 @@ export default function TodayTask({
         dueDate: data.dueDate || getTodayDate(),
       };
 
-      console.log("Submitting data:", submitData);
+
 
       if (!id) {
         const res = await createTodayTask(submitData).unwrap();

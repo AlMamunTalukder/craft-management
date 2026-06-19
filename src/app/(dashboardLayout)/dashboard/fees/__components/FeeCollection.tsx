@@ -1,7 +1,8 @@
 "use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import CraftTable, { Column, RowAction } from "@/components/Table";
+import CraftTable from "@/components/Table";
+import FeeAdjustmentModal from "@/components/FeeAdjustmentModal";
 import { useGetDueFeesQuery } from "@/redux/api/feesApi";
 import {
   Fee,
@@ -9,7 +10,7 @@ import {
   StudentWithFees,
   Summary,
 } from "@/types/feeCollection";
-import { Payment, Visibility } from "@mui/icons-material";
+import { Discount, Payment, Visibility } from "@mui/icons-material";
 import {
   Box,
   Card,
@@ -26,6 +27,7 @@ import PaymentModal from "../../student/profile/__components/PaymentModal";
 import PrintModal from "../../student/profile/__components/PrintModal";
 import StudentFeeDetailsModal from "./StudentFeeDetailsModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { Column, RowAction } from "@/interface/table";
 
 const FeeCollection = () => {
   const theme = useTheme();
@@ -50,6 +52,8 @@ const FeeCollection = () => {
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState<any>(null);
+
+  const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
 
   const { data, error, isLoading, refetch } = useGetDueFeesQuery({
     year: year?.toString() || "",
@@ -322,6 +326,22 @@ const FeeCollection = () => {
     }
   };
 
+  // Opens the FeeAdjustmentModal for a given fee (same pattern as DueStudentFee.tsx)
+  const handleAdjustmentClick = (fee: any) => {
+    setSelectedFee(fee);
+    setAdjustmentModalOpen(true);
+  };
+
+  const handleCloseAdjustmentModal = () => {
+    setAdjustmentModalOpen(false);
+    setSelectedFee(null);
+  };
+
+  const handleAdjustmentSuccess = () => {
+    refetch?.();
+    handleCloseAdjustmentModal();
+  };
+
   const getStudentColumns = (): Column[] => {
     const baseColumns: Column[] = [
       {
@@ -434,7 +454,28 @@ const FeeCollection = () => {
       color: "success",
       tooltip: "Collect all due fees for this student",
     },
+    {
+      label: "Apply Discount/Waiver",
+      icon: <Discount fontSize="small" />,
+      onClick: (row) => {
+        const student = dueFeesData?.find((s) => s?.student?._id === row?._id);
+        // This table is student-wise (a row can have multiple fees), so we
+        // default to the first due fee for that student. If the student has
+        // several fees, open "View Details" to adjust a specific one instead.
+        const fee = student?.fees?.[0];
+        // The fee objects built above don't carry a `student` field, but
+        // FeeAdjustmentModal needs fee.student._id to submit the request —
+        // attach it here so the modal has what it needs.
+        if (fee && student) {
+          handleAdjustmentClick({ ...fee, student: student.student });
+        }
+      },
+      color: "success",
+      tooltip: "Apply discount or waiver to a due fee",
+      inMenu: true,
+    },
   ];
+
 
   const studentBulkActions = [
     {
@@ -535,18 +576,21 @@ const FeeCollection = () => {
       <PrintModal
         open={printModalOpen}
         setOpen={handleClosePrintModal}
-        receipt={selectedReceipt}
-      // onClose={() => {
-      //   setTimeout(() => {
-      //     window.location.href = "/dashboard/student/list";
-      //   }, 100);
-      // }}
+
       />
       <PaymentModal
         open={paymentModalOpen}
         onClose={handleClosePaymentModal}
         fee={selectedFee}
         onPaymentSuccess={handlePaymentSuccess}
+      />
+
+      {/* Fee Adjustment Modal - handles discount/waiver API call internally */}
+      <FeeAdjustmentModal
+        open={adjustmentModalOpen}
+        onClose={handleCloseAdjustmentModal}
+        fee={selectedFee}
+        onSuccess={handleAdjustmentSuccess}
       />
     </>
   );
