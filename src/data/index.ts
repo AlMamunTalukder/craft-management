@@ -121,26 +121,3 @@ export const customTheme = createTheme({
     },
   },
 })
-
-// Sample data for students
-export const generateStudentsData = () => {
-  const firstNames = ["Mohammad", "Abdul", "Fatima", "Aisha", "Yusuf", "Ibrahim", "Zainab", "Hassan", "Amina", "Ali"]
-  const lastNames = ["Ahmed", "Khan", "Rahman", "Islam", "Hossain", "Chowdhury", "Ali", "Siddique", "Uddin", "Akter"]
-  const classes = ["One", "Two", "Three", "Four", "Five"]
-  const batches = ["Morning", "Day", "Evening"]
-  const days = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-  const teachers = ["Mr. Rahman", "Ms. Akter", "Mr. Khan", "Ms. Begum", "Mr. Hossain"]
-
-  return Array.from({ length: 50 }, (_, i) => ({
-    id: i + 1,
-    name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`,
-    class: classes[Math.floor(Math.random() * classes.length)],
-    batch: batches[Math.floor(Math.random() * batches.length)],
-    teacher: teachers[Math.floor(Math.random() * teachers.length)],
-    date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
-    day: days[Math.floor(Math.random() * days.length)],
-    dairyFillUp: true, // Default checked
-    taskStatus: "Completed",
-    handwriting: "Good",
-  }))
-}
