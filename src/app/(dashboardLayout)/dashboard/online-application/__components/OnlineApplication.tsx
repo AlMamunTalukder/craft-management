@@ -987,7 +987,6 @@ export default function AdmissionApplicationList({
     handleBulkReject,
   ]);
 
-  // ─── Header Banner ─────────────────────────────────────────────────────────
 
   const getHeaderBanner = () => {
     const bannerConfig = {
