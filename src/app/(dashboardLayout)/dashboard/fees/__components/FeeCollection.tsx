@@ -1,8 +1,11 @@
+// src/components/FeeCollection/FeeCollection.tsx
 "use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import LoadingSpinner from "@/components/LoadingSpinner";
 import CraftTable from "@/components/Table";
-import FeeAdjustmentModal from "@/components/FeeAdjustmentModal";
+import { Column, RowAction } from "@/interface/table";
+import { baseApi } from "@/redux/api/baseApi";
 import { useGetDueFeesQuery } from "@/redux/api/feesApi";
 import {
   Fee,
@@ -20,22 +23,22 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useDispatch } from "react-redux";
 import BulkPaymentModal from "../../student/profile/__components/BulkPaymentModal";
 import PaymentModal from "../../student/profile/__components/PaymentModal";
 import PrintModal from "../../student/profile/__components/PrintModal";
 import StudentFeeDetailsModal from "./StudentFeeDetailsModal";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { Column, RowAction } from "@/interface/table";
 
 const FeeCollection = () => {
   const theme = useTheme();
+  const dispatch = useDispatch();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [dueFeesData, setDueFeesData] = useState<StudentWithFees[]>([]);
-  const [, setSummary] = useState<Summary | null>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [year] = useState(new Date().getFullYear());
   const [classFilter] = useState("");
@@ -53,112 +56,30 @@ const FeeCollection = () => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState<any>(null);
 
-  const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
-
-  const { data, error, isLoading, refetch } = useGetDueFeesQuery({
+  const { data, error, isLoading } = useGetDueFeesQuery({
     year: year?.toString() || "",
     class: classFilter || "",
   });
-  useEffect(() => {
-    if (data?.success) {
-      const dueFees = data?.data?.dueFees || [];
-      const totalDue = data?.data?.totalDue || 0;
-      const totalPaid = data?.data?.totalPaid || 0;
-      const totalFees = data?.data?.totalFees || 0;
 
-      const studentsMap = new Map<string, any>();
-
-      dueFees?.forEach((fee: any) => {
-        const studentId = fee?.student?._id;
-
-        if (!studentId) return;
-
-        if (!studentsMap.has(studentId)) {
-          let className = "";
-          if (
-            fee?.student?.className &&
-            Array.isArray(fee?.student?.className)
-          ) {
-            const classObj = fee?.student?.className[0];
-            if (classObj && typeof classObj === "object") {
-              className = classObj?.className || "";
-            } else if (typeof classObj === "string") {
-              className = classObj;
-            }
-          }
-
-          studentsMap.set(studentId, {
-            student: {
-              _id: fee?.student?._id || "",
-              studentId: fee?.student?.studentId || "",
-              name: fee?.student?.nameBangla || fee?.student?.name || "",
-              mobile: fee?.student?.mobile || "",
-            },
-            enrollment: {
-              _id: studentId,
-              rollNumber: "",
-              className: className,
-            },
-            fees: [],
-            totalDue: 0,
-            totalPaid: 0,
-            totalAmount: 0,
-            feesCount: 0,
-          });
-        }
-
-        const studentEntry = studentsMap.get(studentId);
-
-        if (!studentEntry) return;
-        const className =
-          fee?.class || fee?.student?.className?.[0]?.className || "";
-
-        studentEntry?.fees?.push({
-          _id: fee?._id || "",
-          feeType: fee?.feeType || "",
-          month: fee?.month || "",
-          class: className,
-          amount: fee?.amount || 0,
-          paidAmount: fee?.paidAmount || 0,
-          dueAmount: fee?.dueAmount || 0,
-          status: fee?.status || "",
-          academicYear: fee?.academicYear || "",
-          isCurrentMonth: fee?.isCurrentMonth || false,
-          advanceUsed: fee?.advanceUsed || 0,
-          discount: fee?.discount || 0,
-          waiver: fee?.waiver || 0,
-          computedDue: fee?.dueAmount || 0,
-        });
-
-        studentEntry.totalDue += fee?.dueAmount || 0;
-        studentEntry.totalPaid += fee?.paidAmount || 0;
-        studentEntry.totalAmount += fee?.amount || 0;
-        studentEntry.feesCount = studentEntry?.fees?.length || 0;
-      });
-
-      const studentsData = Array.from(studentsMap.values());
-      const summaryData = {
-        totalStudents: studentsData?.length || 0,
-        totalFees: totalFees || 0,
-        totalDueAmount: totalDue || 0,
-        totalPaidAmount: totalPaid || 0,
-        totalAmount: totalFees || 0,
-      };
-
-      setDueFeesData(studentsData);
-      setSummary(summaryData);
-      setLoading(false);
-    } else if (error) {
-      console.error("Error fetching due fees:", error);
-      toast.error("Error fetching due fees");
-      setLoading(false);
-      setDueFeesData([]);
+  const forceRefetch = useCallback(async () => {
+    try {
+      dispatch(
+        baseApi.util.invalidateTags([
+          "fees",
+          "students",
+          "Student",
+          "Payment",
+          "Receipts",
+          "Receipt",
+        ])
+      );
+    } catch (error) {
+      console.error("Force refetch error:", error);
     }
-  }, [data, error]);
+  }, [dispatch]);
 
   useEffect(() => {
-    if (data?.success) {
-      // The data is in data.data.students based on your response format
+    if (data?.success && data?.data) {
       const studentsData = data?.data?.students || [];
       const summaryData = data?.data?.summary || {
         totalStudents: 0,
@@ -168,40 +89,43 @@ const FeeCollection = () => {
         totalAmount: 0,
       };
 
-      // Transform the data to match the StudentWithFees type expected by your component
-      const transformedStudents = studentsData.map((student: any) => ({
-        student: {
-          _id: student.student?._id || "",
-          studentId: student.student?.studentId || "",
-          name: student.student?.name || "",
-          mobile: student.student?.mobile || "",
-        },
-        enrollment: student.enrollment || {
-          _id: student.student?._id || "",
-          rollNumber: "",
-          className: student.fees?.[0]?.class || "",
-        },
-        fees: student.fees?.map((fee: any) => ({
-          _id: fee._id || "",
-          feeType: fee.feeType || "",
-          month: fee.month || "",
-          class: fee.class || "",
-          amount: fee.amount || 0,
-          paidAmount: fee.paidAmount || 0,
-          dueAmount: fee.dueAmount || fee.computedDue || 0,
-          status: fee.status || "",
-          academicYear: fee.academicYear || "",
-          isCurrentMonth: fee.isCurrentMonth || false,
-          advanceUsed: fee.advanceUsed || 0,
-          discount: fee.discount || 0,
-          waiver: fee.waiver || 0,
-          computedDue: fee.computedDue || fee.dueAmount || 0,
-        })) || [],
-        totalDue: student.totalDue || 0,
-        totalPaid: student.totalPaid || 0,
-        totalAmount: student.totalAmount || 0,
-        feesCount: student.feesCount || 0,
-      }));
+      const transformedStudents: StudentWithFees[] = studentsData.map(
+        (student: any) => ({
+          student: {
+            _id: student.student?._id || "",
+            studentId: student.student?.studentId || "",
+            name:
+              student.student?.nameBangla || student.student?.name || "",
+            mobile: student.student?.mobile || "",
+          },
+          enrollment: student.enrollment || {
+            _id: student.student?._id || "",
+            rollNumber: "",
+            className: student.fees?.[0]?.class || "",
+          },
+          fees:
+            student.fees?.map((fee: any) => ({
+              _id: fee._id || "",
+              feeType: fee.feeType || "",
+              month: fee.month || "",
+              class: fee.class || "",
+              amount: fee.amount || 0,
+              paidAmount: fee.paidAmount || 0,
+              dueAmount: fee.dueAmount || fee.computedDue || 0,
+              status: fee.status || "",
+              academicYear: fee.academicYear || "",
+              isCurrentMonth: fee.isCurrentMonth || false,
+              advanceUsed: fee.advanceUsed || 0,
+              discount: fee.discount || 0,
+              waiver: fee.waiver || 0,
+              computedDue: fee.computedDue || fee.dueAmount || 0,
+            })) || [],
+          totalDue: student.totalDue || 0,
+          totalPaid: student.totalPaid || 0,
+          totalAmount: student.totalAmount || 0,
+          feesCount: student.feesCount || 0,
+        })
+      );
 
       setDueFeesData(transformedStudents);
       setSummary({
@@ -219,6 +143,7 @@ const FeeCollection = () => {
       setDueFeesData([]);
     }
   }, [data, error]);
+
   const getStudentOverallStatus = (fees: Fee[]): string => {
     if (!fees?.length) return "unknown";
     if (fees?.every((f) => f?.status === "paid")) return "paid";
@@ -315,7 +240,7 @@ const FeeCollection = () => {
 
   const handlePaymentSuccess = () => {
     toast.success("Payment processed successfully!");
-    refetch?.();
+    forceRefetch();
     handleClosePaymentModal();
   };
 
@@ -326,20 +251,17 @@ const FeeCollection = () => {
     }
   };
 
-  // Opens the FeeAdjustmentModal for a given fee (same pattern as DueStudentFee.tsx)
-  const handleAdjustmentClick = (fee: any) => {
-    setSelectedFee(fee);
-    setAdjustmentModalOpen(true);
-  };
-
-  const handleCloseAdjustmentModal = () => {
-    setAdjustmentModalOpen(false);
-    setSelectedFee(null);
+  const handleAdjustmentClick = (row: any) => {
+    const student = dueFeesData?.find((s) => s?.student?._id === row?._id);
+    const fee = student?.fees?.[0];
+    if (fee && student) {
+      setSelectedFee({ ...fee, student: student.student });
+    }
   };
 
   const handleAdjustmentSuccess = () => {
-    refetch?.();
-    handleCloseAdjustmentModal();
+    toast.success("Fee adjustment applied successfully!");
+    forceRefetch();
   };
 
   const getStudentColumns = (): Column[] => {
@@ -426,7 +348,7 @@ const FeeCollection = () => {
               <Chip label={config?.label} color={config?.color} size="small" />
             );
           },
-        },
+        }
       );
     }
 
@@ -457,25 +379,12 @@ const FeeCollection = () => {
     {
       label: "Apply Discount/Waiver",
       icon: <Discount fontSize="small" />,
-      onClick: (row) => {
-        const student = dueFeesData?.find((s) => s?.student?._id === row?._id);
-        // This table is student-wise (a row can have multiple fees), so we
-        // default to the first due fee for that student. If the student has
-        // several fees, open "View Details" to adjust a specific one instead.
-        const fee = student?.fees?.[0];
-        // The fee objects built above don't carry a `student` field, but
-        // FeeAdjustmentModal needs fee.student._id to submit the request —
-        // attach it here so the modal has what it needs.
-        if (fee && student) {
-          handleAdjustmentClick({ ...fee, student: student.student });
-        }
-      },
+      onClick: handleAdjustmentClick,
       color: "success",
       tooltip: "Apply discount or waiver to a due fee",
       inMenu: true,
     },
   ];
-
 
   const studentBulkActions = [
     {
@@ -487,7 +396,7 @@ const FeeCollection = () => {
           return;
         }
         toast.error(
-          "Bulk collection for multiple students is not yet implemented",
+          "Bulk collection for multiple students is not yet implemented"
         );
       },
       color: "success" as const,
@@ -498,10 +407,13 @@ const FeeCollection = () => {
     return <LoadingSpinner />;
   }
 
+  const freshSelectedStudent = selectedStudent
+    ? dueFeesData.find((s) => s.student._id === selectedStudent.student._id) ||
+    selectedStudent
+    : null;
+
   return (
     <>
-
-
       <Box sx={{ p: { xs: 1, sm: 2 }, height: "100%", width: "100%" }}>
         {studentTableData?.length > 0 ? (
           <CraftTable
@@ -524,9 +436,12 @@ const FeeCollection = () => {
             elevation={3}
             showRowNumbers={!isMobile}
             rowNumberHeader="#"
-            defaultSortColumn="totalDue"
-            defaultSortDirection="desc"
             borderRadius={3}
+          /* 
+            ✅ FIX: I removed defaultSortColumn="totalDue" and defaultSortDirection="desc"
+            Because your backend already sorts by student ID safely, 
+            removing this prevents the table from re-arranging rows when a due amount changes to 0!
+          */
           />
         ) : (
           <Card>
@@ -541,17 +456,20 @@ const FeeCollection = () => {
           </Card>
         )}
       </Box>
+
       <StudentFeeDetailsModal
         open={viewDetailsModalOpen}
         onClose={() => setViewDetailsModalOpen(false)}
-        student={selectedStudent?.student}
-        enrollment={selectedStudent?.enrollment}
-        fees={selectedStudent?.fees || []}
-        totalAmount={selectedStudent?.totalAmount || 0}
-        totalPaid={selectedStudent?.totalPaid || 0}
-        totalDue={selectedStudent?.totalDue || 0}
+        student={freshSelectedStudent?.student}
+        enrollment={freshSelectedStudent?.enrollment}
+        fees={freshSelectedStudent?.fees || []}
+        totalAmount={freshSelectedStudent?.totalAmount || 0}
+        totalPaid={freshSelectedStudent?.totalPaid || 0}
+        totalDue={freshSelectedStudent?.totalDue || 0}
         onBulkPayment={handleBulkPaymentFromView}
+        onFeeUpdated={forceRefetch}
       />
+
       {selectedStudentForBulk && (
         <BulkPaymentModal
           open={bulkPaymentModalOpen}
@@ -569,28 +487,22 @@ const FeeCollection = () => {
             selectedStudentForBulk?.fees?.filter((fee) => fee?.dueAmount > 0) ||
             []
           }
-          refetch={refetch}
+          refetch={forceRefetch}
           onPaymentCompleted={handleBulkPaymentCompleted}
         />
       )}
+
       <PrintModal
         open={printModalOpen}
         setOpen={handleClosePrintModal}
-
+        receipt={selectedReceipt}
       />
+
       <PaymentModal
         open={paymentModalOpen}
         onClose={handleClosePaymentModal}
         fee={selectedFee}
         onPaymentSuccess={handlePaymentSuccess}
-      />
-
-      {/* Fee Adjustment Modal - handles discount/waiver API call internally */}
-      <FeeAdjustmentModal
-        open={adjustmentModalOpen}
-        onClose={handleCloseAdjustmentModal}
-        fee={selectedFee}
-        onSuccess={handleAdjustmentSuccess}
       />
     </>
   );

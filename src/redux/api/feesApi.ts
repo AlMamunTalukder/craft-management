@@ -1,4 +1,6 @@
+// src/redux/api/feesApi.ts
 import { baseApi } from "./baseApi";
+import { TagType } from "./tag-types";
 
 export const feesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -37,13 +39,37 @@ export const feesApi = baseApi.injectEndpoints({
       providesTags: ["mealAttendances"],
     }),
 
+    applyFeeAdjustment: build.mutation({
+      query: (data) => ({
+        url: "/fee-adjustments",
+        method: "POST",
+        data: data,
+      }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            baseApi.util.invalidateTags([
+              "fees",
+              "students",
+              "Student",
+              "Payment",
+            ])
+          );
+        } catch (error) {
+          console.error("Fee adjustment failed:", error);
+        }
+      },
+      invalidatesTags: ["fees", "students", "Student", "Payment"],
+    }),
+
     getDueFees: build.query({
-      query: ({ limit, page, searchTerm }) => ({
+      query: ({ limit, page, searchTerm, year, class: className }) => ({
         url: "/fees/due",
         method: "GET",
-        params: { page, limit, searchTerm },
+        params: { page, limit, searchTerm, year, class: className },
       }),
-      providesTags: ["fees"],
+      providesTags: ["fees", "students"],
     }),
 
     getAllFees: build.query({
@@ -86,7 +112,7 @@ export const feesApi = baseApi.injectEndpoints({
         method: "POST",
         data,
       }),
-      invalidatesTags: ["fees"],
+      invalidatesTags: ["fees", "Payment", "Receipts", "Receipt"],
     }),
 
     createFee: build.mutation({
@@ -106,14 +132,17 @@ export const feesApi = baseApi.injectEndpoints({
       }),
       providesTags: ["fees"],
     }),
-    applyFeeAdjustment: build.mutation({
+
+
+    applyBulkAdjustments: build.mutation({
       query: (data) => ({
-        url: "/fee-adjustments",
+        url: "/fee-adjustments/bulk/student",
         method: "POST",
         data: data,
       }),
-      invalidatesTags: ["fees"],
+      invalidatesTags: ["fees", "students", "Student", "Payment"],
     }),
+
   }),
 });
 
@@ -131,4 +160,5 @@ export const {
   usePayFeeMutation,
   useCreateFeeMutation,
   useGetClassWiseFeeSummaryQuery,
+  useApplyBulkAdjustmentsMutation
 } = feesApi;

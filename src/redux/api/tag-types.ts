@@ -1,3 +1,4 @@
+// src/redux/api/tag-types.ts
 export const tagTypesList = [
   "student",
   "teacher",
@@ -45,8 +46,9 @@ export const tagTypesList = [
   "admissionApplication",
   "lateFees",
   "lateFeeConfig",
-  'mealAttendance',
-  "mealAttendances"
+  "mealAttendance",
+  "mealAttendances",
+  "feeAdjustment",
 ] as const;
 
 export type TagType = (typeof tagTypesList)[number];

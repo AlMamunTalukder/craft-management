@@ -2,8 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { BulkPaymentModalProps } from "@/interface/fees";
+import { useApplyBulkAdjustmentsMutation } from "@/redux/api/feesApi";
 import { useCreateBulkPaymentMutation } from "@/redux/api/paymentApi";
-import { ArrowBack, CheckCircle, Close } from "@mui/icons-material";
+import { ArrowBack, CheckCircle, Close, Discount } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -51,12 +52,15 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [createBulkPayment] = useCreateBulkPaymentMutation();
 
-  const steps = ["Select Fees", "Payment Details", "Confirmation"];
+  // ✅ NEW: Quick Discount States
+  const [discountType, setDiscountType] = useState<"flat" | "percentage">("flat");
+  const [discountValue, setDiscountValue] = useState<number>(0);
+  const [applyBulkAdjustments, { isLoading: isApplyingDiscount }] = useApplyBulkAdjustmentsMutation();
 
+  const steps = ["Select Fees & Adjust", "Payment Details", "Confirmation"];
+
+  // Filter payable fees dynamically based on fresh `fees` prop
   const payableFees = fees.filter((fee) => fee.dueAmount > 0);
-
-  console.log('slected fee', selectedFees)
-  console.log('fees check', fees)
 
   const calculateTotals = () => {
     const selectedFeeObjects = fees.filter((fee) =>
@@ -80,7 +84,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       0,
     );
     const totalDue = selectedFeeObjects.reduce(
-      (sum, fee) => sum + (fee.dueAmount || 0), // সরাসরি dueAmount নিচ্ছি
+      (sum, fee) => sum + (fee.dueAmount || 0),
       0,
     );
     const netAmount = totalAmount - totalDiscount - totalWaiver;
@@ -97,6 +101,33 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
   };
 
   const totals = calculateTotals();
+
+  // ✅ NEW: Handle applying the bulk discount
+  const handleApplyDiscount = async () => {
+    if (!discountValue || discountValue <= 0) {
+      toast.error("Please enter a valid discount value");
+      return;
+    }
+
+    try {
+      await applyBulkAdjustments({
+        studentId: student._id,
+        type: "discount",
+        adjustmentType: discountType,
+        value: discountValue,
+        reason: "Bulk payment quick discount applied before payment",
+      }).unwrap();
+
+      toast.success("Discount applied successfully to all due fees!");
+      setDiscountValue(0); // Reset input
+      // Parent component automatically passes down updated `fees` because of invalidation
+    } catch (error: any) {
+      console.error("Discount error:", error);
+      toast.error(
+        error?.data?.message || "Failed to apply discount. It might exceed the fee amount."
+      );
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -167,9 +198,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       selectedFees.includes(fee._id),
     );
 
-    // প্রতিটি ফি এর জন্য প্রপার paidAmount ক্যালকুলেশন
     const receiptFees = selectedFeeObjects.map((fee) => {
-      // প্রতিটি ফি তে কত টাকা পেমেন্ট করা হচ্ছে (dueAmount অনুযায়ী)
       const paidForThisFee = fee.dueAmount || 0;
 
       return {
@@ -180,7 +209,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
         waiver: fee.waiver || 0,
         netAmount: fee.amount - (fee.discount || 0) - (fee.waiver || 0),
         dueAmount: fee.dueAmount || 0,
-        paidAmount: paidForThisFee, // শুধু dueAmount পেইড হচ্ছে
+        paidAmount: paidForThisFee,
         previousPaid: fee.paidAmount || 0,
         quantity: 1,
       };
@@ -208,14 +237,14 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       className: student.className || "",
       rollNumber: student.roll || "",
       section: student.section || "",
-      totalAmount: paidAmount, // এখানে paidAmount হবে total payable amount
+      totalAmount: paidAmount,
       fees: receiptFees,
       summary: {
         totalItems: selectedFees.length,
         subtotal,
         totalDiscount,
         totalWaiver,
-        amountPaid: paidAmount, // সঠিক amount
+        amountPaid: paidAmount,
       },
       transactionId: paymentMethod !== "cash" ? transactionId : undefined,
       note: note || undefined,
@@ -225,18 +254,15 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
   const handleSubmitPayment = async () => {
     setIsProcessing(true);
     try {
-      // শুধুমাত্র selected fees গুলোর dueAmount নিচ্ছি
       const selectedFeeObjects = fees.filter((fee) =>
         selectedFees.includes(fee._id),
       );
 
-      // মোট payable amount গণনা করছি (dueAmount এর সমষ্টি)
       const totalPayableAmount = selectedFeeObjects.reduce(
         (sum, fee) => sum + (fee.dueAmount || 0),
         0,
       );
 
-      // চেক করছি কোন ফি সিলেক্ট করা আছে কিনা
       if (totalPayableAmount === 0) {
         toast.error("No due amount to pay for selected fees");
         setIsProcessing(false);
@@ -246,19 +272,16 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       const paymentData = {
         studentId: student._id,
         feeIds: selectedFees,
-        amountPaid: totalPayableAmount, // এখানে dueAmount পেমেন্ট হচ্ছে
+        amountPaid: totalPayableAmount,
         paymentMethod,
         transactionId: paymentMethod !== "cash" ? transactionId : undefined,
         note,
         collectedBy,
       };
 
-      console.log('Payment data being sent:', paymentData);
-
       const result = await createBulkPayment(paymentData).unwrap();
 
       if (result.success) {
-        // সঠিক receipt data তৈরি করছি যাতে paidAmount সঠিকভাবে দেখায়
         const receiptData = buildReceiptData(result, totalPayableAmount);
 
         toast.success(
@@ -305,6 +328,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
     setNote("");
     setCollectedBy("Nesar Ahmed");
     setIsProcessing(false);
+    setDiscountValue(0); // ✅ Reset discount
   };
 
   const handleClose = () => {
@@ -364,7 +388,6 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
           </Typography>
         </Box>
 
-        {/* Stepper */}
         <Box sx={{ p: 3, background: "#f8f9fa" }}>
           <Stepper activeStep={activeStep} alternativeLabel>
             {steps.map((label) => (
@@ -375,7 +398,6 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
           </Stepper>
         </Box>
 
-        {/* Content */}
         <Box sx={{ p: 3 }}>
           {activeStep === 0 && (
             <>
@@ -413,7 +435,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
               </Box>
 
               <TableContainer
-                sx={{ mb: 3, maxHeight: 400, border: "1px solid #ddd" }}
+                sx={{ mb: 3, maxHeight: 300, border: "1px solid #ddd" }}
               >
                 <Table stickyHeader size="small">
                   <TableHead>
@@ -425,24 +447,16 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                           onChange={handleSelectAll}
                         />
                       </TableCell>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        Fee Type
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Fee Type</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>Month</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                        Amount
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                        Paid
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: "bold" }}>
-                        Due
-                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: "bold" }}>Amount</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: "bold" }}>Discount</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: "bold" }}>Due</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>Status</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {fees.map((fee) => (
+                    {fees.map((fee: any) => (
                       <TableRow
                         key={fee._id}
                         hover
@@ -451,11 +465,6 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                           backgroundColor: selectedFees.includes(fee._id)
                             ? "rgba(25, 118, 210, 0.08)"
                             : "inherit",
-                          "&:hover": {
-                            backgroundColor: selectedFees.includes(fee._id)
-                              ? "rgba(25, 118, 210, 0.12)"
-                              : "rgba(0, 0, 0, 0.04)",
-                          },
                         }}
                         onClick={(e) => handleSelectFee(e, fee._id)}
                       >
@@ -468,16 +477,11 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                         </TableCell>
                         <TableCell>{fee.feeType}</TableCell>
                         <TableCell>{fee.month}</TableCell>
-                        <TableCell align="right">
-                          ৳{fee.amount.toLocaleString()}
+                        <TableCell align="right">৳{fee.amount.toLocaleString()}</TableCell>
+                        <TableCell align="right" sx={{ color: "error.main" }}>
+                          -৳{(fee.discount || 0 + fee?.waiver || 0).toLocaleString()}
                         </TableCell>
-                        <TableCell align="right">
-                          ৳{fee.paidAmount.toLocaleString()}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ color: "#d32f2f", fontWeight: "bold" }}
-                        >
+                        <TableCell align="right" sx={{ color: "#d32f2f", fontWeight: "bold" }}>
                           ৳{fee.dueAmount.toLocaleString()}
                         </TableCell>
                         <TableCell>
@@ -486,12 +490,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                             size="small"
                             sx={{
                               borderRadius: 0,
-                              background:
-                                fee.status === "paid"
-                                  ? "#4caf50"
-                                  : fee.status === "partial"
-                                    ? "#ff9800"
-                                    : "#f44336",
+                              background: fee.status === "paid" ? "#4caf50" : fee.status === "partial" ? "#ff9800" : "#f44336",
                               color: "white",
                               fontWeight: "bold",
                             }}
@@ -503,54 +502,77 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                 </Table>
               </TableContainer>
 
-              {selectedFees.length > 0 && (
-                <Card
-                  sx={{
-                    mb: 2,
-                    border: "1px solid #1976d2",
-                    background: "#e3f2fd",
-                  }}
+              {/* ✅ NEW: QUICK DISCOUNT SECTION */}
+              <Paper
+                variant="outlined"
+                sx={{ p: 2, mb: 2, borderColor: "#4caf50", backgroundColor: "#f1f8e9" }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: "bold", color: "#2e7d32" }}
                 >
+                  <Discount fontSize="small" />
+                  Apply Quick Discount Before Payment
+                </Typography>
+                <Box sx={{ display: "flex", gap: 2, alignItems: "center", mt: 1 }}>
+                  <TextField
+                    select
+                    size="small"
+                    value={discountType}
+                    onChange={(e) => setDiscountType(e.target.value as "flat" | "percentage")}
+                    sx={{ minWidth: 160 }}
+                  >
+                    <MenuItem value="flat">Flat Amount (৳)</MenuItem>
+                    <MenuItem value="percentage">Percentage (%)</MenuItem>
+                  </TextField>
+
+                  <TextField
+                    size="small"
+                    type="number"
+                    label={discountType === "percentage" ? "Percentage" : "Amount (৳)"}
+                    value={discountValue || ""}
+                    onChange={(e) => setDiscountValue(e.target.value === "" ? 0 : Number(e.target.value))}
+                    sx={{ flex: 1 }}
+                    inputProps={{ min: 0, max: discountType === "percentage" ? 100 : 99999 }}
+                  />
+
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleApplyDiscount}
+                    disabled={payableFees.length === 0 || !discountValue || discountValue <= 0 || isApplyingDiscount}
+                    startIcon={isApplyingDiscount ? <CircularProgress size={16} color="inherit" /> : <Discount />}
+                  >
+                    {isApplyingDiscount ? "Applying..." : "Apply Discount"}
+                  </Button>
+                </Box>
+                {discountType === "percentage" && discountValue > 0 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                    * Applies to ALL unpaid fees for this student. Estimated: ৳{(totals.totalAmount * (discountValue / 100)).toFixed(2)}
+                  </Typography>
+                )}
+              </Paper>
+
+              {selectedFees.length > 0 && (
+                <Card sx={{ mb: 2, border: "1px solid #1976d2", background: "#e3f2fd" }}>
                   <CardContent>
                     <Grid container spacing={2}>
                       <Grid item xs={6} sm={3}>
-                        <Typography variant="body2" color="text.secondary">
-                          Total Amount
-                        </Typography>
-                        <Typography variant="h6">
-                          ৳{totals.totalAmount.toLocaleString()}
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Total Amount</Typography>
+                        <Typography variant="h6">৳{totals.totalAmount.toLocaleString()}</Typography>
                       </Grid>
                       <Grid item xs={6} sm={3}>
-                        <Typography variant="body2" color="text.secondary">
-                          Adjustments
-                        </Typography>
-                        <Typography variant="h6" color="error">
-                          -৳
-                          {(
-                            totals.totalDiscount + totals.totalWaiver
-                          ).toLocaleString()}
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Adjustments</Typography>
+                        <Typography variant="h6" color="error">-৳{(totals.totalDiscount + totals.totalWaiver).toLocaleString()}</Typography>
                       </Grid>
                       <Grid item xs={6} sm={3}>
-                        <Typography variant="body2" color="text.secondary">
-                          Net Amount
-                        </Typography>
-                        <Typography variant="h6">
-                          ৳{totals.netAmount.toLocaleString()}
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Net Amount</Typography>
+                        <Typography variant="h6">৳{totals.netAmount.toLocaleString()}</Typography>
                       </Grid>
                       <Grid item xs={6} sm={3}>
-                        <Typography variant="body2" color="text.secondary">
-                          Total Due
-                        </Typography>
-                        <Typography
-                          variant="h5"
-                          color="error"
-                          fontWeight="bold"
-                        >
-                          ৳{totals.totalDue.toLocaleString()}
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Total Due</Typography>
+                        <Typography variant="h5" color="error" fontWeight="bold">৳{totals.totalDue.toLocaleString()}</Typography>
                       </Grid>
                     </Grid>
                   </CardContent>
@@ -561,56 +583,28 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
 
           {activeStep === 1 && (
             <>
-              <Typography variant="h6" gutterBottom>
-                Payment Information
-              </Typography>
+              <Typography variant="h6" gutterBottom>Payment Information</Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <Card sx={{ mb: 2, backgroundColor: "#f5f5f5" }}>
                     <CardContent>
-                      <Typography
-                        variant="subtitle2"
-                        gutterBottom
-                        fontWeight="bold"
-                      >
-                        Payment Summary
-                      </Typography>
+                      <Typography variant="subtitle2" gutterBottom fontWeight="bold">Payment Summary</Typography>
                       <Grid container spacing={2}>
                         <Grid item xs={6} md={3}>
-                          <Typography variant="body2" color="text.secondary">
-                            Amount to Pay
-                          </Typography>
-                          <Typography
-                            variant="h5"
-                            color="primary"
-                            fontWeight="bold"
-                          >
-                            ৳{totals.totalDue.toLocaleString()}
-                          </Typography>
+                          <Typography variant="body2" color="text.secondary">Amount to Pay</Typography>
+                          <Typography variant="h5" color="primary" fontWeight="bold">৳{totals.totalDue.toLocaleString()}</Typography>
                         </Grid>
                         <Grid item xs={6} md={3}>
-                          <Typography variant="body2" color="text.secondary">
-                            Fees Selected
-                          </Typography>
-                          <Typography variant="h6">
-                            {totals.selectedCount}
-                          </Typography>
+                          <Typography variant="body2" color="text.secondary">Fees Selected</Typography>
+                          <Typography variant="h6">{totals.selectedCount}</Typography>
                         </Grid>
                         <Grid item xs={6} md={3}>
-                          <Typography variant="body2" color="text.secondary">
-                            Student
-                          </Typography>
-                          <Typography variant="body2" noWrap>
-                            {student.name}
-                          </Typography>
+                          <Typography variant="body2" color="text.secondary">Student</Typography>
+                          <Typography variant="body2" noWrap>{student.name}</Typography>
                         </Grid>
                         <Grid item xs={6} md={3}>
-                          <Typography variant="body2" color="text.secondary">
-                            ID
-                          </Typography>
-                          <Typography variant="body2">
-                            {student.studentId}
-                          </Typography>
+                          <Typography variant="body2" color="text.secondary">ID</Typography>
+                          <Typography variant="body2">{student.studentId}</Typography>
                         </Grid>
                       </Grid>
                     </CardContent>
@@ -618,15 +612,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="Payment Method"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    size="small"
-                    required
-                  >
+                  <TextField select fullWidth label="Payment Method" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} size="small" required>
                     <MenuItem value="cash">Cash</MenuItem>
                     <MenuItem value="bkash">bKash</MenuItem>
                     <MenuItem value="nagad">Nagad</MenuItem>
@@ -636,39 +622,16 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
 
                 {paymentMethod !== "cash" && (
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Transaction ID"
-                      value={transactionId}
-                      onChange={(e) => setTransactionId(e.target.value)}
-                      size="small"
-                      placeholder={`Enter ${paymentMethod} transaction ID`}
-                      required
-                    />
+                    <TextField fullWidth label="Transaction ID" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} size="small" placeholder={`Enter ${paymentMethod} transaction ID`} required />
                   </Grid>
                 )}
 
                 <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Collected By"
-                    value={collectedBy}
-                    onChange={(e) => setCollectedBy(e.target.value)}
-                    size="small"
-                  />
+                  <TextField fullWidth label="Collected By" value={collectedBy} onChange={(e) => setCollectedBy(e.target.value)} size="small" />
                 </Grid>
 
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Note (Optional)"
-                    multiline
-                    rows={2}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    size="small"
-                    placeholder="Add any notes about this payment"
-                  />
+                  <TextField fullWidth label="Note (Optional)" multiline rows={2} value={note} onChange={(e) => setNote(e.target.value)} size="small" placeholder="Add any notes about this payment" />
                 </Grid>
               </Grid>
             </>
@@ -676,74 +639,36 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
 
           {activeStep === 2 && (
             <>
-              <Typography variant="h6" gutterBottom>
-                Confirm Payment
-              </Typography>
+              <Typography variant="h6" gutterBottom>Confirm Payment</Typography>
               <Card sx={{ mb: 2, backgroundColor: "#f5f5f5" }}>
                 <CardContent>
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    fontWeight="bold"
-                  >
-                    Payment Details
-                  </Typography>
+                  <Typography variant="subtitle2" gutterBottom fontWeight="bold">Payment Details</Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={6} md={3}>
-                      <Typography variant="body2" color="text.secondary">
-                        Amount
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        color="primary"
-                        fontWeight="bold"
-                      >
-                        ৳{totals.totalDue.toLocaleString()}
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary">Amount</Typography>
+                      <Typography variant="h5" color="primary" fontWeight="bold">৳{totals.totalDue.toLocaleString()}</Typography>
                     </Grid>
                     <Grid item xs={6} md={3}>
-                      <Typography variant="body2" color="text.secondary">
-                        Payment Method
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        sx={{ textTransform: "uppercase" }}
-                      >
-                        {paymentMethod}
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary">Payment Method</Typography>
+                      <Typography variant="body1" sx={{ textTransform: "uppercase" }}>{paymentMethod}</Typography>
                     </Grid>
                     <Grid item xs={6} md={3}>
-                      <Typography variant="body2" color="text.secondary">
-                        Collected By
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary">Collected By</Typography>
                       <Typography variant="body1">{collectedBy}</Typography>
                     </Grid>
                     <Grid item xs={6} md={3}>
-                      <Typography variant="body2" color="text.secondary">
-                        Fees Count
-                      </Typography>
-                      <Typography variant="body1">
-                        {totals.selectedCount}
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary">Fees Count</Typography>
+                      <Typography variant="body1">{totals.selectedCount}</Typography>
                     </Grid>
                     {paymentMethod !== "cash" && transactionId && (
                       <Grid item xs={12}>
-                        <Typography variant="body2" color="text.secondary">
-                          Transaction ID
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          sx={{ fontWeight: "medium" }}
-                        >
-                          {transactionId}
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Transaction ID</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: "medium" }}>{transactionId}</Typography>
                       </Grid>
                     )}
                     {note && (
                       <Grid item xs={12}>
-                        <Typography variant="body2" color="text.secondary">
-                          Note
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Note</Typography>
                         <Typography variant="body1">{note}</Typography>
                       </Grid>
                     )}
@@ -771,15 +696,13 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
               onClick={activeStep === 2 ? handleSubmitPayment : handleNext}
               disabled={
                 isProcessing ||
+                isApplyingDiscount || // ✅ Disable next if applying discount
                 (activeStep === 0 && selectedFees.length === 0) ||
                 (activeStep === 1 && paymentMethod !== "cash" && !transactionId)
               }
               sx={{
                 minWidth: 150,
-                background:
-                  activeStep === 2
-                    ? "linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)"
-                    : undefined,
+                background: activeStep === 2 ? "linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)" : undefined,
               }}
             >
               {isProcessing ? (

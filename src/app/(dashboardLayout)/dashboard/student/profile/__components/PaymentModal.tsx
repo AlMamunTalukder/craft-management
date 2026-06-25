@@ -52,6 +52,8 @@ const PaymentModal = ({
   fee,
   onPaymentSuccess,
 }: PaymentModalProps) => {
+
+  console.log('ffe for print', fee)
   const theme = useTheme();
   const [payFee, { isLoading }] = usePayFeeMutation();
   const [paymentMethod, setPaymentMethod] = useState("cash");
@@ -157,8 +159,8 @@ const PaymentModal = ({
       console.error("Payment error:", error);
       toast.error(
         error?.data?.message ||
-          error?.message ||
-          "Failed to process payment. Please try again.",
+        error?.message ||
+        "Failed to process payment. Please try again.",
       );
     }
   };

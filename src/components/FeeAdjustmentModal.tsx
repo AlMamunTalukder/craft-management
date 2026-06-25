@@ -1,3 +1,4 @@
+// src/components/FeeAdjustmentModal.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import {
@@ -50,7 +51,9 @@ const FeeAdjustmentModal = ({
 
   useEffect(() => {
     if (open && fee) {
-      const currentMonth = `${new Date().toLocaleString("en", { month: "long" })} ${new Date().getFullYear()}`;
+      const currentMonth = `${new Date().toLocaleString("en", {
+        month: "long",
+      })} ${new Date().getFullYear()}`;
       setFormData({
         type: "discount",
         adjustmentType: "percentage",
@@ -101,9 +104,7 @@ const FeeAdjustmentModal = ({
     }
 
     const studentId =
-      fee?.student?._id ||
-      fee?.studentId ||
-      fee?.student;
+      fee?.student?._id || fee?.studentId || fee?.student;
 
     if (!studentId) {
       toast.error("Student ID not found");
@@ -123,31 +124,33 @@ const FeeAdjustmentModal = ({
       isRecurring: formData.isRecurring,
       startMonth: formData.startMonth,
       endMonth: formData.endMonth,
-      academicYear:
-        fee?.academicYear ||
-        new Date().getFullYear().toString(),
+      academicYear: fee?.academicYear || new Date().getFullYear().toString(),
     };
 
-    console.log("Sending adjustment =", adjustmentData);
-
     try {
-      const result = await applyFeeAdjustment(
-        adjustmentData
-      ).unwrap();
+      // ✅ FIXED: Don't use .unwrap() - just await the mutation
+      const result = await applyFeeAdjustment(adjustmentData);
 
-      toast.success(
-        `${formData.type === "discount" ? "Discount" : "Waiver"} applied successfully`
-      );
+      if (result?.data) {
+        // Show success message
+        toast.success(
+          `${formData.type === "discount" ? "Discount" : "Waiver"} applied successfully!`,
+          { duration: 3000 }
+        );
 
-      onSuccess?.();
-      onClose();
+        // ✅ FIXED: Call onSuccess immediately - it will invalidate tags
+        // The parent component receives fresh data automatically via RTK Query
+        if (onSuccess) {
+          onSuccess();
+        }
+
+        // Close modal
+        onClose();
+      }
     } catch (error: any) {
-      console.error(error);
-
+      console.error("Adjustment error:", error);
       toast.error(
-        error?.data?.message ||
-        error?.message ||
-        "Failed to apply adjustment"
+        error?.data?.message || error?.message || "Failed to apply adjustment"
       );
     }
   };
@@ -175,9 +178,23 @@ const FeeAdjustmentModal = ({
           overflow: "auto",
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-          <Typography variant="h5" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {formData.type === "discount" ? <Discount color="primary" /> : <MoneyOff color="secondary" />}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{ display: "flex", alignItems: "center", gap: 1 }}
+          >
+            {formData.type === "discount" ? (
+              <Discount color="primary" />
+            ) : (
+              <MoneyOff color="secondary" />
+            )}
             Apply {formData.type === "discount" ? "Discount" : "Waiver"}
           </Typography>
           <Button onClick={onClose} size="small" disabled={isLoading}>
@@ -186,20 +203,41 @@ const FeeAdjustmentModal = ({
         </Box>
 
         <Paper sx={{ p: 2, mb: 3, bgcolor: "grey.50" }}>
-          <Typography variant="subtitle2" gutterBottom>Fee Details</Typography>
+          <Typography variant="subtitle2" gutterBottom>
+            Fee Details
+          </Typography>
           <Grid container spacing={2}>
             <Grid item xs={6}>
-              <Typography variant="body2"><strong>Student:</strong> {fee.student?.name || "N/A"}</Typography>
+              <Typography variant="body2">
+                <strong>Student:</strong> {fee.student?.name || "N/A"}
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography variant="body2"><strong>Month:</strong> {fee.month}</Typography>
+              <Typography variant="body2">
+                <strong>Month:</strong> {fee.month}
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography variant="body2"><strong>Original Amount:</strong> ৳{fee.amount?.toLocaleString()}</Typography>
+              <Typography variant="body2">
+                <strong>Original Amount:</strong>{" "}
+                ৳{fee.amount?.toLocaleString()}
+              </Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography variant="body2"><strong>Due Amount:</strong> ৳{currentDue?.toLocaleString()}</Typography>
+              <Typography variant="body2">
+                <strong>Current Due:</strong> ৳{currentDue?.toLocaleString()}
+              </Typography>
             </Grid>
+            {/* ✅ Show existing adjustments */}
+            {(fee.discount > 0 || fee.waiver > 0) && (
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Existing Adjustments:</strong>{" "}
+                  {fee.discount > 0 && `Discount: ৳${fee.discount} `}
+                  {fee.waiver > 0 && `Waiver: ৳${fee.waiver}`}
+                </Typography>
+              </Grid>
+            )}
           </Grid>
         </Paper>
 
@@ -241,14 +279,23 @@ const FeeAdjustmentModal = ({
             <TextField
               fullWidth
               size="small"
-              label={`Value ${formData.adjustmentType === "percentage" ? "(%)" : "(৳)"}`}
+              label={`Value ${formData.adjustmentType === "percentage" ? "(%)" : "(৳)"
+                }`}
               type="text"
               value={formData.value}
               onChange={(e) => handleValueChange(e.target.value)}
-              placeholder={formData.adjustmentType === "percentage" ? "Enter percentage" : "Enter amount"}
+              placeholder={
+                formData.adjustmentType === "percentage"
+                  ? "Enter percentage"
+                  : "Enter amount"
+              }
               disabled={isLoading}
               error={formData.value ? Number(formData.value) <= 0 : false}
-              helperText={formData.adjustmentType === "percentage" ? "Max: 100%" : `Max: ৳${maxFlatAmount?.toLocaleString()}`}
+              helperText={
+                formData.adjustmentType === "percentage"
+                  ? "Max: 100%"
+                  : `Max: ৳${maxFlatAmount?.toLocaleString()}`
+              }
             />
           </Grid>
 
@@ -260,7 +307,12 @@ const FeeAdjustmentModal = ({
               value={`৳${calculatedAmount.toFixed(2)}`}
               disabled
               InputProps={{
-                startAdornment: formData.type === "discount" ? <Discount color="primary" sx={{ mr: 1 }} /> : <MoneyOff color="secondary" sx={{ mr: 1 }} />,
+                startAdornment:
+                  formData.type === "discount" ? (
+                    <Discount color="primary" sx={{ mr: 1 }} />
+                  ) : (
+                    <MoneyOff color="secondary" sx={{ mr: 1 }} />
+                  ),
               }}
             />
           </Grid>
@@ -309,7 +361,9 @@ const FeeAdjustmentModal = ({
               control={
                 <Checkbox
                   checked={formData.isRecurring}
-                  onChange={(e) => handleInputChange("isRecurring", e.target.checked)}
+                  onChange={(e) =>
+                    handleInputChange("isRecurring", e.target.checked)
+                  }
                   disabled={isLoading}
                 />
               }
@@ -319,18 +373,31 @@ const FeeAdjustmentModal = ({
         </Grid>
 
         {calculatedAmount > 0 && (
-          <Alert severity="info" sx={{ mt: 2 }} icon={formData.type === "discount" ? <Discount /> : <MoneyOff />}>
+          <Alert
+            severity="info"
+            sx={{ mt: 2 }}
+            icon={
+              formData.type === "discount" ? <Discount /> : <MoneyOff />
+            }
+          >
             <Typography variant="body2">
-              <strong>Summary:</strong><br />
-              Applying {formData.type} of ৳{calculatedAmount.toFixed(2)}<br />
-              <strong>Current Due:</strong> ৳{currentDue?.toFixed(2)}<br />
+              <strong>Summary:</strong>
+              <br />
+              Applying {formData.type} of ৳{calculatedAmount.toFixed(2)}
+              <br />
+              <strong>Current Due:</strong> ৳{currentDue?.toFixed(2)}
+              <br />
               <strong>New Due Amount:</strong> ৳{newDueAmount.toFixed(2)}
             </Typography>
           </Alert>
         )}
 
-        <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 3 }}>
-          <Button onClick={onClose} disabled={isLoading} variant="outlined">Cancel</Button>
+        <Box
+          sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 3 }}
+        >
+          <Button onClick={onClose} disabled={isLoading} variant="outlined">
+            Cancel
+          </Button>
           <Button
             variant="contained"
             onClick={handleSubmit}
@@ -339,17 +406,25 @@ const FeeAdjustmentModal = ({
               !formData.reason.trim() ||
               !formData.value ||
               Number(formData.value) <= 0 ||
-              (formData.adjustmentType === "percentage" && Number(formData.value) > 100) ||
-              (formData.adjustmentType === "flat" && Number(formData.value) > maxFlatAmount)
+              (formData.adjustmentType === "percentage" &&
+                Number(formData.value) > 100) ||
+              (formData.adjustmentType === "flat" &&
+                Number(formData.value) > maxFlatAmount)
             }
-            startIcon={isLoading ? <CircularProgress size={16} /> : <Save />}
+            startIcon={
+              isLoading ? <CircularProgress size={16} /> : <Save />
+            }
             sx={{
-              background: formData.type === "discount"
-                ? "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)"
-                : "linear-gradient(135deg, #2196F3 0%, #1976D2 100%)",
+              background:
+                formData.type === "discount"
+                  ? "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)"
+                  : "linear-gradient(135deg, #2196F3 0%, #1976D2 100%)",
             }}
           >
-            {isLoading ? "Applying..." : `Apply ${formData.type === "discount" ? "Discount" : "Waiver"}`}
+            {isLoading
+              ? "Applying..."
+              : `Apply ${formData.type === "discount" ? "Discount" : "Waiver"
+              }`}
           </Button>
         </Box>
       </Box>
