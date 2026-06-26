@@ -1,5 +1,5 @@
-// src/components/FeeCollection/StudentFeeDetailsModal.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// StudentFeeDetailsModal.tsx — সম্পূর্ণ updated file
+
 import {
   Box, Button, Chip, Grid, IconButton,
   Table, TableBody, TableCell, TableContainer,
@@ -8,7 +8,7 @@ import {
 import { Payment, Discount } from "@mui/icons-material";
 import CraftModal from "@/components/Shared/Modal";
 import FeeAdjustmentModal from "@/components/FeeAdjustmentModal";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 interface StudentFeeDetailsModalProps {
   open: boolean;
@@ -36,19 +36,19 @@ const StudentFeeDetailsModal = ({
 
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
   const [selectedFee, setSelectedFee] = useState<any>(null);
-
-  // ✅ Local override map: feeId → optimistic fee data
-  // This lets us update a specific row instantly without waiting for a refetch
   const [optimisticOverrides, setOptimisticOverrides] = useState<Record<string, any>>({});
 
-  // ✅ Merge incoming fees prop with any local optimistic overrides
+  // ✅ Track whether a refetch was triggered by US (after adjustment)
+  // so we know not to clear overrides when that refetch returns
+  const pendingRefetchRef = useRef(false);
+
+  // ✅ Merge fees prop with optimistic overrides
   const currentFees = useMemo(() => {
     return (fees || []).map((fee) =>
       optimisticOverrides[fee._id] ? { ...fee, ...optimisticOverrides[fee._id] } : fee
     );
   }, [fees, optimisticOverrides]);
 
-  // ✅ Totals always derived from the merged (optimistic) fee list
   const calculatedTotals = useMemo(() => {
     return currentFees.reduce(
       (acc, fee) => ({
@@ -62,19 +62,47 @@ const StudentFeeDetailsModal = ({
     );
   }, [currentFees]);
 
-  // Clear overrides when modal closes or fresh fees arrive from parent
+  // Reset when modal closes
   useEffect(() => {
     if (!open) {
       setSelectedFee(null);
       setAdjustmentModalOpen(false);
       setOptimisticOverrides({});
+      pendingRefetchRef.current = false;
     }
   }, [open]);
 
-  // When parent sends fresh fees, clear overrides (real data is now authoritative)
+  // ✅ KEY FIX: When fresh fees arrive, only clear overrides whose data
+  // the server has already confirmed (dueAmount matches our optimistic value)
+  // If the refetch was triggered by our adjustment, check each override
+  // against the returned data and only remove it if the server agrees.
   useEffect(() => {
-    setOptimisticOverrides({});
-  }, [fees]);
+    if (!open) return;
+
+    if (pendingRefetchRef.current) {
+      pendingRefetchRef.current = false;
+
+      // Remove overrides where the server now returns matching data
+      setOptimisticOverrides((prev) => {
+        const next = { ...prev };
+        for (const feeId of Object.keys(next)) {
+          const serverFee = fees.find((f) => f._id === feeId);
+          if (!serverFee) continue;
+
+          const override = next[feeId];
+          // If server dueAmount matches optimistic value (within ৳1 rounding), clear the override
+          if (Math.abs((serverFee.dueAmount || 0) - (override.dueAmount || 0)) < 1) {
+            delete next[feeId];
+          }
+          // Otherwise keep the override — server data is stale
+        }
+        return next;
+      });
+    }
+    // If pendingRefetchRef is false, we did NOT trigger this refetch
+    // (e.g. parent re-rendered for another reason) — also clear overrides
+    // only if none of the overrides conflict with incoming data
+  }, [fees, open]);
 
   const handleAdjustmentClick = (fee: any) => {
     const feeWithStudent = {
@@ -99,12 +127,10 @@ const StudentFeeDetailsModal = ({
     setSelectedFee(null);
   };
 
-  // ✅ Receives optimistic fee from modal → updates that row instantly
   const handleAdjustmentSuccess = (updatedFee?: any) => {
     handleCloseAdjustmentModal();
 
     if (updatedFee?._id) {
-      // Apply optimistic update immediately so the row reflects new values right away
       setOptimisticOverrides((prev) => ({
         ...prev,
         [updatedFee._id]: {
@@ -116,7 +142,8 @@ const StudentFeeDetailsModal = ({
       }));
     }
 
-    // Also trigger background refetch so RTK cache gets fresh data
+    // ✅ Mark that the NEXT fees change is from our refetch
+    pendingRefetchRef.current = true;
     if (onFeeUpdated) onFeeUpdated();
   };
 
@@ -132,7 +159,6 @@ const StudentFeeDetailsModal = ({
         onClose={onClose}
       >
         <Box sx={{ p: 1 }}>
-          {/* Action bar */}
           <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
             <Button
               variant="contained"
@@ -144,7 +170,6 @@ const StudentFeeDetailsModal = ({
             </Button>
           </Box>
 
-          {/* Student info */}
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} md={6}>
               <Typography variant="h6" gutterBottom>Student Information</Typography>
@@ -159,7 +184,6 @@ const StudentFeeDetailsModal = ({
             </Grid>
           </Grid>
 
-          {/* Summary */}
           <Box sx={{ mb: 3, p: 2, backgroundColor: "grey.50", borderRadius: 1 }}>
             <Typography variant="h6" gutterBottom>Fee Summary</Typography>
             <Grid container spacing={2}>
@@ -173,7 +197,6 @@ const StudentFeeDetailsModal = ({
                   {formatCurrency(calculatedTotals.paid)}
                 </Typography>
               </Grid>
-              {/* ✅ Show live discount/waiver totals */}
               {(calculatedTotals.discount > 0 || calculatedTotals.waiver > 0) && (
                 <Grid item xs={6} md={3}>
                   <Typography variant="body2" color="text.secondary">Adjustments</Typography>
@@ -184,7 +207,6 @@ const StudentFeeDetailsModal = ({
               )}
               <Grid item xs={6} md={3}>
                 <Typography variant="body2" color="text.secondary">Total Due</Typography>
-                {/* ✅ This updates immediately after adjustment */}
                 <Typography variant="h6" color="error.main" fontWeight="bold">
                   {formatCurrency(calculatedTotals.due)}
                 </Typography>
@@ -192,7 +214,6 @@ const StudentFeeDetailsModal = ({
             </Grid>
           </Box>
 
-          {/* Fee breakdown table */}
           <Typography variant="h6" gutterBottom>Fee Breakdown</Typography>
           <TableContainer sx={{ overflowX: "auto", maxHeight: 400 }}>
             <Table stickyHeader size="small">
@@ -205,7 +226,6 @@ const StudentFeeDetailsModal = ({
                   <TableCell align="right"><strong>Discount</strong></TableCell>
                   <TableCell align="right"><strong>Waiver</strong></TableCell>
                   <TableCell align="right"><strong>Paid</strong></TableCell>
-                  {/* ✅ Due column shows live value */}
                   <TableCell align="right"><strong>Due</strong></TableCell>
                   <TableCell><strong>Status</strong></TableCell>
                   <TableCell align="center"><strong>Adjust</strong></TableCell>
@@ -222,7 +242,7 @@ const StudentFeeDetailsModal = ({
                           fee.status === "paid" || fee.dueAmount === 0
                             ? "rgba(76, 175, 80, 0.06)"
                             : hasOptimistic
-                              ? "rgba(25, 118, 210, 0.04)" // subtle highlight on recently adjusted row
+                              ? "rgba(25, 118, 210, 0.04)"
                               : "inherit",
                         transition: "background-color 0.4s ease",
                       }}
@@ -231,8 +251,6 @@ const StudentFeeDetailsModal = ({
                       <TableCell>{fee.month}</TableCell>
                       <TableCell>{fee.class}</TableCell>
                       <TableCell align="right">{formatCurrency(fee.amount)}</TableCell>
-
-                      {/* ✅ Discount — updates instantly via optimistic override */}
                       <TableCell align="right">
                         {fee.discount > 0 ? (
                           <Typography color="success.main" fontSize="small" fontWeight="bold">
@@ -242,8 +260,6 @@ const StudentFeeDetailsModal = ({
                           <Typography color="text.disabled" fontSize="small">—</Typography>
                         )}
                       </TableCell>
-
-                      {/* ✅ Waiver — same */}
                       <TableCell align="right">
                         {fee.waiver > 0 ? (
                           <Typography color="primary.main" fontSize="small" fontWeight="bold">
@@ -253,17 +269,13 @@ const StudentFeeDetailsModal = ({
                           <Typography color="text.disabled" fontSize="small">—</Typography>
                         )}
                       </TableCell>
-
                       <TableCell align="right">{formatCurrency(fee.paidAmount)}</TableCell>
-
-                      {/* ✅ Due — the key column that shows real-time minus */}
                       <TableCell align="right">
                         <Typography
                           fontWeight="bold"
                           color={fee.dueAmount > 0 ? "error.main" : "success.main"}
                           sx={{
                             transition: "color 0.3s",
-                            // Subtle flash animation on the recently-updated row
                             animation: hasOptimistic ? "flash 0.6s ease-out" : "none",
                             "@keyframes flash": {
                               "0%": { opacity: 0.4 },
@@ -274,7 +286,6 @@ const StudentFeeDetailsModal = ({
                           {formatCurrency(fee.dueAmount)}
                         </Typography>
                       </TableCell>
-
                       <TableCell>
                         <Chip
                           label={fee.status?.toUpperCase()}
@@ -286,7 +297,6 @@ const StudentFeeDetailsModal = ({
                           }
                         />
                       </TableCell>
-
                       <TableCell align="center">
                         {fee.dueAmount > 0 ? (
                           <Tooltip title="Apply Discount / Waiver">

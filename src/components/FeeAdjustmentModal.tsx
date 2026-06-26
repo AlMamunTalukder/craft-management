@@ -24,13 +24,12 @@ const MONTH_NAMES = [
 
 const buildMonthOptions = (academicYear?: string) => {
   const now = new Date();
-  const currentMonthIdx = now.getMonth();   // 0-based
+  const currentMonthIdx = now.getMonth();
   const currentYear = now.getFullYear();
   const baseYear = academicYear ? parseInt(academicYear) : currentYear;
 
   const options: { label: string; value: string }[] = [];
 
-  // Show from current month to end of next year (enough range)
   const endYear = Math.max(baseYear + 1, currentYear + 1);
 
   for (let year = currentYear; year <= endYear; year++) {
@@ -62,7 +61,6 @@ const FeeAdjustmentModal = ({ open, onClose, fee, onSuccess }: FeeAdjustmentModa
     [fee?.academicYear]
   );
 
-  // ✅ Default startMonth to current month (not fee's month which may be past)
   useEffect(() => {
     if (open && fee) {
       setAdjustmentKind("discount");
@@ -79,7 +77,7 @@ const FeeAdjustmentModal = ({ open, onClose, fee, onSuccess }: FeeAdjustmentModa
     }
   }, [open, fee, monthOptions]);
 
-  // Sync endMonth >= startMonth
+
   useEffect(() => {
     if (startMonth && endMonth) {
       const startIdx = monthOptions.findIndex((o) => o.value === startMonth);
@@ -89,7 +87,21 @@ const FeeAdjustmentModal = ({ open, onClose, fee, onSuccess }: FeeAdjustmentModa
   }, [startMonth, monthOptions, endMonth]);
 
   const numericValue = parseFloat(value) || 0;
-  const currentDue = fee?.dueAmount ?? fee?.amount ?? 0;
+
+  const currentDue = useMemo(() => {
+
+    if (fee?.dueAmount !== undefined && fee.dueAmount !== null) {
+      return fee.dueAmount;
+    }
+
+    const amount = fee?.amount || 0;
+    const paid = fee?.paidAmount || 0;
+    const discount = fee?.discount || 0;
+    const waiver = fee?.waiver || 0;
+    const advance = fee?.advanceUsed || 0;
+    return Math.max(0, amount - paid - discount - waiver - advance);
+  }, [fee]);
+
   const feeAmount = fee?.amount ?? 0;
 
   const calculatedAmount = useMemo(() => {
@@ -155,7 +167,7 @@ const FeeAdjustmentModal = ({ open, onClose, fee, onSuccess }: FeeAdjustmentModa
           { duration: 4000 }
         );
 
-        // ✅ Build optimistic updated fee so parent table updates immediately
+
         const optimisticFee = {
           ...fee,
           discount: adjustmentKind === "discount"
@@ -168,7 +180,6 @@ const FeeAdjustmentModal = ({ open, onClose, fee, onSuccess }: FeeAdjustmentModa
           status: newDueAmount === 0 ? "paid" : fee.paidAmount > 0 ? "partial" : "unpaid",
         };
 
-        // Pass the optimistic fee back so parent can update its local state immediately
         if (onSuccess) onSuccess(optimisticFee);
         onClose();
       }
@@ -180,7 +191,7 @@ const FeeAdjustmentModal = ({ open, onClose, fee, onSuccess }: FeeAdjustmentModa
 
   if (!fee) return null;
 
-  // ✅ Filtered end month options (only >= startMonth)
+
   const endMonthOptions = monthOptions.filter((opt) => {
     if (!startMonth) return true;
     const si = monthOptions.findIndex((o) => o.value === startMonth);
@@ -332,7 +343,6 @@ const FeeAdjustmentModal = ({ open, onClose, fee, onSuccess }: FeeAdjustmentModa
               />
             </Grid>
             <Grid item xs={6}>
-              {/* ✅ Real-time preview of new due amount */}
               <Box sx={{
                 border: "1px solid",
                 borderColor: calculatedAmount > 0 ? "success.main" : "divider",
