@@ -66,7 +66,6 @@ const StudentFeeDetailsModal = ({
     return total;
   }, [currentFees]);
 
-  // ✅ Reset selected fee when modal closes or fees change
   useEffect(() => {
     if (!open) {
       setSelectedFee(null);
@@ -321,11 +320,9 @@ const StudentFeeDetailsModal = ({
                             color="primary"
                             onClick={() => handleAdjustmentClick(fee)}
                             sx={{
-                              backgroundColor: "primary.light",
-                              "&:hover": {
-                                backgroundColor: "primary.main",
-                                color: "white",
-                              },
+                              backgroundColor: "primary.main",
+                              color: 'white',
+
                             }}
                           >
                             <Discount fontSize="small" />

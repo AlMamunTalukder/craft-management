@@ -13,7 +13,7 @@ import {
   StudentWithFees,
   Summary,
 } from "@/types/feeCollection";
-import { Discount, Payment, Visibility } from "@mui/icons-material";
+import { Payment, Visibility } from "@mui/icons-material";
 import {
   Box,
   Card,
@@ -43,12 +43,10 @@ const FeeCollection = () => {
   const [year] = useState(new Date().getFullYear());
   const [classFilter] = useState("");
   const [viewDetailsModalOpen, setViewDetailsModalOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] =
-    useState<StudentWithFees | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentWithFees | null>(null);
 
   const [bulkPaymentModalOpen, setBulkPaymentModalOpen] = useState(false);
-  const [selectedStudentForBulk, setSelectedStudentForBulk] =
-    useState<StudentWithFees | null>(null);
+  const [selectedStudentIdForBulk, setSelectedStudentIdForBulk] = useState<string | null>(null);
 
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [printModalOpen, setPrintModalOpen] = useState(false);
@@ -94,8 +92,7 @@ const FeeCollection = () => {
           student: {
             _id: student.student?._id || "",
             studentId: student.student?.studentId || "",
-            name:
-              student.student?.nameBangla || student.student?.name || "",
+            name: student.student?.nameBangla || student.student?.name || "",
             mobile: student.student?.mobile || "",
           },
           enrollment: student.enrollment || {
@@ -143,6 +140,12 @@ const FeeCollection = () => {
       setDueFeesData([]);
     }
   }, [data, error]);
+
+  // Always derive the freshest version of the selected student from live dueFeesData
+  const selectedStudentForBulk = useMemo(() => {
+    if (!selectedStudentIdForBulk) return null;
+    return dueFeesData.find((s) => s.student._id === selectedStudentIdForBulk) || null;
+  }, [selectedStudentIdForBulk, dueFeesData]);
 
   const getStudentOverallStatus = (fees: Fee[]): string => {
     if (!fees?.length) return "unknown";
@@ -214,13 +217,13 @@ const FeeCollection = () => {
   };
 
   const handleOpenBulkPayment = (student: StudentWithFees) => {
-    setSelectedStudentForBulk(student);
+    setSelectedStudentIdForBulk(student.student._id);
     setBulkPaymentModalOpen(true);
   };
 
   const handleCloseBulkPayment = () => {
     setBulkPaymentModalOpen(false);
-    setSelectedStudentForBulk(null);
+    setSelectedStudentIdForBulk(null);
   };
 
   const handleBulkPaymentCompleted = (receiptData: any) => {
@@ -251,18 +254,8 @@ const FeeCollection = () => {
     }
   };
 
-  const handleAdjustmentClick = (row: any) => {
-    const student = dueFeesData?.find((s) => s?.student?._id === row?._id);
-    const fee = student?.fees?.[0];
-    if (fee && student) {
-      setSelectedFee({ ...fee, student: student.student });
-    }
-  };
 
-  const handleAdjustmentSuccess = () => {
-    toast.success("Fee adjustment applied successfully!");
-    forceRefetch();
-  };
+
 
   const getStudentColumns = (): Column[] => {
     const baseColumns: Column[] = [
@@ -376,32 +369,9 @@ const FeeCollection = () => {
       color: "success",
       tooltip: "Collect all due fees for this student",
     },
-    {
-      label: "Apply Discount/Waiver",
-      icon: <Discount fontSize="small" />,
-      onClick: handleAdjustmentClick,
-      color: "success",
-      tooltip: "Apply discount or waiver to a due fee",
-      inMenu: true,
-    },
+
   ];
 
-  const studentBulkActions = [
-    {
-      label: "Collect Selected",
-      icon: <Payment />,
-      onClick: (selectedRows: any[]) => {
-        if (!selectedRows?.length) {
-          toast.error("Please select at least one student");
-          return;
-        }
-        toast.error(
-          "Bulk collection for multiple students is not yet implemented"
-        );
-      },
-      color: "success" as const,
-    },
-  ];
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -423,7 +393,7 @@ const FeeCollection = () => {
             data={studentTableData}
             loading={loading}
             rowActions={studentRowActions}
-            bulkActions={studentBulkActions}
+
             selectable={true}
             idField="_id"
             hover={true}
@@ -437,11 +407,6 @@ const FeeCollection = () => {
             showRowNumbers={!isMobile}
             rowNumberHeader="#"
             borderRadius={3}
-          /* 
-            ✅ FIX: I removed defaultSortColumn="totalDue" and defaultSortDirection="desc"
-            Because your backend already sorts by student ID safely, 
-            removing this prevents the table from re-arranging rows when a due amount changes to 0!
-          */
           />
         ) : (
           <Card>
@@ -475,17 +440,16 @@ const FeeCollection = () => {
           open={bulkPaymentModalOpen}
           onClose={handleCloseBulkPayment}
           student={{
-            _id: selectedStudentForBulk?.student?._id || "",
-            name: selectedStudentForBulk?.student?.name || "",
-            studentId: selectedStudentForBulk?.student?.studentId || "",
-            className: selectedStudentForBulk?.fees?.[0]?.class || "",
-            roll: selectedStudentForBulk?.enrollment?.rollNumber || "",
+            _id: selectedStudentForBulk.student._id || "",
+            name: selectedStudentForBulk.student.name || "",
+            studentId: selectedStudentForBulk.student.studentId || "",
+            className: selectedStudentForBulk.fees?.[0]?.class || "",
+            roll: selectedStudentForBulk.enrollment?.rollNumber || "",
             section: "",
             jamatGroup: "",
           }}
           fees={
-            selectedStudentForBulk?.fees?.filter((fee) => fee?.dueAmount > 0) ||
-            []
+            selectedStudentForBulk.fees?.filter((fee) => fee.dueAmount > 0) || []
           }
           refetch={forceRefetch}
           onPaymentCompleted={handleBulkPaymentCompleted}
