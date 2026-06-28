@@ -12,7 +12,7 @@ import { useReactToPrint } from "react-to-print";
 
 const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
   const componentRef = useRef<HTMLDivElement | null>(null);
-
+  console.log('reciept ', receipt)
   const hasNavigationCallback = typeof onClose === "function";
 
   const handleClose = () => {
