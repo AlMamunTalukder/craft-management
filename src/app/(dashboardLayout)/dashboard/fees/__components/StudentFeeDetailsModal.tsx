@@ -38,11 +38,9 @@ const StudentFeeDetailsModal = ({
   const [selectedFee, setSelectedFee] = useState<any>(null);
   const [optimisticOverrides, setOptimisticOverrides] = useState<Record<string, any>>({});
 
-  // ✅ Track whether a refetch was triggered by US (after adjustment)
-  // so we know not to clear overrides when that refetch returns
   const pendingRefetchRef = useRef(false);
 
-  // ✅ Merge fees prop with optimistic overrides
+
   const currentFees = useMemo(() => {
     return (fees || []).map((fee) =>
       optimisticOverrides[fee._id] ? { ...fee, ...optimisticOverrides[fee._id] } : fee
@@ -72,17 +70,13 @@ const StudentFeeDetailsModal = ({
     }
   }, [open]);
 
-  // ✅ KEY FIX: When fresh fees arrive, only clear overrides whose data
-  // the server has already confirmed (dueAmount matches our optimistic value)
-  // If the refetch was triggered by our adjustment, check each override
-  // against the returned data and only remove it if the server agrees.
+
   useEffect(() => {
     if (!open) return;
 
     if (pendingRefetchRef.current) {
       pendingRefetchRef.current = false;
 
-      // Remove overrides where the server now returns matching data
       setOptimisticOverrides((prev) => {
         const next = { ...prev };
         for (const feeId of Object.keys(next)) {
@@ -90,18 +84,14 @@ const StudentFeeDetailsModal = ({
           if (!serverFee) continue;
 
           const override = next[feeId];
-          // If server dueAmount matches optimistic value (within ৳1 rounding), clear the override
           if (Math.abs((serverFee.dueAmount || 0) - (override.dueAmount || 0)) < 1) {
             delete next[feeId];
           }
-          // Otherwise keep the override — server data is stale
         }
         return next;
       });
     }
-    // If pendingRefetchRef is false, we did NOT trigger this refetch
-    // (e.g. parent re-rendered for another reason) — also clear overrides
-    // only if none of the overrides conflict with incoming data
+
   }, [fees, open]);
 
   const handleAdjustmentClick = (fee: any) => {
@@ -141,8 +131,6 @@ const StudentFeeDetailsModal = ({
         },
       }));
     }
-
-    // ✅ Mark that the NEXT fees change is from our refetch
     pendingRefetchRef.current = true;
     if (onFeeUpdated) onFeeUpdated();
   };

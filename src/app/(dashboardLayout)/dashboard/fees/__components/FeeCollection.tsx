@@ -100,7 +100,7 @@ const FeeCollection = () => {
             rollNumber: "",
             className: student.fees?.[0]?.class || "",
           },
-          // FeeCollection.tsx — transformedStudents mapping এ এই change করুন
+
 
           fees: student.fees?.map((fee: any) => ({
             _id: fee._id || "",
@@ -109,7 +109,6 @@ const FeeCollection = () => {
             class: fee.class || "",
             amount: fee.amount || 0,
             paidAmount: fee.paidAmount || 0,
-            // ✅ dueAmount: computedDue কে priority দিন (aggregate থেকে আসে)
             dueAmount: fee.computedDue ?? fee.dueAmount ?? 0,
             status: fee.status || "",
             academicYear: fee.academicYear || "",
@@ -143,7 +142,7 @@ const FeeCollection = () => {
     }
   }, [data, error]);
 
-  // Always derive the freshest version of the selected student from live dueFeesData
+
   const selectedStudentForBulk = useMemo(() => {
     if (!selectedStudentIdForBulk) return null;
     return dueFeesData.find((s) => s.student._id === selectedStudentIdForBulk) || null;

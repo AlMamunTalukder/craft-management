@@ -4,6 +4,7 @@
 import { BulkPaymentModalProps } from "@/interface/fees";
 import { useApplyBulkAdjustmentsMutation } from "@/redux/api/feesApi";
 import { useCreateBulkPaymentMutation } from "@/redux/api/paymentApi";
+import { numberToWords } from "@/utils/numberToWords";
 import { Close, Discount } from "@mui/icons-material";
 import {
   Alert,
@@ -58,10 +59,8 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
 
   const steps = ["Select Fees & Adjust", "Payment Details", "Confirmation"];
 
-  // ✅ fees prop is always fresh from parent (driven by RTK Query cache invalidation)
-  const payableFees = fees.filter((fee) => fee.dueAmount > 0);
 
-  // ✅ Totals are always recalculated from the latest fees prop
+  const payableFees = fees.filter((fee) => fee.dueAmount > 0);
   const calculateTotals = () => {
     const selectedFeeObjects = fees.filter((fee) => selectedFees.includes(fee._id));
     const totalAmount = selectedFeeObjects.reduce((sum, fee) => sum + fee.amount, 0);
@@ -75,14 +74,14 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
 
   const totals = calculateTotals();
 
-  // ✅ Live discount preview — shows estimated saving before applying
+
   const discountPreview = useMemo(() => {
     if (!discountValue || discountValue <= 0) return null;
     if (discountType === "percentage") {
       const estimated = payableFees.reduce((sum, fee) => sum + (fee.dueAmount * discountValue) / 100, 0);
       return { estimated: Math.min(estimated, totals.totalDue), label: `${discountValue}% off all due fees` };
     } else {
-      // Flat: each fee gets capped at its own dueAmount (mirrors backend logic)
+
       const estimated = payableFees.reduce((sum, fee) => sum + Math.min(discountValue, fee.dueAmount), 0);
       return { estimated, label: `৳${discountValue} off each due fee (capped per fee)` };
     }
@@ -112,8 +111,6 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
         { duration: 4000, icon: "✅" }
       );
       setDiscountValue(0);
-      // ✅ RTK Query invalidation in feesApi automatically triggers parent
-      //    to re-fetch, which flows fresh `fees` prop into this modal
       if (refetch) refetch();
     } catch (error: any) {
       console.error("Discount error:", error);
@@ -127,10 +124,8 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
     }
   }, [open]);
 
-  // ✅ Auto-select all newly payable fees when fees prop updates after a discount
   useEffect(() => {
     if (selectedFees.length > 0) {
-      // Keep only IDs that still exist in the fees list and still have due amount
       const stillValid = selectedFees.filter((id) =>
         fees.some((f) => f._id === id && f.dueAmount > 0)
       );
@@ -187,8 +182,8 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
   const buildReceiptData = (paymentResponse: any, paidAmount: number) => {
     const paymentDate = new Date(paymentResponse.paymentDate || new Date());
     const receiptNo = paymentResponse.receiptNo || `RCP-${Date.now()}`;
-    // ✅ Use fees prop at time of payment — these are already fresh from parent
     const selectedFeeObjects = fees.filter((fee) => selectedFees.includes(fee._id));
+
     const receiptFees = selectedFeeObjects.map((fee) => ({
       feeType: fee.feeType,
       month: fee.month,
@@ -201,9 +196,14 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       previousPaid: fee.paidAmount || 0,
       quantity: 1,
     }));
+
     const subtotal = selectedFeeObjects.reduce((sum, f) => sum + f.amount, 0);
     const totalDiscount = selectedFeeObjects.reduce((sum, f) => sum + (f.discount || 0), 0);
     const totalWaiver = selectedFeeObjects.reduce((sum, f) => sum + (f.waiver || 0), 0);
+    const totalNetAmount = subtotal - totalDiscount - totalWaiver;
+    const amountPaid = paidAmount;
+
+
     return {
       _id: paymentResponse._id || `temp-${Date.now()}`,
       receiptNo,
@@ -218,7 +218,17 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
       section: student.section || "",
       totalAmount: paidAmount,
       fees: receiptFees,
-      summary: { totalItems: selectedFees.length, subtotal, totalDiscount, totalWaiver, amountPaid: paidAmount },
+      summary: {
+        totalItems: selectedFees.length,
+        subtotal,
+        totalDiscount,
+        totalWaiver,
+        totalNetAmount,
+        amountPaid,
+        subtotalWord: numberToWords(subtotal),
+        totalNetAmountWord: numberToWords(totalNetAmount),
+        amountPaidWord: numberToWords(amountPaid)
+      },
       transactionId: paymentMethod !== "cash" ? transactionId : undefined,
       note: note || undefined,
     };
@@ -227,7 +237,6 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
   const handleSubmitPayment = async () => {
     setIsProcessing(true);
     try {
-      // ✅ Always read dueAmount from the current fees prop (fresh from RTK cache)
       const selectedFeeObjects = fees.filter((fee) => selectedFees.includes(fee._id));
       const totalPayableAmount = selectedFeeObjects.reduce((sum, fee) => sum + (fee.dueAmount || 0), 0);
 
@@ -348,7 +357,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                       <TableCell sx={{ fontWeight: "bold" }}>Month</TableCell>
                       <TableCell align="right" sx={{ fontWeight: "bold" }}>Amount</TableCell>
                       <TableCell align="right" sx={{ fontWeight: "bold" }}>Discount</TableCell>
-                      {/* ✅ Show real-time due amount */}
+
                       <TableCell align="right" sx={{ fontWeight: "bold" }}>Due</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>Status</TableCell>
                     </TableRow>
@@ -371,11 +380,11 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                         <TableCell>{fee.feeType}</TableCell>
                         <TableCell>{fee.month}</TableCell>
                         <TableCell align="right">৳{fee.amount.toLocaleString()}</TableCell>
-                        {/* ✅ Fix: was operator-precedence bug — (0 + fee?.waiver || 0) was wrong */}
+
                         <TableCell align="right" sx={{ color: "error.main" }}>
                           -৳{((fee.discount || 0) + (fee.waiver || 0)).toLocaleString()}
                         </TableCell>
-                        {/* ✅ dueAmount always comes fresh from the fees prop */}
+
                         <TableCell align="right" sx={{ color: "#d32f2f", fontWeight: "bold" }}>
                           ৳{fee.dueAmount.toLocaleString()}
                         </TableCell>
@@ -436,7 +445,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                   </Button>
                 </Box>
 
-                {/* ✅ Real-time discount preview */}
+
                 {discountPreview && (
                   <Box sx={{ mt: 1.5, p: 1, background: "#c8e6c9", borderRadius: 1 }}>
                     <Typography variant="caption" color="#1b5e20" fontWeight="bold">
@@ -498,7 +507,7 @@ const BulkPaymentModal: React.FC<BulkPaymentModalProps> = ({
                       <Grid container spacing={2}>
                         <Grid item xs={6} md={3}>
                           <Typography variant="body2" color="text.secondary">Amount to Pay</Typography>
-                          {/* ✅ Always reflects the latest dueAmount from fresh fees prop */}
+
                           <Typography variant="h5" color="primary" fontWeight="bold">৳{totals.totalDue.toLocaleString()}</Typography>
                         </Grid>
                         <Grid item xs={6} md={3}>

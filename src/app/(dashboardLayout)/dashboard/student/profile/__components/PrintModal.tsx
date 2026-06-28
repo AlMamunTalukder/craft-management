@@ -4,14 +4,14 @@
 
 import CraftModal from "@/components/Shared/Modal";
 import { banglaMonths, englishMonths } from "@/constant/month";
+import { formatDate } from "@/utils/formateDate";
 import { Description, MapRounded, Phone } from "@mui/icons-material";
-import { Box, Button, Typography, Alert } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { useRef, useMemo } from "react";
 import { useReactToPrint } from "react-to-print";
 
 const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
   const componentRef = useRef<HTMLDivElement | null>(null);
-
 
   const hasNavigationCallback = typeof onClose === "function";
 
@@ -66,20 +66,12 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
 
   const handlePrintClick = () => {
     if (!receipt) {
-      console.error("❌ No receipt data available for printing!");
+      console.error(" No receipt data available for printing!");
       return;
     }
     handlePrint();
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    try {
-      return new Date(dateString).toLocaleDateString("en-US");
-    } catch {
-      return dateString;
-    }
-  };
 
   const calculateTotal = () => {
     if (!receipt) return 0;
@@ -346,7 +338,9 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
                     </div>
                     <div className="p-3 bg-gray-100 flex-1 flex items-start gap-2">
                       <span className="font-bold text-sm whitespace-nowrap">কথায়:</span>
-                      <div className="border-b border-dotted border-gray-400 w-full h-5"></div>
+                      <div className="border-b border-dotted border-gray-400 w-full h-5">
+                        <span className="text-sm">{receipt?.summary?.amountPaidWord}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="col-span-4 text-sm font-semibold">
