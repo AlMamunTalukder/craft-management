@@ -33,7 +33,7 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
     },
     pageStyle: `
       @page {
-        size: 130mm 220mm;
+        size: 130mm 230mm;
         margin: 0;
       }
       @media print {
@@ -48,7 +48,7 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
         .receipt-preview {
           transform: none !important;
           width: 130mm !important;
-          height: 220mm !important;
+          height: 230mm !important;
           font-size: 16px !important;
           margin: 0 auto !important;
           padding: 0 !important;
@@ -214,7 +214,7 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
             style={{
               boxSizing: "border-box",
               width: "130mm",
-              height: "220mm",
+              height: "230mm",
               overflow: "hidden",
               backgroundColor: "#fff",
               border: "1px solid #f3f4f6",
