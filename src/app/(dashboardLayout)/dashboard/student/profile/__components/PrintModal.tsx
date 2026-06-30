@@ -9,7 +9,8 @@ import { Description, MapRounded, Phone } from "@mui/icons-material";
 import { Box, Button } from "@mui/material";
 import { useRef, useMemo } from "react";
 import { useReactToPrint } from "react-to-print";
-
+import logo from '@/assets/img/logo/logo.png'
+import Image from "next/image";
 const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
   const componentRef = useRef<HTMLDivElement | null>(null);
   console.log('reciept ', receipt)
@@ -33,7 +34,7 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
     },
     pageStyle: `
       @page {
-        size: 130mm 230mm;
+        size: 140mm 240mm;
         margin: 0;
       }
       @media print {
@@ -47,8 +48,8 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
         .no-print { display: none !important; }
         .receipt-preview {
           transform: none !important;
-          width: 130mm !important;
-          height: 230mm !important;
+          width: 140mm !important;
+          height: 240mm !important;
           font-size: 16px !important;
           margin: 0 auto !important;
           padding: 0 !important;
@@ -118,11 +119,29 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
   const getSelectedMonths = useMemo(() => {
     const fees = getDisplayFees();
     const selectedMonths = new Set<number>();
+
     fees.forEach((fee: any) => {
+      // Only consider Monthly Fee
+      if (fee.feeType === "Monthly Fee" && fee.month) {
+        const monthIndex = englishMonths.findIndex(
+          (m) => m.toLowerCase() === fee.month.toLowerCase()
+        );
+
+        if (monthIndex !== -1) {
+          selectedMonths.add(monthIndex);
+        }
+        return;
+      }
+
+      // Keep old logic for backward compatibility
       const feeType = fee.feeType || fee.name || "";
       const monthIndex = extractMonthFromFeeType(feeType);
-      if (monthIndex !== -1) selectedMonths.add(monthIndex);
+
+      if (monthIndex !== -1) {
+        selectedMonths.add(monthIndex);
+      }
     });
+
     return selectedMonths;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [receipt?.fees]);
@@ -159,7 +178,7 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
     receipt?.rollNumber || receipt?.studentRoll || student?.rollNumber || "N/A";
 
   const fees = getDisplayFees();
-  const MIN_ROWS = 10;
+  const MIN_ROWS = 12;
   const emptyRowCount = Math.max(0, MIN_ROWS - fees.length);
 
 
@@ -213,8 +232,8 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
             className="receipt-preview bg-white text-black font-bengali"
             style={{
               boxSizing: "border-box",
-              width: "130mm",
-              height: "230mm",
+              width: "140mm",
+              height: "240mm",
               overflow: "hidden",
               backgroundColor: "#fff",
               border: "1px solid #f3f4f6",
@@ -227,19 +246,17 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
               {/* Header */}
               <div>
                 <div className="flex items-center gap-4 mb-6 flex-shrink-0">
-                  <div className="w-16 h-16 rounded-full border-4 border-[#4c2a70] flex items-center justify-center">
+                  {/* <div className="w-16 h-16 rounded-full border-4 border-[#4c2a70] flex items-center justify-center">
                     <div className="text-[#4c2a70]">
                       <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" />
                       </svg>
                     </div>
+                  </div> */}
+                  <div className=" w-32">
+                    <Image className="h-full w-full object-contain" src={logo} alt="logo" />
                   </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-[#2d1b4e]">Craft</h1>
-                    <h2 className="text-xl font-semibold text-[#4c2a70]">
-                      International Institute
-                    </h2>
-                  </div>
+
                 </div>
 
                 {/* Student Info Grid */}
@@ -338,8 +355,8 @@ const PrintModal = ({ open, setOpen, receipt, student, onClose }: any) => {
                     </div>
                     <div className="p-3 bg-gray-100 flex-1 flex items-start gap-2">
                       <span className="font-bold text-sm whitespace-nowrap">কথায়:</span>
-                      <div className="border-b border-dotted border-gray-400 w-full h-5">
-                        <span className="text-sm">{receipt?.summary?.amountPaidWord}</span>
+                      <div className="border-b mb border-dotted border-gray-400 w-full h-5">
+                        <span className="text-[12px]  font-semibold">{receipt?.summary?.amountPaidWord}</span>
                       </div>
                     </div>
                   </div>

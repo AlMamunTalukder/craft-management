@@ -2,50 +2,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { JSX, useState, useMemo, useEffect, useCallback } from "react";
+import { LoadingState } from "@/components/common/LoadingState";
+import CraftTable from "@/components/Table";
+import { TAdmissionStatus } from "@/interface/admission";
+import { Column, RowAction } from "@/interface/table";
+import { classOrder } from "@/options";
 import {
   useDeleteAdmissionApplicationMutation,
   useGetAllAdmissionApplicationsQuery,
   useUpdateAdmissionApplicationMutation,
 } from "@/redux/api/admissionApplication";
+import { AdmissionApplicationListProps, ApplicationRow } from "@/types/apply";
+import { formatDate, formatShortDate } from "@/utils/formateDate";
+import { generatePDFFromData } from "@/utils/pdfGenerator";
 import {
-  Visibility,
-  Edit,
-  Delete,
-  CheckCircle,
-  Cancel,
-  Pending,
-  PictureAsPdf,
-  Phone,
-  HowToReg,
-  School,
-  Restore,
   CalendarToday,
+  Cancel,
+  CheckCircle,
+  Delete,
+  Edit,
+  HowToReg,
+  Pending,
+  Phone,
+  PictureAsPdf,
+  Restore,
+  School,
+  Visibility,
 } from "@mui/icons-material";
 import {
+  alpha,
+  Avatar,
   Box,
   Chip,
-  Avatar,
-  Typography,
-  useTheme,
-  useMediaQuery,
-  alpha,
   Paper,
-  Button,
-  CircularProgress,
-  Container,
   Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import CraftTable from "@/components/Table";
+import { JSX, useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { AdmissionDetailModal } from "./AdmissionDetailModal";
-import { TAdmissionStatus } from "@/interface/admission";
-import { formatDate, formatShortDate } from "@/utils/formateDate";
-import { AdmissionApplicationListProps, ApplicationRow } from "@/types/apply";
-import { generatePDFFromData } from "@/utils/pdfGenerator";
-import { classOrder } from "@/options";
-import { BulkAction, Column, RowAction } from "@/interface/table";
 
 const mapApplicationToFormData = (app: any): Record<string, any> => {
   const student = app.studentInfo || {};
@@ -540,124 +538,6 @@ export default function AdmissionApplicationList({
     [router],
   );
 
-  const handleBulkAction = useCallback(
-    async (
-      selectedRows: ApplicationRow[],
-      actionType: "approve" | "delete" | "restore" | "reject",
-    ) => {
-      const ids = selectedRows.map((r) => r._id).filter(Boolean);
-      if (!ids.length) return;
-
-      const config = {
-        approve: {
-          title: `Approve ${ids.length} Applications?`,
-          confirmButtonColor: "#10B981",
-          successMessage: "approved",
-          confirmText: "Yes, Approve!",
-        },
-        delete: {
-          title: `Delete ${ids.length} Applications?`,
-          confirmButtonColor: "#d33",
-          successMessage: "deleted",
-          confirmText: "Yes, Delete!",
-        },
-        restore: {
-          title: `Restore ${ids.length} to Pending?`,
-          confirmButtonColor: "#F59E0B",
-          successMessage: "restored to pending",
-          confirmText: "Yes, Restore!",
-        },
-        reject: {
-          title: `Reject ${ids.length} Applications?`,
-          confirmButtonColor: "#d33",
-          successMessage: "rejected",
-          confirmText: "Yes, Reject!",
-        },
-      }[actionType];
-
-      const result = await Swal.fire({
-        title: config.title,
-        text: `You are about to ${actionType} ${ids.length} applications.`,
-        icon:
-          actionType === "delete" || actionType === "reject"
-            ? "warning"
-            : "question",
-        showCancelButton: true,
-        confirmButtonColor: config.confirmButtonColor,
-        confirmButtonText: config.confirmText,
-      });
-      if (!result.isConfirmed) return;
-
-      try {
-        const promises = ids.map((id) => {
-          if (actionType === "delete")
-            return deleteAdmissionApplication(id).unwrap();
-          if (actionType === "approve")
-            return updateApplication({
-              id,
-              data: { status: "approved" },
-            }).unwrap();
-          if (actionType === "restore")
-            return updateApplication({
-              id,
-              data: { status: "pending" },
-            }).unwrap();
-          if (actionType === "reject")
-            return updateApplication({
-              id,
-              data: { status: "rejected" },
-            }).unwrap();
-          return Promise.reject("Invalid action");
-        });
-        const results = await Promise.allSettled(promises);
-        const succeeded = results.filter(
-          (r) => r.status === "fulfilled",
-        ).length;
-        const failed = results.filter((r) => r.status === "rejected").length;
-
-        if (failed === 0) {
-          await Swal.fire({
-            icon: "success",
-            title: "Success!",
-            text: `${succeeded} applications ${config.successMessage}.`,
-            timer: 1500,
-            showConfirmButton: false,
-          });
-          if (actionType === "approve" && succeeded > 0)
-            router.push("/dashboard/enrollments");
-          else refetch();
-        } else {
-          Swal.fire(
-            "Partial Success",
-            `${succeeded} done, ${failed} failed.`,
-            "warning",
-          );
-          refetch();
-        }
-      } catch (error) {
-        console.error("Bulk action failed:", error);
-        Swal.fire("Error", "Operation failed.", "error");
-      }
-    },
-    [deleteAdmissionApplication, updateApplication, refetch, router],
-  );
-
-  const handleBulkApprove = useCallback(
-    (rows: ApplicationRow[]) => handleBulkAction(rows, "approve"),
-    [handleBulkAction],
-  );
-  const handleBulkDelete = useCallback(
-    (rows: ApplicationRow[]) => handleBulkAction(rows, "delete"),
-    [handleBulkAction],
-  );
-  const handleBulkRestore = useCallback(
-    (rows: ApplicationRow[]) => handleBulkAction(rows, "restore"),
-    [handleBulkAction],
-  );
-  const handleBulkReject = useCallback(
-    (rows: ApplicationRow[]) => handleBulkAction(rows, "reject"),
-    [handleBulkAction],
-  );
 
   const columns: Column[] = useMemo(() => {
     const cols: Column[] = [
@@ -892,100 +772,7 @@ export default function AdmissionApplicationList({
     handleDownloadPDF,
   ]);
 
-  const bulkActions: BulkAction[] = useMemo(() => {
-    if (type === "pending") {
-      return [
-        {
-          label: "Approve Selected",
-          icon: <CheckCircle fontSize="small" />,
-          onClick: handleBulkApprove,
-          color: "success",
-          disabled: (rows: ApplicationRow[]) =>
-            rows.some((r) => r.status !== "pending") ||
-            isUpdating ||
-            isDeleting,
-        },
-        {
-          label: "Delete Selected",
-          icon: <Delete fontSize="small" />,
-          onClick: handleBulkDelete,
-          color: "error",
-          disabled: () => isDeleting || isUpdating,
-        },
-      ];
-    }
-    if (type === "approved") {
-      return [
-        {
-          label: "Restore to Pending",
-          icon: <Restore fontSize="small" />,
-          onClick: handleBulkRestore,
-          color: "warning",
-          disabled: (rows: ApplicationRow[]) =>
-            rows.some((r) => r.status !== "approved") ||
-            isUpdating ||
-            isDeleting,
-        },
-        {
-          label: "Reject Selected",
-          icon: <Cancel fontSize="small" />,
-          onClick: handleBulkReject,
-          color: "error",
-          disabled: (rows: ApplicationRow[]) =>
-            rows.some((r) => r.status !== "approved") ||
-            isUpdating ||
-            isDeleting,
-        },
-        {
-          label: "Delete Selected",
-          icon: <Delete fontSize="small" />,
-          onClick: handleBulkDelete,
-          color: "error",
-          disabled: () => isDeleting || isUpdating,
-        },
-      ];
-    }
-    if (type === "rejected") {
-      return [
-        {
-          label: "Restore to Pending",
-          icon: <Restore fontSize="small" />,
-          onClick: handleBulkRestore,
-          color: "warning",
-          disabled: (rows: ApplicationRow[]) =>
-            rows.some((r) => r.status !== "rejected") ||
-            isUpdating ||
-            isDeleting,
-        },
-        {
-          label: "Approve Selected",
-          icon: <CheckCircle fontSize="small" />,
-          onClick: handleBulkApprove,
-          color: "success",
-          disabled: (rows: ApplicationRow[]) =>
-            rows.some((r) => r.status !== "rejected") ||
-            isUpdating ||
-            isDeleting,
-        },
-        {
-          label: "Delete Selected",
-          icon: <Delete fontSize="small" />,
-          onClick: handleBulkDelete,
-          color: "error",
-          disabled: () => isDeleting || isUpdating,
-        },
-      ];
-    }
-    return [];
-  }, [
-    type,
-    isUpdating,
-    isDeleting,
-    handleBulkApprove,
-    handleBulkDelete,
-    handleBulkRestore,
-    handleBulkReject,
-  ]);
+
 
 
   const getHeaderBanner = () => {
@@ -1112,19 +899,7 @@ export default function AdmissionApplicationList({
   };
 
   if (isLoading) {
-    return (
-      <Container
-        maxWidth="xl"
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "50vh",
-        }}
-      >
-        <CircularProgress />
-      </Container>
-    );
+    return <LoadingState />
   }
 
   return (
@@ -1161,7 +936,6 @@ export default function AdmissionApplicationList({
           serverSideSorting={false}
           filterable={true}
           rowActions={rowActions}
-          bulkActions={bulkActions}
           onRefresh={refetch}
           onAdd={
             type === "pending"
