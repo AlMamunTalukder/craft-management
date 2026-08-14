@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @next/next/no-img-element */
 import React, { useState } from "react";
+import Image from "next/image";
 import { Card, Box, Typography, Button, CircularProgress } from "@mui/material";
 import { Upload } from "@mui/icons-material";
 import { Controller, useFormContext } from "react-hook-form";
@@ -94,10 +94,12 @@ const FileUploadWithIcon: React.FC<FileUploadWithIconProps> = ({ name, label }) 
 
           {imageUrl && (
             <Box sx={{ mt: 2 }}>
-              <img
+              <Image
                 src={imageUrl}
                 alt="Uploaded"
-                style={{ width: "120px", height: "120px", borderRadius: 8, objectFit: "cover" }}
+                width={120}
+                height={120}
+                style={{ borderRadius: 8, objectFit: "cover" }}
               />
             </Box>
           )}

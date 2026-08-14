@@ -1,1011 +1,233 @@
-/* eslint-disable react/no-unescaped-entities */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Box,
-  Typography,
   Paper,
-  Button,
-  Grid,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
   MenuItem,
-  Divider,
-  Alert,
-  Snackbar,
-  CircularProgress,
   Table,
+  TableHead,
   TableBody,
+  TableRow,
   TableCell,
   TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  Avatar,
+  CircularProgress,
+  Typography,
+  Grid,
 } from "@mui/material";
+import { PageHeader } from "@/components/common/PageHeader";
+import StatusChip from "@/components/common/StatusChip";
 import {
-  ArrowBack as ArrowBackIcon,
-  Print as PrintIcon,
-  Search as SearchIcon,
-  Assessment as AssessmentIcon,
-  Download as DownloadIcon,
-  Edit as EditIcon,
-} from "@mui/icons-material";
-import { useTheme } from "@mui/material/styles";
-import { useRouter } from "next/navigation";
+  useGetAllExamsQuery,
+  useGetExamResultsQuery,
+} from "@/redux/api/examApi";
+import { useGetAllClassesQuery } from "@/redux/api/classApi";
+import type { TExam } from "@/interface";
 
-// Mock data for exams
-const mockExams = [
-  {
-    id: 1,
-    name: "First Term Examination",
-    examType: "Term",
-    startDate: "2023-04-10",
-    endDate: "2023-04-20",
-    status: "Completed",
-  },
-  {
-    id: 2,
-    name: "Hifz Quarterly Assessment",
-    examType: "Assessment",
-    startDate: "2023-06-15",
-    endDate: "2023-06-18",
-    status: "Completed",
-  },
-  {
-    id: 3,
-    name: "Mid-Term Examination",
-    examType: "Term",
-    startDate: "2023-07-20",
-    endDate: "2023-07-30",
-    status: "Completed",
-  },
-  {
-    id: 4,
-    name: "Nazera Recitation Test",
-    examType: "Assessment",
-    startDate: "2023-09-05",
-    endDate: "2023-09-07",
-    status: "Completed",
-  },
-  {
-    id: 5,
-    name: "Final Term Examination",
-    examType: "Term",
-    startDate: "2023-12-01",
-    endDate: "2023-12-15",
-    status: "Upcoming",
-  },
-];
+const gradeColor = (grade: string) => {
+  if (grade === "A+" || grade === "A") return "#2e7d32";
+  if (grade === "A-" || grade === "B+" || grade === "B") return "#1976d2";
+  if (grade === "B-" || grade === "C+" || grade === "C") return "#f57c00";
+  return "#d32f2f";
+};
 
-// Mock data for subjects
-const mockSubjects = [
-  {
-    id: 1,
-    name: "Quran Recitation",
-    code: "QR101",
-    fullMarks: 100,
-    passMarks: 40,
-  },
-  {
-    id: 2,
-    name: "Islamic Studies",
-    code: "IS101",
-    fullMarks: 100,
-    passMarks: 40,
-  },
-  {
-    id: 3,
-    name: "Arabic Language",
-    code: "AL101",
-    fullMarks: 100,
-    passMarks: 40,
-  },
-  {
-    id: 4,
-    name: "Mathematics",
-    code: "MATH101",
-    fullMarks: 100,
-    passMarks: 40,
-  },
-  { id: 5, name: "Science", code: "SCI101", fullMarks: 100, passMarks: 40 },
-  { id: 6, name: "English", code: "ENG101", fullMarks: 100, passMarks: 40 },
-  { id: 7, name: "Urdu", code: "URD101", fullMarks: 100, passMarks: 40 },
-  {
-    id: 8,
-    name: "Social Studies",
-    code: "SS101",
-    fullMarks: 100,
-    passMarks: 40,
-  },
-  { id: 9, name: "Computer", code: "COMP101", fullMarks: 100, passMarks: 40 },
-  { id: 10, name: "Art", code: "ART101", fullMarks: 50, passMarks: 20 },
-];
+const ResultPage = () => {
+  const searchParams = useSearchParams();
+  const [examId, setExamId] = useState(searchParams.get("examId") || "");
+  const [className, setClassName] = useState("");
 
-// Mock data for students
-const mockStudents = [
-  {
-    id: 1,
-    rollNo: "001",
-    name: "Ahmed Ali",
-    class: "One",
-    photo: "/placeholder.svg?height=100&width=100",
-    results: {
-      1: {
-        // Exam ID 1 (First Term)
-        "Quran Recitation": { marks: 85, grade: "A", remarks: "Excellent" },
-        "Islamic Studies": { marks: 78, grade: "B+", remarks: "Good" },
-        "Arabic Language": { marks: 72, grade: "B", remarks: "Good" },
-        Mathematics: { marks: 90, grade: "A+", remarks: "Excellent" },
-        Science: { marks: 82, grade: "A", remarks: "Very Good" },
-        English: { marks: 75, grade: "B+", remarks: "Good" },
-        Urdu: { marks: 80, grade: "A", remarks: "Very Good" },
-        "Social Studies": { marks: 70, grade: "B", remarks: "Good" },
-        Computer: { marks: 88, grade: "A", remarks: "Very Good" },
-        Art: { marks: 45, grade: "A", remarks: "Very Good" },
-      },
-      3: {
-        // Exam ID 3 (Mid-Term)
-        "Quran Recitation": { marks: 88, grade: "A", remarks: "Very Good" },
-        "Islamic Studies": { marks: 82, grade: "A", remarks: "Very Good" },
-        "Arabic Language": { marks: 75, grade: "B+", remarks: "Good" },
-        Mathematics: { marks: 92, grade: "A+", remarks: "Excellent" },
-        Science: { marks: 85, grade: "A", remarks: "Very Good" },
-        English: { marks: 78, grade: "B+", remarks: "Good" },
-        Urdu: { marks: 83, grade: "A", remarks: "Very Good" },
-        "Social Studies": { marks: 76, grade: "B+", remarks: "Good" },
-        Computer: { marks: 90, grade: "A+", remarks: "Excellent" },
-        Art: { marks: 48, grade: "A+", remarks: "Excellent" },
-      },
-    },
-  },
-  {
-    id: 2,
-    rollNo: "002",
-    name: "Fatima Khan",
-    class: "One",
-    photo: "/placeholder.svg?height=100&width=100",
-    results: {
-      1: {
-        // Exam ID 1 (First Term)
-        "Quran Recitation": { marks: 90, grade: "A+", remarks: "Excellent" },
-        "Islamic Studies": { marks: 85, grade: "A", remarks: "Very Good" },
-        "Arabic Language": { marks: 80, grade: "A", remarks: "Very Good" },
-        Mathematics: { marks: 75, grade: "B+", remarks: "Good" },
-        Science: { marks: 78, grade: "B+", remarks: "Good" },
-        English: { marks: 82, grade: "A", remarks: "Very Good" },
-        Urdu: { marks: 88, grade: "A", remarks: "Very Good" },
-        "Social Studies": { marks: 76, grade: "B+", remarks: "Good" },
-        Computer: { marks: 85, grade: "A", remarks: "Very Good" },
-        Art: { marks: 42, grade: "A", remarks: "Very Good" },
-      },
-      3: {
-        // Exam ID 3 (Mid-Term)
-        "Quran Recitation": { marks: 92, grade: "A+", remarks: "Excellent" },
-        "Islamic Studies": { marks: 88, grade: "A", remarks: "Very Good" },
-        "Arabic Language": { marks: 83, grade: "A", remarks: "Very Good" },
-        Mathematics: { marks: 78, grade: "B+", remarks: "Good" },
-        Science: { marks: 80, grade: "A", remarks: "Very Good" },
-        English: { marks: 85, grade: "A", remarks: "Very Good" },
-        Urdu: { marks: 90, grade: "A+", remarks: "Excellent" },
-        "Social Studies": { marks: 79, grade: "B+", remarks: "Good" },
-        Computer: { marks: 87, grade: "A", remarks: "Very Good" },
-        Art: { marks: 45, grade: "A", remarks: "Very Good" },
-      },
-    },
-  },
-  {
-    id: 3,
-    rollNo: "003",
-    name: "Muhammad Usman",
-    class: "One",
-    photo: "/placeholder.svg?height=100&width=100",
-    results: {
-      1: {
-        // Exam ID 1 (First Term)
-        "Quran Recitation": { marks: 75, grade: "B+", remarks: "Good" },
-        "Islamic Studies": { marks: 70, grade: "B", remarks: "Good" },
-        "Arabic Language": { marks: 65, grade: "B", remarks: "Satisfactory" },
-        Mathematics: { marks: 95, grade: "A+", remarks: "Excellent" },
-        Science: { marks: 88, grade: "A", remarks: "Very Good" },
-        English: { marks: 80, grade: "A", remarks: "Very Good" },
-        Urdu: { marks: 72, grade: "B", remarks: "Good" },
-        "Social Studies": { marks: 68, grade: "B", remarks: "Satisfactory" },
-        Computer: { marks: 92, grade: "A+", remarks: "Excellent" },
-        Art: { marks: 40, grade: "A", remarks: "Very Good" },
-      },
-      3: {
-        // Exam ID 3 (Mid-Term)
-        "Quran Recitation": { marks: 78, grade: "B+", remarks: "Good" },
-        "Islamic Studies": { marks: 73, grade: "B", remarks: "Good" },
-        "Arabic Language": { marks: 68, grade: "B", remarks: "Satisfactory" },
-        Mathematics: { marks: 97, grade: "A+", remarks: "Excellent" },
-        Science: { marks: 90, grade: "A+", remarks: "Excellent" },
-        English: { marks: 83, grade: "A", remarks: "Very Good" },
-        Urdu: { marks: 75, grade: "B+", remarks: "Good" },
-        "Social Studies": { marks: 70, grade: "B", remarks: "Good" },
-        Computer: { marks: 95, grade: "A+", remarks: "Excellent" },
-        Art: { marks: 43, grade: "A", remarks: "Very Good" },
-      },
-    },
-  },
-];
+  const { data: examsData } = useGetAllExamsQuery({ limit: 100, page: 1 });
+  const { data: classesData } = useGetAllClassesQuery({ limit: 100, page: 1 });
+  const exams = examsData?.data?.data || [];
+  const classes = classesData?.data?.classes || [];
+  const exam: TExam | undefined = exams.find((e: any) => e._id === examId);
 
-// Available classes
-const availableClasses = [
-  "Hifz",
-  "One",
-  "One",
-  "Nazera",
-  "Two",
-  "Three",
-  "Four",
-  "Five",
-  "Six",
-];
-
-const ExamResultsPage = () => {
-  const theme = useTheme();
-  const router = useRouter();
-  const [exams, setExams] = useState(mockExams);
-  const [students, setStudents] = useState(mockStudents);
-  const [subjects, setSubjects] = useState(mockSubjects);
-  const [selectedExam, setSelectedExam] = useState<any>(mockExams[0]); // Default to the first exam
-  const [selectedClass, setSelectedClass] = useState<string>("One");
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [openStudentDialog, setOpenStudentDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error",
-  });
-
-  // Form state for marks
-  const [marksFormData, setMarksFormData] = useState<any>({});
-
-  const handleExamChange = (event: React.SyntheticEvent, newValue: number) => {
-    const exam = exams.find((e) => e.id === newValue);
-    setSelectedExam(exam);
-  };
-
-  const handleClassChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedClass(event.target.value);
-  };
-
-  const handleOpenDialog = (student?: any) => {
-    if (student) {
-      setSelectedStudent(student);
-
-      // Initialize form data with current marks
-      const initialMarks: any = {};
-      subjects.forEach((subject) => {
-        const result = student.results[selectedExam.id]?.[subject.name];
-        initialMarks[subject.name] = result ? result.marks : "";
-      });
-
-      setMarksFormData(initialMarks);
-    } else {
-      setSelectedStudent(null);
-      setMarksFormData({});
-    }
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
-  const handleOpenStudentDialog = (student: any) => {
-    setSelectedStudent(student);
-    setOpenStudentDialog(true);
-  };
-
-  const handleCloseStudentDialog = () => {
-    setOpenStudentDialog(false);
-  };
-
-  const handleMarksChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    subject: string
-  ) => {
-    const { value } = e.target;
-    setMarksFormData({
-      ...marksFormData,
-      [subject]: value,
-    });
-  };
-
-  const handleSubmitMarks = () => {
-    setLoading(true);
-    setTimeout(() => {
-      // Update student results
-      const updatedStudents = students.map((student) => {
-        if (student.id === selectedStudent.id) {
-          // Create a new results object if it doesn't exist
-          // const currentResults = student.results[selectedExam.id] || {}
-          const newResults: any = {};
-
-          // Update marks and calculate grades for each subject
-          Object.keys(marksFormData).forEach((subject) => {
-            const subjectInfo = subjects.find((s) => s.name === subject);
-            const marks = Number(marksFormData[subject]);
-
-            let grade = "F";
-            let remarks = "Fail";
-
-            if (marks >= 90) {
-              grade = "A+";
-              remarks = "Excellent";
-            } else if (marks >= 80) {
-              grade = "A";
-              remarks = "Very Good";
-            } else if (marks >= 70) {
-              grade = "B+";
-              remarks = "Good";
-            } else if (marks >= 60) {
-              grade = "B";
-              remarks = "Satisfactory";
-            } else if (marks >= 50) {
-              grade = "C";
-              remarks = "Average";
-            } else if (marks >= 40) {
-              grade = "D";
-              remarks = "Below Average";
-            }
-
-            newResults[subject] = {
-              marks,
-              grade,
-              remarks,
-            };
-          });
-
-          return {
-            ...student,
-            results: {
-              ...student.results,
-              [selectedExam.id]: {
-                // ...currentResults,
-                ...newResults,
-              },
-            },
-          };
-        }
-        return student;
-      });
-
-      setStudents(updatedStudents);
-      setSnackbar({
-        open: true,
-        message: "Marks updated successfully!",
-        severity: "success",
-      });
-      setLoading(false);
-      handleCloseDialog();
-    }, 1000);
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({
-      ...snackbar,
-      open: false,
-    });
-  };
-
-  const filteredStudents = students.filter(
-    (student) => student.class === selectedClass
+  const { data, isLoading } = useGetExamResultsQuery(
+    { examId, className: className || undefined },
+    { skip: !examId },
   );
 
-  // Calculate student statistics
-  const calculateStats = (student: any) => {
-    if (!student.results[selectedExam.id])
-      return { total: 0, obtained: 0, percentage: 0, grade: "N/A" };
+  const results = data?.data?.results || [];
+  const summary = data?.data?.summary || { total: 0, pass: 0, fail: 0, passRate: 0, classStrength: 0 };
+  const subjects = exam?.subjects || [];
 
-    const results = student.results[selectedExam.id];
-    let totalMarks = 0;
-    let obtainedMarks = 0;
-    let subjectCount = 0;
-
-    subjects.forEach((subject) => {
-      if (results[subject.name]) {
-        totalMarks += subject.fullMarks;
-        obtainedMarks += results[subject.name].marks;
-        subjectCount++;
-      }
-    });
-
-    const percentage =
-      subjectCount > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
-
-    let grade = "F";
-    if (percentage >= 90) grade = "A+";
-    else if (percentage >= 80) grade = "A";
-    else if (percentage >= 70) grade = "B+";
-    else if (percentage >= 60) grade = "B";
-    else if (percentage >= 50) grade = "C";
-    else if (percentage >= 40) grade = "D";
-
-    return {
-      total: totalMarks,
-      obtained: obtainedMarks,
-      percentage: percentage.toFixed(2),
-      grade,
-    };
-  };
+  const statCards = [
+    { label: "Marked Students", value: summary.total, color: "#6366f1" },
+    { label: "Passed", value: summary.pass, color: "#2e7d32" },
+    { label: "Failed", value: summary.fail, color: "#d32f2f" },
+    { label: "Pass Rate", value: `${summary.passRate}%`, color: "#f57c00" },
+  ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          mb: 4,
-          alignItems: "center",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <IconButton
-            onClick={() => router.push("/dashboard/admin/exams")}
-            sx={{ mr: 2, bgcolor: "rgba(0,0,0,0.04)" }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-            Exam Results
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<PrintIcon />}
-            sx={{ borderRadius: 2 }}
-            onClick={() => window.print()}
-          >
-            Print
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            sx={{ borderRadius: 2 }}
-            onClick={() => alert("Download functionality will be implemented")}
-          >
-            Export
-          </Button>
-        </Box>
-      </Box>
+    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+      <PageHeader
+        title="Exam Results"
+        subtitle={exam ? `${exam.name} (${exam.examType})` : "Select exam to view results"}
+      />
 
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          borderRadius: 3,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-          mb: 4,
-        }}
-      >
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-          <Tabs
-            value={selectedExam?.id}
-            onChange={handleExamChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
+      <Paper sx={{ p: 1.5, mb: 2, borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
+          <TextField
+            size="small"
+            select
+            label="Exam"
+            value={examId}
+            onChange={(e) => setExamId(e.target.value)}
           >
-            {exams.map((exam) => (
-              <Tab
-                key={exam.id}
-                label={
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {exam.name}
-                    </Typography>
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", mt: 0.5 }}
-                    >
-                      <Typography variant="caption" color="text.secondary">
-                        {exam.startDate} - {exam.endDate}
-                      </Typography>
-                      <Chip
-                        label={exam.status}
-                        size="small"
-                        color={
-                          exam.status === "Completed" ? "success" : "primary"
-                        }
-                        sx={{ ml: 1, height: 20 }}
-                      />
-                    </Box>
-                  </Box>
-                }
-                value={exam.id}
-                sx={{ textTransform: "none", minHeight: 72, py: 1 }}
-              />
+            <MenuItem value="">Select Exam</MenuItem>
+            {exams.map((e: any) => (
+              <MenuItem key={e._id} value={e._id}>
+                {e.name} ({e.examType})
+              </MenuItem>
             ))}
-          </Tabs>
+          </TextField>
+          <TextField
+            size="small"
+            select
+            label="Class"
+            value={className}
+            onChange={(e) => setClassName(e.target.value)}
+          >
+            <MenuItem value="">All Classes</MenuItem>
+            {classes.map((c: any) => (
+              <MenuItem key={c._id} value={c._id}>
+                {c.className}
+              </MenuItem>
+            ))}
+          </TextField>
         </Box>
-
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="class-select-label">Class</InputLabel>
-              <Select
-                labelId="class-select-label"
-                value={selectedClass}
-                label="Class"
-              >
-                {availableClasses.map((cls) => (
-                  <MenuItem key={cls} value={cls}>
-                    {cls}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={8}>
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-              <TextField
-                placeholder="Search student..."
-                size="small"
-                InputProps={{
-                  startAdornment: (
-                    <SearchIcon
-                      fontSize="small"
-                      sx={{ mr: 1, color: "text.secondary" }}
-                    />
-                  ),
-                }}
-                sx={{ width: 250 }}
-              />
-            </Box>
-          </Grid>
-        </Grid>
-
-        {filteredStudents.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 5 }}>
-            <SearchIcon sx={{ fontSize: 60, color: "text.disabled", mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              No students found
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              No students found for the selected class.
-            </Typography>
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {filteredStudents.map((student) => {
-              const stats = calculateStats(student);
-              return (
-                <Grid item xs={12} md={4} key={student.id}>
-                  <Card
-                    sx={{
-                      borderRadius: 3,
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-                      transition: "transform 0.2s",
-                      "&:hover": {
-                        transform: "translateY(-5px)",
-                        boxShadow: "0 8px 25px rgba(0,0,0,0.1)",
-                      },
-                    }}
-                  >
-                    <CardContent>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", mb: 2 }}
-                      >
-                        <Avatar
-                          src={student.photo}
-                          alt={student.name}
-                          sx={{ width: 60, height: 60, mr: 2 }}
-                        />
-                        <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            {student.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Roll No: {student.rollNo} | Class: {student.class}
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      <Divider sx={{ mb: 2 }} />
-
-                      <Grid container spacing={1} sx={{ mb: 2 }}>
-                        <Grid item xs={6}>
-                          <Typography variant="body2" color="text.secondary">
-                            Total Marks:
-                          </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {stats.obtained} / {stats.total}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="body2" color="text.secondary">
-                            Percentage:
-                          </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {stats.percentage}%
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="body2" color="text.secondary">
-                            Grade:
-                          </Typography>
-                          <Chip
-                            label={stats.grade}
-                            size="small"
-                            color={
-                              stats.grade === "A+" || stats.grade === "A"
-                                ? "success"
-                                : stats.grade === "F"
-                                  ? "error"
-                                  : "default"
-                            }
-                          />
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="body2" color="text.secondary">
-                            Status:
-                          </Typography>
-                          <Chip
-                            label={
-                              Number(stats.percentage) >= 40 ? "Pass" : "Fail"
-                            }
-                            size="small"
-                            color={
-                              Number(stats.percentage) >= 40
-                                ? "success"
-                                : "error"
-                            }
-                          />
-                        </Grid>
-                      </Grid>
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<AssessmentIcon />}
-                          onClick={() => handleOpenStudentDialog(student)}
-                          sx={{ borderRadius: 2 }}
-                        >
-                          View Details
-                        </Button>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          startIcon={<EditIcon />}
-                          onClick={() => handleOpenDialog(student)}
-                          sx={{ borderRadius: 2 }}
-                        >
-                          Edit Marks
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
-        )}
       </Paper>
 
-      {/* Edit Marks Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ pb: 1 }}>
-          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-            Edit Marks for {selectedStudent?.name}
+      {exam && (
+        <Box sx={{ mb: 2, display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+          <StatusChip status={exam.status} />
+          <Typography variant="caption" sx={{ color: "#666" }}>
+            Class strength: {summary.classStrength || "-"} students
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {selectedExam?.name} | Class: {selectedStudent?.class}
-          </Typography>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 3 }}>
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            sx={{ borderRadius: 2 }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Subject</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Full Marks</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Pass Marks</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Obtained Marks</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {subjects.map((subject) => (
-                  <TableRow key={subject.id}>
-                    <TableCell>{subject.name}</TableCell>
-                    <TableCell>{subject.fullMarks}</TableCell>
-                    <TableCell>{subject.passMarks}</TableCell>
-                    <TableCell>
-                      <TextField
-                        type="number"
-                        size="small"
-                        value={marksFormData[subject.name] || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleMarksChange(e, subject.name)
-                        }
-                        inputProps={{ min: 0, max: subject.fullMarks }}
-                        sx={{ width: 100 }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button
-            onClick={handleCloseDialog}
-            variant="outlined"
-            color="inherit"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmitMarks}
-            variant="contained"
-            color="primary"
-            disabled={loading}
-            startIcon={
-              loading && <CircularProgress size={20} color="inherit" />
-            }
-          >
-            {loading ? "Saving..." : "Save Marks"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      )}
 
-      {/* Student Result Details Dialog */}
-      <Dialog
-        open={openStudentDialog}
-        onClose={handleCloseStudentDialog}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ pb: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Avatar
-              src={selectedStudent?.photo}
-              alt={selectedStudent?.name}
-              sx={{ width: 50, height: 50, mr: 2 }}
-            />
-            <Box>
-              <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-                {selectedStudent?.name} - Result Card
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {selectedExam?.name} | Class: {selectedStudent?.class} | Roll
-                No: {selectedStudent?.rollNo}
-              </Typography>
-            </Box>
-          </Box>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 3 }}>
-          {selectedStudent && (
-            <>
-              <Box
+      {results.length > 0 && (
+        <Grid container spacing={1.5} sx={{ mb: 2 }}>
+          {statCards.map((s) => (
+            <Grid item xs={6} sm={3} key={s.label}>
+              <Paper
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  mb: 3,
-                  p: 2,
-                  bgcolor: "primary.light",
-                  borderRadius: 2,
+                  p: 1.5,
+                  borderRadius: "10px",
+                  textAlign: "center",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
+                  borderTop: `3px solid ${s.color}`,
                 }}
               >
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Exam Date
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {selectedExam?.startDate} to {selectedExam?.endDate}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Result Status
-                  </Typography>
-                  <Chip
-                    label={
-                      Number(calculateStats(selectedStudent).percentage) >= 40
-                        ? "Pass"
-                        : "Fail"
-                    }
-                    size="small"
-                    color={
-                      Number(calculateStats(selectedStudent).percentage) >= 40
-                        ? "success"
-                        : "error"
-                    }
-                  />
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Overall Grade
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {calculateStats(selectedStudent).grade}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Percentage
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {calculateStats(selectedStudent).percentage}%
-                  </Typography>
-                </Box>
-              </Box>
+                <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: s.color }}>
+                  {s.value}
+                </Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#666", fontWeight: 600 }}>
+                  {s.label}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
-              <TableContainer
-                component={Paper}
-                elevation={0}
-                sx={{ borderRadius: 2, mb: 3 }}
-              >
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Subject</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Full Marks</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Pass Marks</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>
-                        Obtained Marks
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Grade</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Remarks</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {subjects.map((subject) => {
-                      const result = selectedStudent.results[selectedExam.id]?.[
-                        subject.name
-                      ] || {
-                        marks: "-",
-                        grade: "-",
-                        remarks: "-",
-                      };
+      <TableContainer component={Paper} sx={{ borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+        <Table size="small" sx={{ minWidth: 760 }}>
+          <TableHead>
+            <TableRow sx={{ bgcolor: "#f5f6fa" }}>
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#555" }}>#</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#555" }}>Student</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#555" }}>ID</TableCell>
+              {subjects.map((s) => (
+                <TableCell key={s.subject} sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#555" }}>
+                  {s.subject}
+                </TableCell>
+              ))}
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#555" }}>Total</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#555" }}>GPA</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#555" }}>Grade</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", color: "#555" }}>Result</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={subjects.length + 8} align="center" sx={{ py: 5 }}>
+                  <CircularProgress size={28} />
+                </TableCell>
+              </TableRow>
+            ) : !examId ? (
+              <TableRow>
+                <TableCell colSpan={subjects.length + 8} align="center" sx={{ py: 5, color: "#999" }}>
+                  Select an exam to view results.
+                </TableCell>
+              </TableRow>
+            ) : results.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={subjects.length + 8} align="center" sx={{ py: 5, color: "#999" }}>
+                  No marks recorded yet. Enter marks first.
+                </TableCell>
+              </TableRow>
+            ) : (
+              results.map((r: any, i: number) => {
+                const markMap: Record<string, any> = {};
+                r.marks?.forEach((m: any) => (markMap[m.subject] = m));
+                return (
+                  <TableRow key={r._id} hover>
+                    <TableCell sx={{ fontSize: "0.75rem" }}>{i + 1}</TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem", fontWeight: 600 }}>
+                      {r.student?.name || r.student?.studentName || "-"}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.72rem", color: "#666" }}>
+                      {r.student?.studentId || "-"}
+                    </TableCell>
+                    {subjects.map((s) => {
+                      const m = markMap[s.subject];
                       return (
-                        <TableRow key={subject.id}>
-                          <TableCell>{subject.name}</TableCell>
-                          <TableCell>{subject.fullMarks}</TableCell>
-                          <TableCell>{subject.passMarks}</TableCell>
-                          <TableCell>{result.marks}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={result.grade}
-                              size="small"
-                              color={
-                                result.grade === "A+" || result.grade === "A"
-                                  ? "success"
-                                  : result.grade === "F"
-                                    ? "error"
-                                    : "default"
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>{result.remarks}</TableCell>
-                        </TableRow>
+                        <TableCell
+                          key={s.subject}
+                          sx={{
+                            fontSize: "0.75rem",
+                            color: m?.result === "fail" ? "#d32f2f" : "#333",
+                            fontWeight: m?.result === "fail" ? 700 : 400,
+                          }}
+                        >
+                          {m ? m.obtained : "-"}
+                        </TableCell>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Marks
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    {calculateStats(selectedStudent).obtained} /{" "}
-                    {calculateStats(selectedStudent).total}
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Teacher's Remarks
-                  </Typography>
-                  <Typography variant="body1">
-                    {Number(calculateStats(selectedStudent).percentage) >= 80
-                      ? "Excellent performance! Keep up the good work."
-                      : Number(calculateStats(selectedStudent).percentage) >= 60
-                        ? "Good performance. Continue to work hard."
-                        : Number(calculateStats(selectedStudent).percentage) >=
-                            40
-                          ? "Satisfactory performance. Need to improve in some subjects."
-                          : "Needs significant improvement. Please focus on studies."}
-                  </Typography>
-                </Box>
-              </Box>
-            </>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button
-            onClick={() => window.print()}
-            variant="outlined"
-            startIcon={<PrintIcon />}
-            sx={{ mr: "auto" }}
-          >
-            Print Result
-          </Button>
-          <Button
-            onClick={handleCloseStudentDialog}
-            variant="outlined"
-            color="inherit"
-          >
-            Close
-          </Button>
-          <Button
-            onClick={() => {
-              handleCloseStudentDialog();
-              handleOpenDialog(selectedStudent);
-            }}
-            variant="contained"
-            color="primary"
-            startIcon={<EditIcon />}
-          >
-            Edit Marks
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+                    <TableCell sx={{ fontSize: "0.8rem", fontWeight: 700 }}>
+                      {r.totalObtained ?? "-"}
+                      {r.totalFull ? `/${r.totalFull}` : ""}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#4338ca" }}>
+                      {r.gpa > 0 ? r.gpa.toFixed(2) : "0.00"}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem", fontWeight: 800, color: gradeColor(r.grade) }}>
+                      {r.grade || "-"}
+                    </TableCell>
+                    <TableCell>
+                      <StatusChip status={r.result === "pass" ? "Passed" : "Failed"} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };
 
-export default ExamResultsPage;
+const ResultPageWithSuspense = () => (
+  <Suspense fallback={<Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress size={30} /></Box>}>
+    <ResultPage />
+  </Suspense>
+);
+
+export default ResultPageWithSuspense;

@@ -144,6 +144,8 @@ export default function AddExpenseModal({
           paymentMethod: singleExpense.data.paymentMethod,
           expenseDate: singleExpense.data.expenseDate,
           note: singleExpense.data.note,
+          buyer: singleExpense.data.buyer || "",
+          payer: singleExpense.data.payer || "",
           expenseItems: singleExpense.data.expenseItems.map(
             (item: any, index: number) => ({
               id: index + 1,
@@ -157,6 +159,8 @@ export default function AddExpenseModal({
           paymentMethod: "",
           expenseDate: new Date(),
           note: "",
+          buyer: "",
+          payer: "",
           expenseItems: [{ id: 1, source: "", amount: "" }],
         };
 
@@ -195,14 +199,17 @@ export default function AddExpenseModal({
           <DialogContent>
             <CraftForm onSubmit={handleSubmit} defaultValues={defaultValues}>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
+                  <CraftDatePicker name="expenseDate" label="Expense Date" />
+                </Grid>
+                <Grid item xs={12} sm={4}>
                   <CategoryAutoComplete
                     name="category"
                     label="Category"
                     options={expenseCategoryOption}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                   <CraftSelect
                     margin="none"
                     name="paymentMethod"
@@ -212,13 +219,10 @@ export default function AddExpenseModal({
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
-                  <CraftDatePicker name="expenseDate" label="Expense Date" />
+                  <CraftInput name="buyer" label="Buyer" fullWidth />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <CraftInput name="status" label="Buyer" fullWidth />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <CraftInput name="status" label="Payer" fullWidth />
+                  <CraftInput name="payer" label="Payer" fullWidth />
                 </Grid>
 
                 <Grid item xs={12}>
@@ -242,8 +246,8 @@ export default function AddExpenseModal({
                             </IconButton>
                           )}
                         </Box>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} sm={6}>
+                        <Grid container spacing={2} alignItems="center">
+                          <Grid item xs={12} sm={5}>
                             <CraftInput
                               fullWidth
                               name={`expenseItems[${index}].source`}
@@ -264,7 +268,7 @@ export default function AddExpenseModal({
                             />
                           </Grid>
 
-                          <Grid item xs={12} sm={6}>
+                          <Grid item xs={12} sm={5}>
                             <CraftInput
                               sx={{
                                 "& .MuiOutlinedInput-root": {
@@ -285,33 +289,33 @@ export default function AddExpenseModal({
                               }
                             />
                           </Grid>
+
+                          <Grid item xs={12} sm={2}>
+                            <Button
+                              onClick={handleAddExpenseItem}
+                              variant="contained"
+                              startIcon={<Add />}
+                              fullWidth
+                              sx={{
+                                height: "100%",
+                                minHeight: "46px",
+                                borderRadius: "12px",
+                                background:
+                                  "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)",
+                                boxShadow: "0 4px 15px rgba(76, 175, 80, 0.3)",
+                                "&:hover": {
+                                  boxShadow:
+                                    "0 6px 20px rgba(76, 175, 80, 0.4)",
+                                },
+                              }}
+                            >
+                              Add
+                            </Button>
+                          </Grid>
                         </Grid>
                       </CardContent>
                     </Card>
                   ))}
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    mt={2}
-                  >
-                    <Button
-                      onClick={handleAddExpenseItem}
-                      variant="contained"
-                      startIcon={<Add />}
-                      sx={{
-                        borderRadius: "20px",
-                        background:
-                          "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)",
-                        boxShadow: "0 4px 15px rgba(76, 175, 80, 0.3)",
-                        "&:hover": {
-                          boxShadow: "0 6px 20px rgba(76, 175, 80, 0.4)",
-                        },
-                      }}
-                    >
-                      Add Item
-                    </Button>
-                  </Box>
                 </Grid>
                 <Grid item xs={12} sm={12}>
                   <CraftTextArea name="note" label="Note" />
