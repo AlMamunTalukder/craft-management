@@ -26,7 +26,7 @@ jobs:
             echo "Starting deployment to VPS..."
 
             # Navigate to the project directory
-            cd /var/www/html/craft/school/management || exit
+            cd /var/www/craft/management || exit
 
             # Ensure Git is available
             if ! command -v git &> /dev/null; then
