@@ -53,7 +53,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FieldValues } from "react-hook-form";
+import { FieldValues, useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
 import bg from "../assets/img/bg.webp";
@@ -68,7 +68,6 @@ type UserRole =
   | "student"
   | null;
 
-
 const loginSchema = z.object({
   credential: z
     .string({
@@ -82,17 +81,31 @@ const loginSchema = z.object({
     .min(1, "Password is required"),
 });
 
+// ----- Domain credentials map -----
 const DOMAIN_CREDENTIALS: Record<string, { credential: string; password: string }> = {
-
   "craft.janataautosolution.com": {
     credential: "admin@gmail.com",
     password: "Admin!@#super33",
   },
-
   "localhost": {
     credential: "admin@gmail.com",
     password: "Admin!@#super33",
   },
+};
+
+// ----- Helper: flexible domain matching -----
+const getDomainCredentials = (hostname: string) => {
+  // 1. Exact match
+  if (DOMAIN_CREDENTIALS[hostname]) {
+    return DOMAIN_CREDENTIALS[hostname];
+  }
+  // 2. Check if hostname ends with any of the keys (for subdomains like www.craft...)
+  for (const [domain, creds] of Object.entries(DOMAIN_CREDENTIALS)) {
+    if (hostname.endsWith(domain) || hostname.includes(domain)) {
+      return creds;
+    }
+  }
+  return null;
 };
 
 const LoginDashboard = () => {
@@ -119,14 +132,20 @@ const LoginDashboard = () => {
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
-  // ----- Domain detection and default values -----
+  // ----- Domain detection (with fallback) -----
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  // Check if current domain has predefined credentials
-  const domainDefaults = DOMAIN_CREDENTIALS[hostname] || null;
-  // If domain matches, prepare default values for the form
+  const domainDefaults = getDomainCredentials(hostname);
   const defaultFormValues = domainDefaults
     ? { credential: domainDefaults.credential, password: domainDefaults.password }
     : {};
+
+  // ----- Debug: log the detected hostname (remove in production) -----
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("🔍 [Login] Detected hostname:", window.location.hostname);
+      console.log("🔍 [Login] Matched credentials:", domainDefaults);
+    }
+  }, [domainDefaults]);
 
   const particleColors = [
     "#FF3366",
@@ -252,7 +271,7 @@ const LoginDashboard = () => {
         }}
       />
 
-      {/* Floating Particles with different colors */}
+      {/* Floating Particles */}
       {particles.map((particle) => (
         <Box
           key={particle.id}
@@ -315,7 +334,7 @@ const LoginDashboard = () => {
       >
         {!showLoginForm ? (
           <>
-            {/* Hero Section - Craft International Institute Branding */}
+            {/* Hero Section */}
             <Box
               sx={{
                 textAlign: "center",
@@ -452,7 +471,7 @@ const LoginDashboard = () => {
               </Fade>
             </Box>
 
-            {/* Role Selection Cards - DISTINCT COLORS */}
+            {/* Role Selection Cards */}
             <Box id="role-section">
               <Fade in timeout={800}>
                 <Typography
@@ -570,7 +589,7 @@ const LoginDashboard = () => {
                             zIndex: 1,
                           }}
                         >
-                          {/* Rank Badge with Role Color */}
+                          {/* Rank Badge */}
                           <Box
                             sx={{
                               position: "absolute",
@@ -598,7 +617,7 @@ const LoginDashboard = () => {
                             <span>{roleConfig[role].rank}</span>
                           </Box>
 
-                          {/* Icon with Role Color */}
+                          {/* Icon */}
                           <Box
                             sx={{
                               mb: { xs: 1.5, sm: 2, md: 2.5 },
@@ -616,7 +635,7 @@ const LoginDashboard = () => {
                             {roleConfig[role].icon}
                           </Box>
 
-                          {/* Role Label with Gradient */}
+                          {/* Label */}
                           <Typography
                             variant="h5"
                             sx={{
@@ -655,7 +674,7 @@ const LoginDashboard = () => {
                             {roleConfig[role].description}
                           </Typography>
 
-                          {/* Access Button with Role Color */}
+                          {/* Access Button */}
                           <Box
                             sx={{
                               display: "flex",
@@ -693,7 +712,7 @@ const LoginDashboard = () => {
               </Grid>
             </Box>
 
-            {/* Institute Stats Section */}
+            {/* Stats Section */}
             <Box
               sx={{
                 mt: { xs: 4, sm: 5, md: 6, lg: 8 },
@@ -861,7 +880,7 @@ const LoginDashboard = () => {
                     transition: "box-shadow 0.3s",
                   }}
                 >
-                  {/* Animated Gradient Border with Selected Role Color */}
+                  {/* Animated Gradient Border */}
                   <Box
                     sx={{
                       position: "absolute",
@@ -938,11 +957,18 @@ const LoginDashboard = () => {
                     </Box>
 
 
+
                     <CraftForm
                       onSubmit={handleSubmit}
                       resolver={zodResolver(loginSchema)}
                       defaultValues={defaultFormValues}
                     >
+
+                      <FormValuesSetter
+                        defaultValues={defaultFormValues}
+                        enabled={!!domainDefaults}
+                      />
+
                       <Box
                         sx={{
                           display: "flex",
@@ -1230,3 +1256,27 @@ const LoginDashboard = () => {
 };
 
 export default LoginDashboard;
+
+// ----- Helper component to manually set form values (fallback) -----
+const FormValuesSetter = ({
+  defaultValues,
+  enabled,
+}: {
+  defaultValues: { credential?: string; password?: string };
+  enabled: boolean;
+}) => {
+  const { setValue } = useFormContext();
+
+  useEffect(() => {
+    if (enabled && defaultValues) {
+      if (defaultValues.credential) {
+        setValue("credential", defaultValues.credential);
+      }
+      if (defaultValues.password) {
+        setValue("password", defaultValues.password);
+      }
+    }
+  }, [enabled, defaultValues, setValue]);
+
+  return null;
+};
