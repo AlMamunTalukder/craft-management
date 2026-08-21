@@ -25,11 +25,14 @@ import {
   DeveloperBoard,
   DoneAllSharp,
   EditNote,
+  EventBusy,
+  FactCheck,
   Feedback,
   FormatListBulleted,
   Group,
   HowToReg,
   ImportContacts,
+  Inventory2,
   LibraryAdd,
   LibraryBooks,
   ListAlt,
@@ -56,6 +59,7 @@ import {
   ViewList,
   VpnKey,
   Web,
+  WorkspacePremium,
 } from "@mui/icons-material";
 import { ColorfulIcon } from "./ColorfulIcon";
 
@@ -200,6 +204,16 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/online-application/rejected",
         roles: ["admin", "super_admin"],
       },
+      {
+        title: "Admission Analytics",
+        icon: (
+          <ColorfulIcon color="#5D4037">
+            <Analytics />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/admission-analytics",
+        roles: ["admin", "super_admin", "teacher"],
+      },
     ],
   },
 
@@ -281,6 +295,48 @@ export const navigationItems: NavigationItem[] = [
         ),
         path: "/dashboard/class-routine",
         roles: ["admin", "teacher", "student", "super_admin", "class_teacher"],
+      },
+    ],
+  },
+  // Exam & Results
+  {
+    title: "Exam & Results",
+    icon: (
+      <ColorfulIcon color="#7B1FA2">
+        <FactCheck />
+      </ColorfulIcon>
+    ),
+    roles: ["admin", "super_admin", "teacher"],
+    children: [
+      {
+        title: "Exams",
+        icon: (
+          <ColorfulIcon color="#7B1FA2">
+            <FactCheck />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/exam",
+        roles: ["admin", "super_admin", "teacher"],
+      },
+      {
+        title: "Enter Marks",
+        icon: (
+          <ColorfulIcon color="#7B1FA2">
+            <EditNote />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/exam/marks",
+        roles: ["admin", "super_admin", "teacher"],
+      },
+      {
+        title: "Results",
+        icon: (
+          <ColorfulIcon color="#7B1FA2">
+            <Assessment />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/exam/result",
+        roles: ["admin", "super_admin", "teacher"],
       },
     ],
   },
@@ -529,6 +585,37 @@ export const navigationItems: NavigationItem[] = [
       },
     ],
   },
+  {
+    title: "Certificates & ID Cards",
+    icon: (
+      <ColorfulIcon color="#B71C1C">
+        <WorkspacePremium />
+      </ColorfulIcon>
+    ),
+    roles: ["admin", "super_admin"],
+    children: [
+      {
+        title: "Certificates",
+        icon: (
+          <ColorfulIcon color="#B71C1C">
+            <WorkspacePremium />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/certificates",
+        roles: ["admin", "super_admin"],
+      },
+      {
+        title: "ID Cards",
+        icon: (
+          <ColorfulIcon color="#B71C1C">
+            <Badge />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/id-cards",
+        roles: ["admin", "super_admin"],
+      },
+    ],
+  },
   // People
   {
     title: "People",
@@ -666,6 +753,48 @@ export const navigationItems: NavigationItem[] = [
         ],
       },
     ],
+  },
+
+  {
+    title: "HR Management",
+    icon: (
+      <ColorfulIcon color="#00838F">
+        <PeopleAlt />
+      </ColorfulIcon>
+    ),
+    roles: ["admin", "super_admin"],
+    children: [
+      {
+        title: "Leaves",
+        icon: (
+          <ColorfulIcon color="#00838F">
+            <EventBusy />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/leaves",
+        roles: ["admin", "super_admin"],
+      },
+      {
+        title: "Payslips",
+        icon: (
+          <ColorfulIcon color="#00838F">
+            <ReceiptLong />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/payslips",
+        roles: ["admin", "super_admin", "accountant"],
+      },
+    ],
+  },
+  {
+    title: "Assets & Inventory",
+    icon: (
+      <ColorfulIcon color="#455A64">
+        <Inventory2 />
+      </ColorfulIcon>
+    ),
+    path: "/dashboard/assets",
+    roles: ["admin", "super_admin", "accountant"],
   },
 
   {

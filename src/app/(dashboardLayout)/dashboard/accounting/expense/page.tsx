@@ -24,7 +24,9 @@ import {
   InputAdornment,
   IconButton,
   Container,
-  Fab,
+  Button,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Search,
@@ -38,7 +40,7 @@ import {
 } from "@mui/icons-material";
 import { GlassCard } from "@/style/customStyle";
 import Swal from "sweetalert2";
-import { TExpense, TIncome } from "@/interface";
+import { TExpense } from "@/interface";
 import AddExpenseModal from "../_components/AddExpenseModal";
 import { useGetAllExpenseCategoriesQuery } from "@/redux/api/expenseCategoryApi";
 import {
@@ -47,11 +49,13 @@ import {
 } from "@/redux/api/expenseApi";
 
 export default function ExpenseManagement() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [editData, setEditData] = useState<TIncome | null>(null);
+  const [editData, setEditData] = useState<TExpense | null>(null);
   const [deleteIncome] = useDeleteExpenseMutation();
   const { data, isLoading } = useGetAllExpensesQuery({});
   const expenseRecords = data?.data?.expenses || [];
@@ -95,6 +99,7 @@ export default function ExpenseManagement() {
       case "completed":
         return (
           <Chip
+            size="small"
             label={status}
             sx={{
               bgcolor: "#e8f5e8",
@@ -109,6 +114,7 @@ export default function ExpenseManagement() {
       case "pending":
         return (
           <Chip
+            size="small"
             label={status}
             sx={{
               bgcolor: "#fff3e0",
@@ -123,6 +129,7 @@ export default function ExpenseManagement() {
       case "overdue":
         return (
           <Chip
+            size="small"
             label={status}
             sx={{
               bgcolor: "#ffebee",
@@ -137,6 +144,7 @@ export default function ExpenseManagement() {
       default:
         return (
           <Chip
+            size="small"
             label={status}
             sx={{
               bgcolor: "#e0e0e0",
@@ -148,6 +156,12 @@ export default function ExpenseManagement() {
           />
         );
     }
+  };
+
+  const formatDate = (date: string | Date | undefined | null) => {
+    if (!date) return "-";
+    const parsed = new Date(date);
+    return isNaN(parsed.getTime()) ? "-" : parsed.toLocaleDateString("en-GB");
   };
 
   const getIncomeIcon = (category: string) => {
@@ -185,102 +199,131 @@ export default function ExpenseManagement() {
   if (isLoading) {
     return (
       <Container maxWidth="xl">
-        <Box sx={{ py: 4, textAlign: "center" }}>
-          <Typography variant="h6">Loading expense data...</Typography>
+        <Box sx={{ py: 3, textAlign: "center" }}>
+          <Typography variant="body1">Loading expense data...</Typography>
         </Box>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 4 }}>
+    <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 3 } }}>
+      <Box sx={{ py: { xs: 2, sm: 3 } }}>
         {/* Header */}
         <Box
           sx={{
             display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
             justifyContent: "space-between",
-            alignItems: "center",
-            mb: 6,
+            alignItems: { xs: "stretch", sm: "center" },
+            gap: 1.5,
+            mb: 2,
           }}
         >
           <Box>
             <Typography
-              variant="h3"
+              variant="h5"
               sx={{
-                fontWeight: 800,
+                fontWeight: 700,
                 background: "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)",
                 backgroundClip: "text",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                mb: 1,
+                fontSize: { xs: "1.15rem", sm: "1.4rem" },
               }}
             >
               Expense Management
             </Typography>
-            <Typography variant="h6" sx={{ color: "#666", fontWeight: 500 }}>
+            <Typography variant="body2" sx={{ color: "#666", fontWeight: 500 }}>
               ব্যয় ব্যবস্থাপনা - স্কুলের সকল খরচ ট্র্যাকিং ও নিয়ন্ত্রণ
             </Typography>
           </Box>
-          <Fab
-            variant="extended"
+          <Button
             onClick={handleAddNew}
+            variant="contained"
+            startIcon={<Add />}
+            size="small"
             sx={{
+              alignSelf: { xs: "flex-start", sm: "center" },
+              borderRadius: "10px",
+              px: 2.5,
+              py: 0.8,
+              textTransform: "none",
+              fontWeight: 600,
               background: "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)",
-              color: "white",
-              px: 4,
-              py: 2,
-              borderRadius: "50px",
-              boxShadow: "0 8px 25px rgba(76, 175, 80, 0.3)",
+              boxShadow: "0 4px 12px rgba(211, 47, 47, 0.25)",
               "&:hover": {
-                transform: "translateY(-2px)",
-                boxShadow: "0 12px 35px rgba(76, 175, 80, 0.4)",
+                boxShadow: "0 6px 16px rgba(211, 47, 47, 0.35)",
               },
             }}
           >
-            <Add sx={{ mr: 1 }} />
             Add Expense
-          </Fab>
+          </Button>
         </Box>
+
         <GlassCard>
-          <CardContent sx={{ p: 4 }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-              Expense Records
-            </Typography>
-            <Typography variant="body2" sx={{ color: "#666", mb: 4 }}>
-              খরচের বিস্তারিত রেকর্ড ({expenseRecords.length} টি এন্ট্রি)
-            </Typography>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 1.5,
+                flexWrap: "wrap",
+                gap: 1,
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: { xs: "0.95rem", sm: "1.1rem" },
+                  }}
+                >
+                  Expense Records
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#666",
+                    fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                  }}
+                >
+                  খরচের বিস্তারিত রেকর্ড ({expenseRecords.length} টি এন্ট্রি)
+                </Typography>
+              </Box>
+            </Box>
 
             {/* Filters */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={6}>
+            <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
+              <Grid item xs={12} sm={6} md={6}>
                 <TextField
                   fullWidth
+                  size="small"
                   placeholder="খরচের বিবরণ খুঁজুন..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Search />
+                        <Search sx={{ fontSize: 18 }} />
                       </InputAdornment>
                     ),
                   }}
                   sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "15px",
-                    },
+                    "& .MuiOutlinedInput-root": { borderRadius: "10px" },
                   }}
                 />
               </Grid>
-              <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
+              <Grid item xs={6} sm={3} md={3}>
+                <FormControl fullWidth size="small">
                   <InputLabel>Category</InputLabel>
                   <Select
                     value={categoryFilter}
                     label="Category"
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    sx={{ borderRadius: "15px" }}
+                    sx={{ borderRadius: "10px" }}
                   >
                     <MenuItem value="all">All</MenuItem>
                     {expenseCategories?.data?.data?.map(
@@ -293,14 +336,14 @@ export default function ExpenseManagement() {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
+              <Grid item xs={6} sm={3} md={3}>
+                <FormControl fullWidth size="small">
                   <InputLabel>Status</InputLabel>
                   <Select
                     value={statusFilter}
                     label="Status"
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    sx={{ borderRadius: "15px" }}
+                    sx={{ borderRadius: "10px" }}
                   >
                     <MenuItem value="all">All Status</MenuItem>
                     <MenuItem value="received">Received</MenuItem>
@@ -315,29 +358,36 @@ export default function ExpenseManagement() {
             <TableContainer
               component={Paper}
               sx={{
-                borderRadius: "15px",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                borderRadius: "10px",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
               }}
             >
-              <Table>
+              <Table
+                size="small"
+                sx={{ minWidth: isMobile ? 480 : undefined }}
+              >
                 <TableHead>
                   <TableRow sx={{ bgcolor: "#f8f9fa" }}>
-                    <TableCell sx={{ fontWeight: 700, fontSize: "1rem" }}>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", py: 1 }}>
                       Source & Description
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: "1rem" }}>
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", py: 1 }}>
                       Amount
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: "1rem" }}>
-                      Category
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: "1rem" }}>
+                    {!isMobile && (
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", py: 1 }}>
+                        Category
+                      </TableCell>
+                    )}
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", py: 1 }}>
                       Date
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: "1rem" }}>
-                      Status
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: "1rem" }}>
+                    {!isMobile && (
+                      <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", py: 1 }}>
+                        Status
+                      </TableCell>
+                    )}
+                    <TableCell sx={{ fontWeight: 700, fontSize: "0.78rem", py: 1 }}>
                       Actions
                     </TableCell>
                   </TableRow>
@@ -346,35 +396,36 @@ export default function ExpenseManagement() {
                   {expenseRecords?.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
-                        sx={{ textAlign: "center", py: 4 }}
+                        colSpan={isMobile ? 4 : 6}
+                        sx={{ textAlign: "center", py: 3 }}
                       >
-                        <Typography variant="h6" sx={{ color: "#666" }}>
-                          কোন আয়ের রেকর্ড পাওয়া যায়নি
+                        <Typography variant="body1" sx={{ color: "#666" }}>
+                          কোন ব্যায়ের রেকর্ড পাওয়া যায়নি
                         </Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    expenseRecords?.map((Expense: TIncome) => (
+                    expenseRecords?.map((Expense: TExpense) => (
                       <TableRow
                         key={Expense._id}
                         hover
                         sx={{
-                          "&:hover": {
-                            bgcolor: "#f8f9fa",
-                          },
+                          "&:hover": { bgcolor: "#f8f9fa" },
                         }}
                       >
-                        <TableCell>
+                        <TableCell sx={{ py: 1 }}>
                           <Box
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              gap: 2,
+                              gap: 1.5,
                             }}
                           >
                             <Avatar
                               sx={{
+                                width: 32,
+                                height: 32,
+                                fontSize: "1rem",
                                 bgcolor: "#e3f2fd",
                                 color: "#1976d2",
                               }}
@@ -383,42 +434,58 @@ export default function ExpenseManagement() {
                             </Avatar>
                             <Box>
                               <Typography
-                                variant="body1"
-                                sx={{ fontWeight: 600 }}
+                                variant="body2"
+                                sx={{ fontWeight: 600, lineHeight: 1.3 }}
                               >
                                 {Expense.category?.name || "Other"}
                               </Typography>
+                              {Expense.note && (
+                                <Typography
+                                  variant="caption"
+                                  noWrap
+                                  sx={{
+                                    color: "#888",
+                                    display: "block",
+                                    maxWidth: 220,
+                                  }}
+                                >
+                                  {Expense.note}
+                                </Typography>
+                              )}
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ py: 1 }}>
                           <Typography
-                            variant="h6"
-                            sx={{ fontWeight: 800, color: "#4CAF50" }}
+                            variant="body2"
+                            sx={{ fontWeight: 700, color: "#4CAF50" }}
                           >
                             ৳ {(Expense.totalAmount || 0).toLocaleString()}
                           </Typography>
                         </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={Expense.category?.name || "Other"}
-                            variant="outlined"
-                            sx={{
-                              borderRadius: "20px",
-                              fontWeight: 600,
-                            }}
-                          />
+                        {!isMobile && (
+                          <TableCell sx={{ py: 1 }}>
+                            <Chip
+                              label={Expense.category?.name || "Other"}
+                              variant="outlined"
+                              size="small"
+                              sx={{
+                                borderRadius: "20px",
+                                fontWeight: 600,
+                              }}
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell sx={{ py: 1, whiteSpace: "nowrap" }}>
+                          {formatDate(Expense.expenseDate)}
                         </TableCell>
-                        <TableCell>
-                          {new Date(Expense.incomeDate).toLocaleDateString(
-                            "en-GB",
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusChip(Expense.status || "completed")}
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: "flex", gap: 1 }}>
+                        {!isMobile && (
+                          <TableCell sx={{ py: 1 }}>
+                            {getStatusChip(Expense.status || "completed")}
+                          </TableCell>
+                        )}
+                        <TableCell sx={{ py: 1 }}>
+                          <Box sx={{ display: "flex", gap: 0.5 }}>
                             <IconButton
                               onClick={() => handleEdit(Expense)}
                               size="small"
@@ -428,7 +495,7 @@ export default function ExpenseManagement() {
                                 "&:hover": { bgcolor: "#bbdefb" },
                               }}
                             >
-                              <Edit />
+                              <Edit fontSize="small" />
                             </IconButton>
                             <IconButton
                               onClick={() => handleDeleteIncome(Expense._id)}
@@ -436,12 +503,10 @@ export default function ExpenseManagement() {
                               sx={{
                                 bgcolor: "#fdecea",
                                 color: "#d32f2f",
-                                "&:hover": {
-                                  bgcolor: "#f8d7da",
-                                },
+                                "&:hover": { bgcolor: "#f8d7da" },
                               }}
                             >
-                              <Delete />
+                              <Delete fontSize="small" />
                             </IconButton>
                           </Box>
                         </TableCell>

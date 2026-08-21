@@ -31,7 +31,7 @@ import {
   useGetAllExpenseCategoriesQuery,
 } from "@/redux/api/expenseCategoryApi";
 
-export default function IncomeCategoryPage() {
+export default function ExpenseCategoryPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,7 +73,7 @@ export default function IncomeCategoryPage() {
   const handleDelete = async (id: string) => {
     Swal.fire({
       title: "Are you sure?",
-      text: "You won't be delete this income!",
+      text: "You won't be able to delete this expense category!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#6366f1",
@@ -269,7 +269,7 @@ export default function IncomeCategoryPage() {
                                   variant="body1"
                                   color="textSecondary"
                                 >
-                                  No income categories found
+                                  No expense categories found
                                 </Typography>
                               </Box>
                             </TableCell>
@@ -304,7 +304,7 @@ export default function IncomeCategoryPage() {
         </Container>
       </div>
 
-      {/* Income Category Modal */}
+      {/* Expense Category Modal */}
       <ExpenseCategoryModal
         open={open}
         setOpen={setOpen}
