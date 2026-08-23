@@ -2,13 +2,17 @@
 
 import { cookies } from "next/headers";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_BASE_API_URL ||
+  "https://server.craftinternationalinstitute.com/api/v1";
+
 export const getUserInfo = async () => {
   try {
     const cookieStore = cookies();
     const cookieString = cookieStore.toString();
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_API_URL}/auth/me`,
+      `${API_BASE}/auth/me`,
       {
         method: "GET",
         headers: {

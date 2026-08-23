@@ -39,7 +39,7 @@ export const removeUser = () => {
 
 export const getNewAccessToken = async () => {
   return await instance({
-    url: `${process.env.NEXT_PUBLIC_BASE_API_URL}/auth/refresh-token`,
+    url: "/auth/refresh-token",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
