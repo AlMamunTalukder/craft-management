@@ -44,6 +44,7 @@ import {
   Assignment,
   FileCopy,
   Save,
+  Payment,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -1970,12 +1971,16 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
                 variant="outlined"
                 onClick={() => {
                   setOpenSuccessModal(false);
-                  setOpenPrintModal(true);
+                  const sid =
+                    enrolledStudentData?.data?.student?._id ||
+                    enrolledStudentData?.data?._id ||
+                    enrolledStudentData?._id;
+                  router.push(`/dashboard/student/profile/${sid}?tab=3`);
                 }}
-                startIcon={<Print />}
+                startIcon={<Payment />}
                 sx={{ borderRadius: 2, px: 3 }}
               >
-                Print Receipt
+                Pay Now
               </Button>
             </Box>
             <Button variant="text" onClick={handleFinishProcess}>

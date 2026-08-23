@@ -57,7 +57,13 @@ function TabPanel(props: TabPanelProps) {
 const StudentProfile = ({ params }: PageProps) => {
   const { id } = params;
   const theme = useTheme();
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(() => {
+    if (typeof window !== "undefined") {
+      const t = new URLSearchParams(window.location.search).get("tab");
+      return t ? Number(t) : 0;
+    }
+    return 0;
+  });
   const { data: singleStudent, isLoading } = useGetSingleStudentQuery({ id });
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
