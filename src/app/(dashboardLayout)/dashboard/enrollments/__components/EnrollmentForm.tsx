@@ -22,8 +22,6 @@ import { useGetAllAdmissionApplicationsQuery } from "@/redux/api/admissionApplic
 import {
   AccessTime,
   AccountCircle,
-  ArrowBack,
-  ArrowForward,
   Book,
   Cake,
   CalendarMonth,
@@ -1518,14 +1516,6 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
   const [submitting, setSubmitting] = useState(false);
   const [defaultValues, setDefaultValues] = useState<any>(null);
   const [formKey, setFormKey] = useState(0);
-  const [activeStep, setActiveStep] = useState(0);
-
-  const steps = [
-    { label: "Student Info", icon: <AccountCircle /> },
-    { label: "Academic Info", icon: <SchoolIcon /> },
-    { label: "Parent/Guardian", icon: <FamilyRestroom /> },
-    { label: "Address & Docs", icon: <Home /> },
-  ];
 
   useEffect(() => {
     if (id && singleEnrollment && classOptions.length > 0) {
@@ -1536,7 +1526,6 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
       if (transformedData) {
         setDefaultValues(transformedData);
         setFormKey((prev) => prev + 1);
-        setActiveStep(0);
       }
     } else if (applicationId && admissionApplications?.data?.length > 0) {
       setIsApplicationLoading(true);
@@ -1551,7 +1540,6 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
         toast.success(
           `Application ${application.applicationId} loaded successfully`,
         );
-        setTimeout(() => setActiveStep(getFirstIncompleteStep(formData)), 300);
       } else toast.error("Failed to load application data");
       setIsApplicationLoading(false);
     } else if (!id && !applicationId) {
@@ -1611,7 +1599,6 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
         termsAccepted: false,
       });
       setFormKey((prev) => prev + 1);
-      setActiveStep(0);
     }
   }, [
     id,
@@ -1634,7 +1621,6 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
         toast.success(
           `Application data loaded for ${formData.studentNameBangla || formData.studentName}`,
         );
-        setTimeout(() => setActiveStep(getFirstIncompleteStep(formData)), 300);
       } else toast.error("Failed to load application data");
     },
     [classOptions],
@@ -1787,21 +1773,6 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
     }
   };
 
-  const handleNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setActiveStep((prev) => prev + 1);
-    document
-      .getElementById("form-content-wrapper")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-  const handleBack = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setActiveStep((prev) => prev - 1);
-    document
-      .getElementById("form-content-wrapper")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   if (enrollmentLoading || isApplicationLoading) {
     return (
       <Box
@@ -1898,32 +1869,15 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
               minHeight: 600,
             }}
           >
-            <Box
-              sx={{
-                px: 4,
-                py: 2,
-                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-              }}
-            >
-              <Typography
-                variant="caption"
-                color="text.disabled"
-                sx={{ fontWeight: 600, letterSpacing: 0.5 }}
-              >
-                {activeStep + 1} OF {steps.length}
-              </Typography>
-            </Box>
             <CardContent sx={{ p: 4 }} id="form-content-wrapper">
-              <Box minHeight={400}>
-                {activeStep === 0 && <StudentInformationStep />}
-                {activeStep === 1 && (
-                  <AcademicStep classOptions={classOptions} />
-                )}
-                {activeStep === 2 && <ParentGuardianStep />}
-                {activeStep === 3 && <AddressDocumentsStep />}
+              <Box>
+                <StudentInformationStep />
+                <Box sx={{ my: 4, borderTop: `1px solid ${alpha(theme.palette.divider, 0.2)}` }} />
+                <AcademicStep classOptions={classOptions} />
+                <Box sx={{ my: 4, borderTop: `1px solid ${alpha(theme.palette.divider, 0.2)}` }} />
+                <ParentGuardianStep />
+                <Box sx={{ my: 4, borderTop: `1px solid ${alpha(theme.palette.divider, 0.2)}` }} />
+                <AddressDocumentsStep />
               </Box>
             </CardContent>
           </Paper>
@@ -1931,74 +1885,38 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
           <Box
             sx={{
               display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              justifyContent: "flex-end",
               mt: 3,
               px: 1,
             }}
           >
             <Button
-              disabled={activeStep === 0}
-              onClick={handleBack}
-              startIcon={<ArrowBack sx={{ fontSize: 18 }} />}
-              variant="text"
-              type="button"
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={submitting}
+              endIcon={
+                submitting ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <Save />
+                )
+              }
               sx={{
-                fontWeight: "bold",
-                color: "text.secondary",
-                "&:hover": { color: "text.primary" },
-                px: 2,
+                borderRadius: 2,
+                px: 5,
                 py: 1.5,
+                fontWeight: "bold",
+                boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+                textTransform: "none",
               }}
             >
-              Back
+              {submitting
+                ? "Submitting..."
+                : id
+                  ? "Update Enrollment"
+                  : "Submit Application"}
             </Button>
-            {activeStep === steps.length - 1 ? (
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={submitting}
-                endIcon={
-                  submitting ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : (
-                    <Save />
-                  )
-                }
-                sx={{
-                  borderRadius: 2,
-                  px: 5,
-                  py: 1.5,
-                  fontWeight: "bold",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-                  textTransform: "none",
-                }}
-              >
-                {submitting
-                  ? "Submitting..."
-                  : id
-                    ? "Update Enrollment"
-                    : "Submit Application"}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                endIcon={<ArrowForward sx={{ fontSize: 18 }} />}
-                type="button"
-                sx={{
-                  borderRadius: 2,
-                  px: 5,
-                  py: 1.5,
-                  fontWeight: "bold",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-                  textTransform: "none",
-                }}
-              >
-                Continue
-              </Button>
-            )}
           </Box>
         </Container>
 
