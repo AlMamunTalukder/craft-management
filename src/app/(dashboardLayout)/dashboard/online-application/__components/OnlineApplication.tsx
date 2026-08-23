@@ -60,6 +60,30 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
   const behavior = app.behaviorSkills || {};
   const docs = app.documents || {};
 
+  // Map profession to pdfGenerator expected values
+  const mapProfession = (prof: string, type: "father" | "mother"): string => {
+    if (!prof) return "";
+    const p = prof.toLowerCase();
+    const fatherMap: Record<string, string> = {
+      teacher: "teacher", doctor: "doctor", engineer: "engineer", business: "business",
+      govt_job: "govt_job", private_job: "private_job", expatriate: "expatriate",
+      lawyer: "lawyer", farmer: "farmer", driver: "driver", others: "others",
+      "গুরু": "teacher", "ডাক্তার": "doctor", "ইঞ্জিনিয়ার": "engineer", "ব্যবসায়ী": "business",
+      "সরকারী চাকরিজীবি": "govt_job", "বেসরকারী চাকরিজীবি": "private_job",
+      "প্রবাসী": "expatriate", "উকিল": "lawyer", "কৃষক": "farmer", "চালক": "driver", "অন্যান্য": "others",
+    };
+    const motherMap: Record<string, string> = {
+      housewife: "Housewife", teacher: "teacher", doctor: "doctor", engineer: "engineer",
+      business: "business", govt_job: "govt_job", private_job: "private_job",
+      lawyer: "lawyer", others: "others",
+      "গৃহিণী": "Housewife", "শিক্ষকা": "teacher", "ডাক্তার": "doctor",
+      "ইঞ্জিনিয়ার": "engineer", "ব্যবসায়ী": "business", "সরকারি চাকরিজীবি": "govt_job",
+      "বেসরকারী চাকরিজীবি": "private_job", "উকিল": "lawyer", "অন্যান্য": "others",
+    };
+    const map = type === "father" ? fatherMap : motherMap;
+    return map[p] || p;
+  };
+
   return {
     // Student
     StudentName: student.nameBangla || "",
@@ -73,16 +97,36 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
     Class: academic.class || student.class || "",
     bloodGroup: student.bloodGroup || "",
     session: academic.session || student.session || "",
+    category: student.category || "Residential",
+    rollNumber: student.rollNumber || student.roll || "",
+    section: student.section || "",
+    group: student.group || "",
+    optionalSubject: student.optionalSubject || "",
+    shift: student.shift || "",
 
     FatherNameBangla: father.nameBangla || "",
     FatherName: father.nameEnglish || "",
-    FatherJob: father.profession || father.occupation || "",
+    FatherJob: mapProfession(father.profession || father.occupation || "", "father"),
     FatherMobile: father.mobile || "",
+    FatherWhatsapp: father.whatsapp || "",
+    FatherNid: father.nid || father.nidBirth || "",
+    FatherIncome: father.income || 0,
+    FatherEducation: father.education || "",
 
     MotherNameBangla: mother.nameBangla || "",
     MotherName: mother.nameEnglish || "",
-    MotherJob: mother.profession || mother.occupation || "",
+    MotherJob: mapProfession(mother.profession || mother.occupation || "", "mother"),
     MotherMobile: mother.mobile || "",
+    MotherWhatsapp: mother.whatsapp || "",
+    MotherNid: mother.nid || mother.nidBirth || "",
+    MotherIncome: mother.income || 0,
+    MotherEducation: mother.education || "",
+
+    guardianNameBangla: parent.guardian?.nameBangla || "",
+    guardianName: parent.guardian?.nameEnglish || "",
+    guardianRelation: parent.guardian?.relation || "",
+    guardianMobile: parent.guardian?.mobile || "",
+    guardianAddress: parent.guardian?.address || "",
 
     village: present.village || "",
     postOffice: present.postOffice || "",
@@ -98,17 +142,32 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
     HalalIncome: family.halalIncome || "",
     Purdah: family.purdah || "",
     ParentsPrayer: family.parentsPrayer || "",
+    TV: family.tv || "",
+    Addiction: family.addiction || "",
+    QuranRecitation: family.quranRecitation || "",
 
     // Behavior
     StudyInterest: behavior.studyInterest || "",
     AngerControl: behavior.angerControl || "",
     MobileUsage: behavior.mobileUsage || "",
+    GeneralBehavior: behavior.generalBehavior || "",
+    Obedience: behavior.obedience || "",
+    ElderBehavior: behavior.elderBehavior || "",
+    YoungerBehavior: behavior.youngerBehavior || "",
+    LyingStubbornness: behavior.lyingStubbornness || "",
+    ReligiousInterest: behavior.religiousInterest || "",
+
+    // Academic
+    PrevSchool: academic.previousSchool || academic.prevSchool || "",
+    PrevClass: academic.prevClass || "",
+    GPA: academic.gpa || academic.GPA || "",
 
     // Documents
     photographs: docs.photographs || false,
     birthCertificate: docs.birthCertificate || false,
     markSheet: docs.markSheet || false,
     transferCertificate: docs.transferCertificate || false,
+    characterCertificate: docs.characterCertificate || false,
 
     termsAccepted: app.termsAccepted || false,
   };
