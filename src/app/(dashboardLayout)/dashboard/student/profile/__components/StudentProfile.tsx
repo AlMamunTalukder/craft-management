@@ -27,7 +27,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PaymentHistory from "./PaymentHistory";
 import ReceiptHistory from "./ReceiptHistory";
 import StudentOverview from "./StudentOverview";
@@ -57,13 +57,15 @@ function TabPanel(props: TabPanelProps) {
 const StudentProfile = ({ params }: PageProps) => {
   const { id } = params;
   const theme = useTheme();
-  const [tabValue, setTabValue] = useState(() => {
-    if (typeof window !== "undefined") {
-      const t = new URLSearchParams(window.location.search).get("tab");
-      return t ? Number(t) : 0;
+  const [tabValue, setTabValue] = useState(0);
+
+  // Open the tab passed via ?tab=N (e.g. ?tab=3 = Due Fees)
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t !== null && !Number.isNaN(Number(t))) {
+      setTabValue(Number(t));
     }
-    return 0;
-  });
+  }, [id]);
   const { data: singleStudent, isLoading } = useGetSingleStudentQuery({ id });
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
