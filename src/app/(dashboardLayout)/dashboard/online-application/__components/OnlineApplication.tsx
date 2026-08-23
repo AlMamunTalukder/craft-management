@@ -131,11 +131,13 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
 
     village: present.village || "",
     postOffice: present.postOffice || "",
+    postCode: present.postCode || "",
     policeStation: present.policeStation || "",
     district: present.district || "",
 
     permVillage: permanent.village || "",
     permPostOffice: permanent.postOffice || "",
+    permPostCode: permanent.postCode || "",
     permPoliceStation: permanent.policeStation || "",
     permDistrict: permanent.district || "",
 
