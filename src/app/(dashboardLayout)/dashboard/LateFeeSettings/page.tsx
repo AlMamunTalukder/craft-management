@@ -21,6 +21,8 @@ import {
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_API_URL || '';
+
 interface LateFeeConfig {
     enabled: boolean;
     type: 'fixed' | 'percentage';
@@ -54,7 +56,7 @@ const LateFeeSettings = () => {
 
     const fetchConfig = async () => {
         try {
-            const response = await fetch('/api/v1/late-fee/config');
+            const response = await fetch(`${API_BASE_URL}/late-fee/config`);
             const data = await response.json();
             if (data.success) {
                 setConfig(data.data);
@@ -67,7 +69,7 @@ const LateFeeSettings = () => {
     const handleSave = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/v1/late-fee/config', {
+            const response = await fetch(`${API_BASE_URL}/late-fee/config`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config),
@@ -89,7 +91,7 @@ const LateFeeSettings = () => {
     const handleManualCalculate = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/v1/late-fee/calculate', {
+            const response = await fetch(`${API_BASE_URL}/late-fee/calculate`, {
                 method: 'POST',
             });
 

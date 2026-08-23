@@ -22,7 +22,7 @@ export const axiosBaseQuery =
   async ({ url, method, data, params, contentType }) => {
     try {
       const result = await instance({
-        url: baseUrl + url,
+        url,  // Use relative URL - instance already has baseURL
         method,
         data,
         params,
