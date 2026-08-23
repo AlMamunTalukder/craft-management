@@ -97,6 +97,7 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
     Class: academic.class || student.class || "",
     bloodGroup: student.bloodGroup || "",
     session: academic.session || student.session || "",
+    nationality: student.nationality || "",
     category: student.category || "Residential",
     rollNumber: student.rollNumber || student.roll || "",
     section: student.section || "",
