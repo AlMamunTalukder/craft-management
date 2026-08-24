@@ -70,7 +70,7 @@ const CraftDatePicker = ({
 
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DesktopDatePicker
+                 {/* <DesktopDatePicker
               label={label}
               {...field}
               onChange={(date: Dayjs | null) => {
@@ -83,7 +83,21 @@ const CraftDatePicker = ({
                   setValue(name, todayDate);
                 }
               }}
-              value={dateValue}
+              value={dateValue} */}
+            <DesktopDatePicker
+              label={label}
+              {...field}
+              format="DD-MM-YYYY" // Explicitly set the format
+              onChange={(date: Dayjs | null) => {
+                if (date && date.isValid()) {
+                  onChange(date.format("YYYY-MM-DD"));
+                } else {
+                  const todayDate = getTodayDate();
+                  onChange(todayDate);
+                  setValue(name, todayDate);
+                }
+              }}
+              value={dateValue}       
               slotProps={{
                 textField: {
                   required: required,

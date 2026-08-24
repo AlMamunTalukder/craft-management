@@ -13,9 +13,7 @@ import {
 import { useGetAllStaffQuery } from '@/redux/api/staffApi';
 import { useGetAllTeachersQuery } from '@/redux/api/teacherApi';
 import {
-  ArrowBack as ArrowBackIcon,
-  BreakfastDining as BreakfastIcon,
-  CalendarMonth as CalendarIcon,
+  BreakfastDining as BreakfastIcon, 
   Clear as ClearIcon,
   DinnerDining as DinnerIcon,
   LunchDining as LunchIcon,
@@ -66,6 +64,8 @@ import {
   Typography,
   ToggleButton,
   ToggleButtonGroup,
+  Fab,
+  Zoom,
 } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -77,7 +77,6 @@ import toast, { Toaster } from 'react-hot-toast';
 
 
 const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
-  const router = useRouter();
   const { classData, studentData } = useAcademicOption();
   const [bulkCreateAttendance, { isLoading: isSaving }] = useBulkCreateAttendanceMutation();
   const category = 'Residential'
@@ -546,7 +545,9 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
         const count = result?.data?.totalProcessed || result?.totalProcessed || toSave.length;
         toast.success(`${count} records saved successfully!`);
         refetchMonthly();
-        router.push('/dashboard/daily-meal-report');
+        // REMOVED: router.push('/dashboard/daily-meal-report'); 
+        // Keep this line commented out - if you need navigation, uncomment it
+        // router.push('/dashboard/daily-meal-report');
       }
     } catch (err: any) {
       toast.error(err?.data?.message || err?.error || 'Failed to save');
@@ -600,7 +601,7 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Toaster position="top-right" reverseOrder={false} />
 
-      <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
+      <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, bgcolor: '#f5f7fa', minHeight: '100vh', pb: { xs: 10, sm: 12, md: 14 } }}>
 
         {/* ── Header ── */}
         <Paper sx={{ p: 3, mb: 3, borderRadius: 3, background: `linear-gradient(135deg, ${tabColor} 0%, ${tabColor}cc 100%)`, color: 'white' }}>
@@ -1021,6 +1022,73 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
 
         </Paper>
       </Box>
+
+      {/* ─── FLOATING SAVE BUTTON - ONLY THIS ADDED ─── */}
+      <Zoom in={true}>
+        <Fab
+          variant="extended"
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: { xs: 16, sm: 24, md: 32 },
+            right: { xs: 16, sm: 24, md: 32 },
+            bgcolor: tabColor,
+            color: 'white',
+            fontWeight: 'bold',
+            boxShadow: 6,
+            '&:hover': {
+              bgcolor: tabColor,
+              opacity: 0.9,
+            },
+            zIndex: 999,
+            px: { xs: 2, sm: 3 },
+            borderRadius: 4,
+          }}
+          onClick={handleSaveAll}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
+          ) : (
+            <SaveIcon sx={{ mr: 1 }} />
+          )}
+          {Object.keys(attendanceChanges).length > 0 ? (
+            <>Save ({Object.keys(attendanceChanges).length})</>
+          ) : (
+            'Save All'
+          )}
+        </Fab>
+      </Zoom>
+
+      {/* ─── FLOATING CANCEL BUTTON - ONLY WHEN CHANGES EXIST ─── */}
+      {Object.keys(attendanceChanges).length > 0 && (
+        <Zoom in={true}>
+          <Fab
+            variant="extended"
+            color="error"
+            size="medium"
+            sx={{
+              position: 'fixed',
+              bottom: { xs: 80, sm: 88, md: 96 },
+              right: { xs: 16, sm: 24, md: 32 },
+              bgcolor: '#ef5350',
+              color: 'white',
+              fontWeight: 'bold',
+              boxShadow: 6,
+              '&:hover': {
+                bgcolor: '#d32f2f',
+              },
+              zIndex: 999,
+              px: { xs: 2, sm: 3 },
+              borderRadius: 4,
+            }}
+            onClick={handleReset}
+          >
+            <RemoveCircleIcon sx={{ mr: 1 }} />
+            Cancel
+          </Fab>
+        </Zoom>
+      )}
     </LocalizationProvider>
   );
 };
