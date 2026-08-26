@@ -987,7 +987,7 @@ export const navigationItems: NavigationItem[] = [
             roles: ["admin", "super_admin"],
           },
           {
-            path: "/dashboard/accounting/salary",
+            path: "/dashboard/accounting/salary-expense",
             title: "Salary",
             icon: (
               <ColorfulIcon color="#D32F2F">
