@@ -1,1 +1,1 @@
-{"version":1,"functions":{"/dashboard/staff/profile/[id]":{},"/dashboard/teacher/profile/[id]":{},"/dashboard/student/profile/[id]":{}}}
+{"version":1,"functions":{"/dashboard/student/profile/[id]":{},"/dashboard/teacher/profile/[id]":{},"/dashboard/staff/profile/[id]":{}}}
