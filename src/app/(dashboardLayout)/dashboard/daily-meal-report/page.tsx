@@ -124,7 +124,19 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
       totalFreeMeals: c.grandTotalFreeMeals || 0,
       totalFreeMealCostSaved: c.grandTotalFreeMealCostSaved || 0,
       byPersonType: c.byPersonType || null,
-      today: c.today || null,
+      today: c.today
+        ? {
+          totalPersons: c.today.totalPersons || 0,
+          totalMeals: c.today.totalMeals || 0,
+          totalGrossCost: c.today.totalGrossCost || c.today.grossCost || 0,
+          totalCost: c.today.totalCost || 0,
+          totalBreakfast: c.today.totalBreakfast || 0,
+          totalLunch: c.today.totalLunch || 0,
+          totalDinner: c.today.totalDinner || 0,
+          totalFreeMeals: c.today.totalFreeMeals || 0,
+          totalFreeMealCostSaved: c.today.totalFreeMealCostSaved || c.today.freeMealCostSaved || 0,
+        }
+        : null,
     };
   }, [combinedStats]);
 
@@ -301,6 +313,7 @@ const MealAttendanceList: React.FC<any> = ({ academicYear = dayjs().year().toStr
                 '& .MuiTabs-indicator': { bgcolor: tabColor },
               }}
             >
+              <Tab value="student" label="All" icon={<SchoolIcon fontSize="small" />} iconPosition="start" sx={{ color: TAB_COLORS.student }} />
               <Tab value="student" label="Students" icon={<SchoolIcon fontSize="small" />} iconPosition="start" sx={{ color: TAB_COLORS.student }} />
               <Tab value="teacher" label="Teachers" icon={<GroupIcon fontSize="small" />} iconPosition="start" sx={{ color: TAB_COLORS.teacher }} />
               <Tab value="staff" label="Staff" icon={<StaffIcon fontSize="small" />} iconPosition="start" sx={{ color: TAB_COLORS.staff }} />
