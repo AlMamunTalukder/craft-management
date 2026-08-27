@@ -63,8 +63,8 @@ const AddSalaryModal = ({ open, onClose, salaryId }: AddSalaryDialogProps) => {
 
   // Combine teachers and staff for dropdown options
   const employeeOptions = useMemo(() => {
-    const teachers = teachersData?.data?.teachers || [];
-    const staff = staffData?.data?.staff || [];
+    const teachers = teachersData?.data || [];
+    const staff = staffData?.data || [];
     return [
       ...teachers.map((t: any) => ({
         value: t._id,
