@@ -11,6 +11,7 @@ import {
   Edit,
   Info,
   Message,
+  Payments,
   Restaurant,
   School,
   Star
@@ -35,6 +36,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import MealAttendance from "../_components/MealAttendance";
+import TeacherSalary from "../_components/TeacherSalary";
 import TeacherOverview from "../_components/TeacherOverview";
 
 
@@ -393,6 +395,12 @@ export default function TeacherProfile({ params }: PageProps) {
             iconPosition="start"
             {...getTabProps(1)}
           />
+          <Tab
+            icon={<Payments />}
+            label={isSmall ? "" : "Salary"}
+            iconPosition="start"
+            {...getTabProps(2)}
+          />
         </Tabs>
       </Box>
 
@@ -402,6 +410,9 @@ export default function TeacherProfile({ params }: PageProps) {
       </TabPanel>
       <TabPanel value={tabValue} index={1}>
         <MealAttendance teacher={singleTeacher?.data} />
+      </TabPanel>
+      <TabPanel value={tabValue} index={2}>
+        <TeacherSalary teacher={singleTeacher?.data} />
       </TabPanel>
     </Container>
   );

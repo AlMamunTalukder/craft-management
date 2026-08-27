@@ -299,7 +299,9 @@ const TeacherOverview: React.FC<TeacherProps> = ({ teacher }) => {
                         }
                         secondary={
                           <Typography variant="body1" fontWeight="medium">
-                            ${teacher?.monthlySalary || "N/A"}
+                            {teacher?.monthlySalary
+                              ? `৳${teacher.monthlySalary.toLocaleString()}`
+                              : "N/A"}
                           </Typography>
                         }
                       />
