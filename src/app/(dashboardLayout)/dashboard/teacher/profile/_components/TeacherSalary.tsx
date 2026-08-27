@@ -42,15 +42,15 @@ const getMonthName = (monthKey: string) => {
   });
 };
 
-const getEmployeeId = (row: any) => row.employeeInfo?._id || row.employee?._id || row.employeeId || "";
-const getEmployeeName = (row: any) => row.employeeInfo?.name || row.employee?.name || row.employeeName || row.employee || "";
-const getAdvanceAmount = (row: any) => Number(row.advanceGiven || row.advance || row.advanceSalary) || 0;
-const getPaidAmount = (row: any) => Number(row.paidAmount || row.netSalary || row.totalSalary) || 0;
-const getDueAmount = (row: any) => Number(row.due || row.dueSalary || row.salaryDue) || 0;
-const getBonusAmount = (row: any) => Number(row.bonus) || Number(row.otherAllowances) || 0;
+const getEmployeeId = (row: any) => row?.employeeInfo?._id || row?.employee?._id || row?.employeeId || "";
+const getEmployeeName = (row: any) => row?.employeeInfo?.name || row?.employee?.name || row?.employeeName || row?.employee || "";
+const getAdvanceAmount = (row: any) => Number(row?.advanceGiven || row?.advance || row?.advanceSalary) || 0;
+const getPaidAmount = (row: any) => Number(row?.paidAmount || row?.netSalary || row?.totalSalary) || 0;
+const getDueAmount = (row: any) => Number(row?.due || row?.dueSalary || row?.salaryDue) || 0;
+const getBonusAmount = (row: any) => Number(row?.bonus) || Number(row?.otherAllowances) || 0;
 const getDeductedAmount = (row: any) =>
-  Number(row.deductions || row.deducted || row.totalDeductions) ||
-  (Number(row.incomeTax) || 0) + (Number(row.providentFund) || 0) + (Number(row.otherDeductions) || 0);
+  Number(row?.deductions || row?.deducted || row?.totalDeductions) ||
+  (Number(row?.incomeTax) || 0) + (Number(row?.providentFund) || 0) + (Number(row?.otherDeductions) || 0);
 
 export default function TeacherSalary({ teacher }: { teacher: any }) {
   const router = useRouter();

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { FieldValues } from "react-hook-form";
+import { useMemo } from "react";
 import {
   Box,
   Grid,
@@ -38,6 +39,8 @@ import {
   useGetSingleSalaryQuery,
   useUpdateSalaryMutation,
 } from "@/redux/api/salaryApi";
+import { useGetAllTeachersQuery } from "@/redux/api/teacherApi";
+import { useGetAllStaffQuery } from "@/redux/api/staffApi";
 import toast from "react-hot-toast";
 
 interface AddSalaryDialogProps {
@@ -54,13 +57,41 @@ const AddSalaryModal = ({ open, onClose, salaryId }: AddSalaryDialogProps) => {
     { skip: !salaryId },
   );
 
+  // Fetch teachers and staff for dropdown
+  const { data: teachersData } = useGetAllTeachersQuery({ limit: 1000, page: 1 });
+  const { data: staffData } = useGetAllStaffQuery({ limit: 1000, page: 1 });
+
+  // Combine teachers and staff for dropdown options
+  const employeeOptions = useMemo(() => {
+    const teachers = teachersData?.data?.teachers || [];
+    const staff = staffData?.data?.staff || [];
+    return [
+      ...teachers.map((t: any) => ({
+        value: t._id,
+        label: `${t.name} (Teacher - ${t.teacherId})`,
+        type: "teacher",
+        basicSalary: t.monthlySalary,
+      })),
+      ...staff.map((s: any) => ({
+        value: s._id,
+        label: `${s.name} (Staff - ${s.staffId})`,
+        type: "staff",
+        basicSalary: s.monthlySalary,
+      })),
+    ];
+  }, [teachersData, staffData]);
+
   const handleSubmit = async (data: FieldValues) => {
     const formattedDate = data.effectiveDate
       ? new Date(data.effectiveDate).toISOString()
       : "";
 
+    // Find selected employee to get type
+    const selectedEmployee = employeeOptions.find((opt) => opt.value === data.employee);
+
     const submitData = {
       employee: data.employee || "",
+      employeeType: selectedEmployee?.type || data.employeeType || "teacher",
       effectiveDate: formattedDate,
       basicSalary: Number(data.basicSalary) || 0,
       houseRent: Number(data.houseRent) || 0,
@@ -71,6 +102,8 @@ const AddSalaryModal = ({ open, onClose, salaryId }: AddSalaryDialogProps) => {
       incomeTax: Number(data.incomeTax) || 0,
       providentFund: Number(data.providentFund) || 0,
       otherDeductions: Number(data.otherDeductions) || 0,
+      advanceGiven: Number(data.advanceGiven) || 0,
+      paidAmount: Number(data.paidAmount) || 0,
       notes: data.notes || "",
     };
     try {
@@ -96,6 +129,7 @@ const AddSalaryModal = ({ open, onClose, salaryId }: AddSalaryDialogProps) => {
 
   const defaultValues = {
     employee: singleSalary?.data?.employee ?? "",
+    employeeType: singleSalary?.data?.employeeType ?? "",
     basicSalary: singleSalary?.data?.basicSalary ?? "",
     houseRent: singleSalary?.data?.houseRent ?? "",
     medicalAllowance: singleSalary?.data?.medicalAllowance ?? "",
@@ -107,6 +141,8 @@ const AddSalaryModal = ({ open, onClose, salaryId }: AddSalaryDialogProps) => {
     providentFund: singleSalary?.data?.providentFund ?? "",
     otherDeductions: singleSalary?.data?.otherDeductions ?? "",
     netSalary: singleSalary?.data?.netSalary ?? "",
+    advanceGiven: singleSalary?.data?.advanceGiven ?? "",
+    paidAmount: singleSalary?.data?.paidAmount ?? "",
     effectiveDate: singleSalary?.data?.effectiveDate
       ? singleSalary.data.effectiveDate.split("T")[0]
       : "",
@@ -207,15 +243,28 @@ const AddSalaryModal = ({ open, onClose, salaryId }: AddSalaryDialogProps) => {
 
                   <Grid container spacing={3}>
                     <Grid item xs={12}>
-                      <CraftInput
+                      <CraftSelect
                         name="employee"
                         fullWidth
-                        label=" Employee Name"
+                        label="Employee Name (শিক্ষক/কর্মচারী)"
+                        items={employeeOptions.map((opt: any) => ({ label: opt.label, value: opt.value }))}
+                        placeholder="Search teacher or staff..."
                         sx={StyledTextFieldSx}
                       />
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid item xs={12} md={6}>
+                      <CraftInput
+                        name="employeeType"
+                        fullWidth
+                        label="Employee Type"
+                        sx={StyledTextFieldSx}
+                        disabled
+                        placeholder="Auto-filled from selection"
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
                       <CraftDatePicker
                         name="effectiveDate"
                         sx={StyledTextFieldSx}
@@ -451,6 +500,66 @@ const AddSalaryModal = ({ open, onClose, salaryId }: AddSalaryDialogProps) => {
                   </SectionCard>
                 </Grid>
               </Grid>
+
+              {/* Salary Payment Details Section */}
+              <SectionCard
+                bgcolor="linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)"
+                sx={{ mt: 4 }}
+              >
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                    <AttachMoney
+                      sx={{ fontSize: 30, color: "#f57c00", mr: 2 }}
+                    />
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, color: "#f57c00" }}
+                    >
+                      Salary Payment Details
+                    </Typography>
+                  </Box>
+
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <CraftInput
+                        name="advanceGiven"
+                        sx={StyledTextFieldSx}
+                        fullWidth
+                        type="number"
+                        margin="none"
+                        label="Advance Given (অগ্রিম বেতন) ৳"
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">৳</InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <CraftInput
+                        name="paidAmount"
+                        sx={StyledTextFieldSx}
+                        fullWidth
+                        type="number"
+                        margin="none"
+                        label="Paid Amount (পরিশোধিত পরিমাণ) ৳"
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">৳</InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Due Amount will be calculated: (Basic + Allowances) - Deductions - Advance Given - Paid Amount
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </SectionCard>
 
               {/* Notes Section */}
               <SectionCard
