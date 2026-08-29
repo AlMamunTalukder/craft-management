@@ -7,6 +7,10 @@ import CraftForm from "@/components/Forms/Form";
 import CraftInput from "@/components/Forms/Input";
 import { useLoginMutation } from "@/redux/features/auth/auth.api";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import { storeUserInfo } from "@/services/auth.services";
+import Cookies from "js-cookie";
+
 import {
   AdminPanelSettings,
   Architecture,
@@ -82,12 +86,15 @@ const loginSchema = z.object({
 });
 
 // ----- Domain credentials map -----
-const DOMAIN_CREDENTIALS: Record<string, { credential: string; password: string }> = {
+const DOMAIN_CREDENTIALS: Record<
+  string,
+  { credential: string; password: string }
+> = {
   "craft.janataautosolution.com": {
     credential: "admin@gmail.com",
     password: "Admin!@#super33",
   },
-  "localhost": {
+  localhost: {
     credential: "admin@gmail.com",
     password: "Admin!@#super33",
   },
@@ -133,10 +140,14 @@ const LoginDashboard = () => {
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
   // ----- Domain detection (with fallback) -----
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const hostname =
+    typeof window !== "undefined" ? window.location.hostname : "";
   const domainDefaults = getDomainCredentials(hostname);
   const defaultFormValues = domainDefaults
-    ? { credential: domainDefaults.credential, password: domainDefaults.password }
+    ? {
+        credential: domainDefaults.credential,
+        password: domainDefaults.password,
+      }
     : {};
 
   // ----- Debug: log the detected hostname (remove in production) -----
@@ -214,8 +225,14 @@ const LoginDashboard = () => {
       if (res?.success) {
         toast.success(
           res.message ||
-          `Welcome to Craft International Institute! Login Successful!`,
+            `Welcome to Craft International Institute! Login Successful!`,
         );
+
+        storeUserInfo({ accessToken: res.data.accessToken });
+        Cookies.set("accessToken", res.data.accessToken, { path: "/" });
+        if (res.data.refreshToken)
+          Cookies.set("refreshToken", res.data.refreshToken, { path: "/" });
+
         router.push("/dashboard");
       } else {
         toast.error("Invalid response from server");
@@ -956,14 +973,11 @@ const LoginDashboard = () => {
                       />
                     </Box>
 
-
-
                     <CraftForm
                       onSubmit={handleSubmit}
                       resolver={zodResolver(loginSchema)}
                       defaultValues={defaultFormValues}
                     >
-
                       <FormValuesSetter
                         defaultValues={defaultFormValues}
                         enabled={!!domainDefaults}

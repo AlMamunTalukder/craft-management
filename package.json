@@ -4,12 +4,23 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:docker": "bash scripts/dev-with-docker.sh",
+    "dev:docker:win": "scripts/dev-with-docker.bat",
     "build": "next build",
     "start": "next start -p 3002",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "redis:cli": "docker-compose exec redis redis-cli"
   },
   "pnpm": {
-    "allowedBuildScripts": ["core-js", "esbuild", "sharp", "unrs-resolver"]
+    "allowedBuildScripts": [
+      "core-js",
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -55,6 +66,7 @@
     "react-virtualized-auto-sizer": "^1.0.26",
     "react-window": "^1.8.11",
     "recharts": "^2.15.2",
+    "redis": "^6.2.1",
     "sharp": "^0.34.1",
     "sweetalert2": "^11.20.0",
     "use-debounce": "^10.0.4",

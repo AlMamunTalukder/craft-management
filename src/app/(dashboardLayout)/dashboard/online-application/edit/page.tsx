@@ -13,6 +13,7 @@ import CraftSelect from "@/components/Forms/Select";
 import CraftSwitch from "@/components/Forms/switch";
 import FileUploadWithIcon from "@/components/Forms/Upload";
 import { bloodGroups, genderOptions } from "@/options";
+import { STUDENT_CATEGORIES } from "@/constant/studentCategory";
 import {
   angerOptions,
   behaviorGeneralOptions,
@@ -154,6 +155,7 @@ export default function EditAdmissionApplication() {
       const apiData = {
         academicYear: formData.session,
         termsAccepted: formData.termsAccepted,
+        category: formData.category,
         studentInfo: {
           nameBangla: formData.StudentName,
           nameEnglish: formData.studentName,
@@ -279,6 +281,7 @@ export default function EditAdmissionApplication() {
   // ✅ All defaultValues mapped 1-to-1 from API response
   const defaultValues = {
     // Student Info
+    category: (d as any)?.category ?? "Residential",
     StudentName: d?.studentInfo?.nameBangla ?? "",
     studentName: d?.studentInfo?.nameEnglish ?? "",
     dateOfBirth: d?.studentInfo?.dateOfBirth?.split("T")[0] ?? "",
@@ -597,7 +600,17 @@ export default function EditAdmissionApplication() {
                   </Typography>
                 </Box>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} md={3}>
+                    <CraftSelect
+                      fullWidth
+                      label="একাডেমিক ক্যাটাগরি"
+                      name="category"
+                      items={STUDENT_CATEGORIES.map((c) => c.value)}
+                      size="small"
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={3}>
                     <CraftInput
                       fullWidth
                       label="পূর্ববর্তী প্রতিষ্ঠানের নাম"

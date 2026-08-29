@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Redis for caching, sessions, rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: craft-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - craft-network
+
+  # Optional: Redis Commander for GUI management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: craft-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - craft-network
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  craft-network:
+    driver: bridge

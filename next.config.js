@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  // output: 'standalone', // enable only for Docker build (requires admin on Windows)
   images: {
     remotePatterns: [
       {
@@ -9,6 +10,12 @@ const nextConfig = {
         hostname: "res.cloudinary.com",
       },
     ],
+  },
+  // Enable experimental features if needed
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
 };
 

@@ -7,6 +7,7 @@
 import type React from "react";
 
 import { LoadingState } from "@/components/common/LoadingState";
+import { STUDENT_CATEGORIES } from "@/constant/studentCategory";
 import CraftIntAutoCompleteWithIcon from "@/components/Forms/AutocompleteWithIcon";
 import CraftForm from "@/components/Forms/Form";
 import CraftInputWithIcon from "@/components/Forms/inputWithIcon";
@@ -1350,11 +1351,7 @@ const StudentForm = ({ id }: StudentFormProps) => {
                       size="medium"
                       label="Category"
                       placeholder="Select Student Type"
-                      items={['Residential',
-                        'Non-Residential',
-                        'Day Care',
-                        'Non-Residential One Meal',
-                        'Day Care One Meal', 'Residential No Meal',]}
+                      items={STUDENT_CATEGORIES.map((c) => c.value)}
                       adornment={<Person color="action" />}
                     />
                   </Grid>

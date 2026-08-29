@@ -12,6 +12,7 @@ import CraftInputWithIcon from "@/components/Forms/inputWithIcon";
 import CraftSelectWithIcon from "@/components/Forms/selectWithIcon";
 import { useAcademicOption } from "@/hooks/useAcademicOption";
 import { bloodGroups } from "@/options";
+import { STUDENT_CATEGORIES } from "@/constant/studentCategory";
 import {
   useCreateEnrollmentMutation,
   useGetSingleEnrollmentQuery,
@@ -102,14 +103,8 @@ const getFirstIncompleteStep = (formData: any): number => {
   return 3;
 };
 
-// Category options
-const CATEGORY_OPTIONS = [
-  { label: "Residential", value: "Residential" },
-  { label: "Non-Residential", value: "Non-Residential" },
-  { label: "Day Care", value: "Day Care" },
-  { label: "Day Care One Meal", value: "Day Care One Meal" },
-  { label: "Non-Residential One Meal", value: "Non-Residential One Meal" },
-];
+// Category options - from centralized constant (6 values same as client)
+const CATEGORY_OPTIONS = STUDENT_CATEGORIES.map((c) => ({ label: c.label, value: c.value }));
 
 // ─── AdmissionApplicationSelector ────────────────────────────────────────────────
 const AdmissionApplicationSelector = ({
