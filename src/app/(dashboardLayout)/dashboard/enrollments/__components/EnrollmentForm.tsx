@@ -1228,7 +1228,7 @@ const transformApplicationToFormData = (
     mobileNo:
       fatherInfo.mobile || motherInfo.mobile || guardianInfo.mobile || "",
     session: application.academicYear || new Date().getFullYear().toString(),
-    category: studentInfo.category || "Residential",
+    category: (application as any).category || studentInfo.category || "Residential",
     dateOfBirth: formatDate(studentInfo.dateOfBirth),
     nidBirth: studentInfo.nidBirth || "",
     bloodGroup: studentInfo.bloodGroup || "",

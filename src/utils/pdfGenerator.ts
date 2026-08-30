@@ -423,11 +423,10 @@ export const generatePDFFromData = async (
           <div class="sidebar">
             <!-- PHOTO -->
             <div class="sidebar-photo">
-              ${
-                formData.studentPhoto
-                  ? `<img src="${formData.studentPhoto}" />`
-                  : `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#b45309; font-size:8px;">ছবি নেই</div>`
-              }
+              ${formData.studentPhoto
+      ? `<img src="${formData.studentPhoto}" />`
+      : `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#b45309; font-size:8px;">ছবি নেই</div>`
+    }
             </div>
 
             <!-- STUDENT ID -->
@@ -544,11 +543,10 @@ export const generatePDFFromData = async (
               <div class="grid-3">
                 <div class="field">
                   <span class="label">জন্ম তারিখ</span>
-                  <div class="value">${
-                    formData.dateOfBirth
-                      ? (() => { const d = new Date(formData.dateOfBirth); return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}` })()
-                      : "-"
-                  }</div>
+                  <div class="value">${formData.dateOfBirth
+      ? (() => { const d = new Date(formData.dateOfBirth); return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}` })()
+      : "-"
+    }</div>
                 </div>
                 <div class="field">
                   <span class="label">বয়স</span>
@@ -581,17 +579,16 @@ export const generatePDFFromData = async (
                       ${formData.FatherMobile || "-"}
                     </div>
                   </div>
-                  ${
-                    formData.FatherWhatsapp
-                      ? `
+                  ${formData.FatherWhatsapp
+      ? `
                     <div class="field">
                       <span class="label">হোয়াটসঅ্যাপ</span>
                       <div class="value" style="border:none; min-height:auto;">
                         ${formData.FatherWhatsapp}
                       </div>
                     </div>`
-                      : ""
-                  }
+      : ""
+    }
                   </div>
                 </div>
                 <div class="info-card">
@@ -610,17 +607,16 @@ export const generatePDFFromData = async (
                       ${formData.MotherMobile || "-"}
                     </div>
                   </div>
-                  ${
-                    formData.MotherWhatsapp
-                      ? `
+                  ${formData.MotherWhatsapp
+      ? `
                     <div class="field">
                       <span class="label">হোয়াটসঅ্যাপ</span>
                       <div class="value" style="border:none; min-height:auto;">
                         ${formData.MotherWhatsapp}
                       </div>
                     </div>`
-                      : ""
-                  }
+      : ""
+    }
                   </div>
                 </div>
               </div>
@@ -640,8 +636,7 @@ export const generatePDFFromData = async (
             <!-- ===== ACADEMIC INFO ===== -->
             <div class="section">
               <div class="section-title">পূর্ববর্তী একাডেমিক তথ্য</div>
-              <div class="grid-4">
-               
+              <div class="grid-3">               
                 <div class="field">
                   <span class="label">পূর্ববর্তী প্রতিষ্ঠান</span>
                   <div class="value">${formData.PrevSchool || "-"}</div>
@@ -736,16 +731,15 @@ export const generatePDFFromData = async (
             </div>
 
             <!-- ===== PLEDGE ===== -->
-            ${
-              formData.termsAccepted
-                ? `
+            ${formData.termsAccepted
+      ? `
             <div class="pledge-box">
               আমি <strong>${formData.StudentName || "__________"}</strong> সজ্ঞানে অঙ্গীকার করছি যে,
               প্রতিষ্ঠানের সকল নিয়মকানুন মেনে চলব। প্রতিষ্ঠানের আইন পরিপন্থি কোনো কিছু আমার মাঝে
               পরিলক্ষিত হলে কর্তৃপক্ষের সিদ্ধান্ত মেনে নিতে বাধ্য থাকব।
             </div>`
-                : ""
-            }
+      : ""
+    }
             </div> <!-- end content-grow -->
 
             <div class="bottom-pin">
