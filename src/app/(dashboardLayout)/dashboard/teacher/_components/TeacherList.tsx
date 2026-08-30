@@ -58,56 +58,68 @@ export default function TeacherList() {
 
   useEffect(() => {
     if (teacherData && teacherData.data && !isLoading) {
-      const formattedTeachers = teacherData.data.map(
-        (teacher: any, index: number) => {
-          let department = "Not Specified";
-          if (teacher.department) {
-            department = teacher.department;
-          } else if (teacher.professionalInfo?.department) {
-            department = teacher.professionalInfo.department;
-          }
+      const formattedTeachers = teacherData.data
+        .map(
+          (teacher: any, index: number) => {
+            let department = "Not Specified";
+            if (teacher.department) {
+              department = teacher.department;
+            } else if (teacher.professionalInfo?.department) {
+              department = teacher.professionalInfo.department;
+            }
 
-          const teacherName = teacher.englishName || teacher.name || "Unknown";
+            const teacherName = teacher.englishName || teacher.name || "Unknown";
 
-          const status =
-            teacher.status?.toLowerCase() === "active" ||
-              teacher.additionalInfo?.status?.toLowerCase() === "active"
-              ? ("Active" as TeacherStatus)
-              : ("Inactive" as TeacherStatus);
-          const experience = calculateExperience(
-            teacher.joiningDate || teacher.professionalInfo?.joiningDate,
-          );
+            const status =
+              teacher.status?.toLowerCase() === "active" ||
+                teacher.additionalInfo?.status?.toLowerCase() === "active"
+                ? ("Active" as TeacherStatus)
+                : ("Inactive" as TeacherStatus);
+            const experience = calculateExperience(
+              teacher.joiningDate || teacher.professionalInfo?.joiningDate,
+            );
 
-          return {
-            id: index + 1,
-            _id: teacher._id,
-            name: teacherName,
-            teacherPhoto: teacher.teacherPhoto || "",
-            department: department,
-            status: status,
-            email: teacher.email || "Not Available",
-            phone: teacher.phone || "Not Available",
-            subjects: [],
-            classes: [],
-            experience: experience,
-            rating: "4.5",
-            performance: 85,
-            students: 120,
-            joinDate: new Date(
-              teacher.joiningDate ||
-              teacher.professionalInfo?.joiningDate ||
-              teacher.createdAt,
-            ).toLocaleDateString(),
-            qualifications:
-              teacher.designation ||
-              teacher.professionalInfo?.designation ||
-              "Teacher",
-            teacherId: teacher.teacherId || "",
-            // FIX: Added teacherSerial here
-            teacherSerial: teacher.teacherSerial || "",
-          };
-        },
-      );
+            return {
+              id: index + 1,
+              _id: teacher._id,
+              name: teacherName,
+              teacherPhoto: teacher.teacherPhoto || "",
+              department: department,
+              status: status,
+              email: teacher.email || "Not Available",
+              phone: teacher.phone || "Not Available",
+              subjects: [],
+              classes: [],
+              experience: experience,
+              rating: "4.5",
+              performance: 85,
+              students: 120,
+              joinDate: new Date(
+                teacher.joiningDate ||
+                teacher.professionalInfo?.joiningDate ||
+                teacher.createdAt,
+              ).toLocaleDateString(),
+              qualifications:
+                teacher.designation ||
+                teacher.professionalInfo?.designation ||
+                "Teacher",
+              teacherId: teacher.teacherId || "",
+              teacherSerial: teacher.teacherSerial || "",
+            };
+          },
+        )
+        .sort((a: any, b: any) => {
+          const aHas = !!a.teacherSerial;
+          const bHas = !!b.teacherSerial;
+          if (aHas && !bHas) return -1;
+          if (!aHas && bHas) return 1;
+          if (!aHas && !bHas) return 0;
+          const aNum = parseInt(String(a.teacherSerial), 10);
+          const bNum = parseInt(String(b.teacherSerial), 10);
+          if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+          return String(a.teacherSerial).localeCompare(String(b.teacherSerial), 'en', { numeric: true });
+        })
+        .map((t: any, idx: number) => ({ ...t, id: idx + 1 }));
 
       setTeachers(formattedTeachers);
     }
@@ -327,8 +339,8 @@ export default function TeacherList() {
           onSortChange={handleSortChange}
           onSearchChange={handleSearchChange}
           idField="_id"
-          defaultSortColumn="createdAt"
-          defaultSortDirection="desc"
+          defaultSortColumn="teacherSerial"
+          defaultSortDirection="asc"
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={(newPage) => setPage(newPage)}

@@ -47,14 +47,15 @@ export function useAcademicOption(limit = 100, initialSearch = "") {
     searchTerm: searchTerm,
   });
 
-  // Fetch teachers
+  // Fetch teachers - serial wise
   const { data: teacherData, isLoading: teacherLoading } =
     useGetAllTeachersQuery({
       limit,
       page: page + 1,
       searchTerm,
-      department: department
-    });
+      department: department,
+      sort: 'teacherSerial',
+    } as any);
 
 
   // Fetch students

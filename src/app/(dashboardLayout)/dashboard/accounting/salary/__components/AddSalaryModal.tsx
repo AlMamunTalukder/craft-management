@@ -57,18 +57,28 @@ const AddSalaryModal = ({ open, onClose, salaryId }: AddSalaryDialogProps) => {
     { skip: !salaryId },
   );
 
-  // Fetch teachers and staff for dropdown
-  const { data: teachersData } = useGetAllTeachersQuery({ limit: 1000, page: 1 });
+  // Fetch teachers and staff for dropdown - sort teachers by serial
+  const { data: teachersData } = useGetAllTeachersQuery({ limit: 1000, page: 1, sort: 'teacherSerial' } as any);
   const { data: staffData } = useGetAllStaffQuery({ limit: 1000, page: 1 });
 
-  // Combine teachers and staff for dropdown options
+  // Combine teachers and staff for dropdown options - serial wise (with serial first)
   const employeeOptions = useMemo(() => {
-    const teachers = teachersData?.data || [];
+    const teachers = [...(teachersData?.data || [])].sort((a: any, b: any) => {
+      const aHas = !!a.teacherSerial;
+      const bHas = !!b.teacherSerial;
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+      if (!aHas && !bHas) return 0;
+      const aNum = parseInt(String(a.teacherSerial), 10);
+      const bNum = parseInt(String(b.teacherSerial), 10);
+      if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+      return String(a.teacherSerial).localeCompare(String(b.teacherSerial), 'en', { numeric: true });
+    });
     const staff = staffData?.data || [];
     return [
       ...teachers.map((t: any) => ({
         value: t._id,
-        label: `${t.name} (Teacher - ${t.teacherId})`,
+        label: `${t.teacherSerial ? `#${t.teacherSerial} - ` : ""}${t.name} (Teacher - ${t.teacherId})`,
         type: "teacher",
         basicSalary: t.monthlySalary,
       })),

@@ -82,7 +82,7 @@ const AddMealForm: any = ({ isUpdate = false, attendanceId = '' }) => {
   const category = 'Residential'
 
   const { data: staffApiData } = useGetAllStaffQuery({ category: category });
-  const { data: teacherApiData } = useGetAllTeachersQuery({ category: category });
+  const { data: teacherApiData } = useGetAllTeachersQuery({ category: category, sort: 'teacherSerial' } as any);
 
   // ─── Core state ────────────────────────────────────────────────────────────
   const [personType, setPersonType] = useState<PersonType>('student');

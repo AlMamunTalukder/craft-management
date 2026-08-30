@@ -79,12 +79,18 @@ const ClassRoutinePage = () => {
 
   const { data: classesData } = useGetAllClassesQuery({ limit: 100, page: 1 });
   const { data: subjectsData } = useGetAllSubjectsQuery({ limit: 100, page: 1 });
-  const { data: teachersData } = useGetAllTeachersQuery({ limit: 100, page: 1 });
+  const { data: teachersData } = useGetAllTeachersQuery({ limit: 100, page: 1, sort: 'teacherSerial' } as any);
   const { data: sectionsData } = useGetAllSectionsQuery({ limit: 100, page: 1 });
 
   const classes = classesData?.data?.classes || [];
   const subjects = subjectsData?.data?.subjects || [];
-  const teachers = teachersData?.data || [];
+  const teachers = [...(teachersData?.data || [])].sort((a: any, b: any) => {
+    const aHas = !!a.teacherSerial; const bHas = !!b.teacherSerial;
+    if (aHas && !bHas) return -1; if (!aHas && bHas) return 1; if (!aHas && !bHas) return 0;
+    const aNum = parseInt(String(a.teacherSerial), 10); const bNum = parseInt(String(b.teacherSerial), 10);
+    if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+    return String(a.teacherSerial).localeCompare(String(b.teacherSerial), 'en', { numeric: true });
+  });
   const sections = sectionsData?.data?.sections || [];
 
   const { data, isLoading, refetch } = useGetWeekRoutineQuery(
