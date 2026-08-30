@@ -38,7 +38,7 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { JSX, useCallback, useEffect, useMemo, useState } from "react";
@@ -65,20 +65,48 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
     if (!prof) return "";
     const p = prof.toLowerCase();
     const fatherMap: Record<string, string> = {
-      teacher: "teacher", doctor: "doctor", engineer: "engineer", business: "business",
-      govt_job: "govt_job", private_job: "private_job", expatriate: "expatriate",
-      lawyer: "lawyer", farmer: "farmer", driver: "driver", others: "others",
-      "গুরু": "teacher", "ডাক্তার": "doctor", "ইঞ্জিনিয়ার": "engineer", "ব্যবসায়ী": "business",
-      "সরকারী চাকরিজীবি": "govt_job", "বেসরকারী চাকরিজীবি": "private_job",
-      "প্রবাসী": "expatriate", "উকিল": "lawyer", "কৃষক": "farmer", "চালক": "driver", "অন্যান্য": "others",
+      teacher: "teacher",
+      doctor: "doctor",
+      engineer: "engineer",
+      business: "business",
+      govt_job: "govt_job",
+      private_job: "private_job",
+      expatriate: "expatriate",
+      lawyer: "lawyer",
+      farmer: "farmer",
+      driver: "driver",
+      others: "others",
+      গুরু: "teacher",
+      ডাক্তার: "doctor",
+      ইঞ্জিনিয়ার: "engineer",
+      ব্যবসায়ী: "business",
+      "সরকারী চাকরিজীবি": "govt_job",
+      "বেসরকারী চাকরিজীবি": "private_job",
+      প্রবাসী: "expatriate",
+      উকিল: "lawyer",
+      কৃষক: "farmer",
+      চালক: "driver",
+      অন্যান্য: "others",
     };
     const motherMap: Record<string, string> = {
-      housewife: "Housewife", teacher: "teacher", doctor: "doctor", engineer: "engineer",
-      business: "business", govt_job: "govt_job", private_job: "private_job",
-      lawyer: "lawyer", others: "others",
-      "গৃহিণী": "Housewife", "শিক্ষকা": "teacher", "ডাক্তার": "doctor",
-      "ইঞ্জিনিয়ার": "engineer", "ব্যবসায়ী": "business", "সরকারি চাকরিজীবি": "govt_job",
-      "বেসরকারী চাকরিজীবি": "private_job", "উকিল": "lawyer", "অন্যান্য": "others",
+      housewife: "Housewife",
+      teacher: "teacher",
+      doctor: "doctor",
+      engineer: "engineer",
+      business: "business",
+      govt_job: "govt_job",
+      private_job: "private_job",
+      lawyer: "lawyer",
+      others: "others",
+      গৃহিণী: "Housewife",
+      শিক্ষকা: "teacher",
+      ডাক্তার: "doctor",
+      ইঞ্জিনিয়ার: "engineer",
+      ব্যবসায়ী: "business",
+      "সরকারি চাকরিজীবি": "govt_job",
+      "বেসরকারী চাকরিজীবি": "private_job",
+      উকিল: "lawyer",
+      অন্যান্য: "others",
     };
     const map = type === "father" ? fatherMap : motherMap;
     return map[p] || p;
@@ -98,7 +126,7 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
     bloodGroup: student.bloodGroup || "",
     session: academic.session || student.session || "",
     nationality: student.nationality || "",
-    category: student.category || "Residential",
+    category: (app as any).category || student.category || "Residential",
     rollNumber: student.rollNumber || student.roll || "",
     section: student.section || "",
     group: student.group || "",
@@ -107,7 +135,10 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
 
     FatherNameBangla: father.nameBangla || "",
     FatherName: father.nameEnglish || "",
-    FatherJob: mapProfession(father.profession || father.occupation || "", "father"),
+    FatherJob: mapProfession(
+      father.profession || father.occupation || "",
+      "father",
+    ),
     FatherMobile: father.mobile || "",
     FatherWhatsapp: father.whatsapp || "",
     FatherNid: father.nid || father.nidBirth || "",
@@ -116,7 +147,10 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
 
     MotherNameBangla: mother.nameBangla || "",
     MotherName: mother.nameEnglish || "",
-    MotherJob: mapProfession(mother.profession || mother.occupation || "", "mother"),
+    MotherJob: mapProfession(
+      mother.profession || mother.occupation || "",
+      "mother",
+    ),
     MotherMobile: mother.mobile || "",
     MotherWhatsapp: mother.whatsapp || "",
     MotherNid: mother.nid || mother.nidBirth || "",
@@ -127,6 +161,8 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
     guardianName: parent.guardian?.nameEnglish || "",
     guardianRelation: parent.guardian?.relation || "",
     guardianMobile: parent.guardian?.mobile || "",
+    guardianWhatsapp: parent.guardian?.whatsapp || "",
+    guardianJob: parent.guardian?.profession || "",
     guardianAddress: parent.guardian?.address || "",
 
     village: present.village || "",
@@ -600,7 +636,6 @@ export default function AdmissionApplicationList({
     [router],
   );
 
-
   const columns: Column[] = useMemo(() => {
     const cols: Column[] = [
       {
@@ -834,9 +869,6 @@ export default function AdmissionApplicationList({
     handleDownloadPDF,
   ]);
 
-
-
-
   const getHeaderBanner = () => {
     const bannerConfig = {
       pending: {
@@ -961,7 +993,7 @@ export default function AdmissionApplicationList({
   };
 
   if (isLoading) {
-    return <LoadingState />
+    return <LoadingState />;
   }
 
   return (

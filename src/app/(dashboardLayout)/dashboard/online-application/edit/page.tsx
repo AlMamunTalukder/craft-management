@@ -50,7 +50,7 @@ import {
   CardContent,
   CircularProgress,
   Divider,
-  Grid,
+  Grid2 as Grid,
   InputAdornment,
   Paper,
   Snackbar,
@@ -468,16 +468,16 @@ export default function EditAdmissionApplication() {
                 </Box>
 
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <FileUploadWithIcon
                       name="studentPhoto"
                       label="Student Photo"
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={8}>
+                  <Grid size={{ xs: 12, md: 8 }}>
                     <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <CraftInput
                           fullWidth
                           label="শিক্ষার্থীর নাম (বাংলা)"
@@ -485,7 +485,7 @@ export default function EditAdmissionApplication() {
                           size="small"
                         />
                       </Grid>
-                      <Grid item xs={12} md={6}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <CraftInput
                           fullWidth
                           label="Student Name (English)"
@@ -493,25 +493,7 @@ export default function EditAdmissionApplication() {
                           size="small"
                         />
                       </Grid>
-                      <Grid item xs={12} md={4}>
-                        <CraftDatePicker
-                          fullWidth
-                          label="জন্ম তারিখ"
-                          name="dateOfBirth"
-                          size="small"
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <CraftInput
-                          fullWidth
-                          label="বয়স"
-                          name="Age"
-                          disabled
-                          size="small"
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        {/* ✅ genderOptions must be string[] e.g. ["male","female"] */}
+                      <Grid size={{ xs: 12, md: 4 }}>                       
                         <CraftSelect
                           fullWidth
                           label="লিঙ্গ"
@@ -520,9 +502,27 @@ export default function EditAdmissionApplication() {
                           size="small"
                         />
                       </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <CraftDatePicker
+                          fullWidth
+                          label="জন্ম তারিখ"
+                          name="dateOfBirth"
+                          size="small"
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <CraftInput
+                          fullWidth
+                          label="বয়স"
+                          name="Age"
+                          disabled
+                          size="small"
+                        />
+                      </Grid>
+                      
 
                       {/* ✅ Department — plain string[] */}
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <CraftSelect
                           fullWidth
                           label="বিভাগ"
@@ -534,14 +534,14 @@ export default function EditAdmissionApplication() {
                       </Grid>
 
                       {/* ✅ Class — filtered by department, defaultValue from API */}
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <DepartmentAwareClassSelect
                           defaultDept={defaultValues.studentDept}
                           defaultClass={defaultValues.className}
                         />
                       </Grid>
 
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <CraftInput
                           fullWidth
                           label="সেশন"
@@ -549,7 +549,7 @@ export default function EditAdmissionApplication() {
                           size="small"
                         />
                       </Grid>
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <CraftInput
                           fullWidth
                           label="জাতীয় পরিচয়পত্র/জন্ম নিবন্ধন"
@@ -557,8 +557,7 @@ export default function EditAdmissionApplication() {
                           size="small"
                         />
                       </Grid>
-                      <Grid item xs={12} md={4}>
-                        {/* ✅ bloodGroups must be string[] e.g. ["A+","B+", ...] */}
+                      <Grid size={{ xs: 12, md: 4 }}>                        
                         <CraftSelect
                           fullWidth
                           label="রক্তের গ্রুপ"
@@ -567,7 +566,7 @@ export default function EditAdmissionApplication() {
                           size="small"
                         />
                       </Grid>
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <CraftInput
                           fullWidth
                           label="জাতীয়তা"
@@ -600,7 +599,7 @@ export default function EditAdmissionApplication() {
                   </Typography>
                 </Box>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={3}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <CraftSelect
                       fullWidth
                       label="একাডেমিক ক্যাটাগরি"
@@ -610,7 +609,7 @@ export default function EditAdmissionApplication() {
                       required
                     />
                   </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <CraftInput
                       fullWidth
                       label="পূর্ববর্তী প্রতিষ্ঠানের নাম"
@@ -618,7 +617,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <CraftInput
                       fullWidth
                       label="পূর্ববর্তী শ্রেণি"
@@ -626,7 +625,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <CraftInput
                       fullWidth
                       label="সর্বশেষ জিপিএ"
@@ -666,7 +665,7 @@ export default function EditAdmissionApplication() {
                   পিতার তথ্য
                 </Typography>
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="পিতার নাম (বাংলা)"
@@ -675,7 +674,7 @@ export default function EditAdmissionApplication() {
                       required
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="Father's Name (English)"
@@ -683,7 +682,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="পেশা"
@@ -691,7 +690,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="শিক্ষাগত যোগ্যতা"
@@ -699,7 +698,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="মোবাইল"
@@ -715,7 +714,7 @@ export default function EditAdmissionApplication() {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="WhatsApp"
@@ -744,7 +743,7 @@ export default function EditAdmissionApplication() {
                   মাতার তথ্য
                 </Typography>
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="মাতার নাম (বাংলা)"
@@ -752,7 +751,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="Mother's Name (English)"
@@ -760,7 +759,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="পেশা"
@@ -768,7 +767,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="শিক্ষাগত যোগ্যতা"
@@ -776,7 +775,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="মোবাইল"
@@ -791,7 +790,7 @@ export default function EditAdmissionApplication() {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="WhatsApp"
@@ -820,7 +819,7 @@ export default function EditAdmissionApplication() {
                   অভিভাবকের তথ্য (যদি পিতা-মাতা ব্যতীত অন্য কেউ)
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="অভিভাবকের নাম (বাংলা)"
@@ -828,7 +827,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="Guardian's Name (English)"
@@ -836,7 +835,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="সম্পর্ক"
@@ -844,7 +843,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="মোবাইল"
@@ -852,7 +851,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="WhatsApp"
@@ -860,7 +859,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <CraftInput
                       fullWidth
                       label="পেশা"
@@ -868,7 +867,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <CraftInput
                       fullWidth
                       label="ঠিকানা"
@@ -909,7 +908,7 @@ export default function EditAdmissionApplication() {
                   বর্তমান ঠিকানা
                 </Typography>
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                  <Grid item xs={12} md={3}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <CraftInput
                       fullWidth
                       label="গ্রাম/এলাকা"
@@ -917,7 +916,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <CraftInput
                       fullWidth
                       label="ডাকঘর"
@@ -925,7 +924,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={2}>
+                  <Grid size={{ xs: 12, md: 2 }}>
                     <CraftInput
                       fullWidth
                       label="পোস্ট কোড"
@@ -933,7 +932,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={2}>
+                  <Grid size={{ xs: 12, md: 2 }}>
                     <CraftInput
                       fullWidth
                       label="থানা"
@@ -941,7 +940,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={2}>
+                  <Grid size={{ xs: 12, md: 2 }}>
                     <CraftInput
                       fullWidth
                       label="জেলা"
@@ -959,7 +958,7 @@ export default function EditAdmissionApplication() {
                   স্থায়ী ঠিকানা
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={3}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <CraftInput
                       fullWidth
                       label="গ্রাম/এলাকা"
@@ -968,7 +967,7 @@ export default function EditAdmissionApplication() {
                       required
                     />
                   </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <CraftInput
                       fullWidth
                       label="ডাকঘর"
@@ -977,7 +976,7 @@ export default function EditAdmissionApplication() {
                       required
                     />
                   </Grid>
-                  <Grid item xs={12} md={2}>
+                  <Grid size={{ xs: 12, md: 2 }}>
                     <CraftInput
                       fullWidth
                       label="পোস্ট কোড"
@@ -985,7 +984,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={2}>
+                  <Grid size={{ xs: 12, md: 2 }}>
                     <CraftInput
                       fullWidth
                       label="থানা"
@@ -994,7 +993,7 @@ export default function EditAdmissionApplication() {
                       required
                     />
                   </Grid>
-                  <Grid item xs={12} md={2}>
+                  <Grid size={{ xs: 12, md: 2 }}>
                     <CraftInput
                       fullWidth
                       label="জেলা"
@@ -1026,7 +1025,7 @@ export default function EditAdmissionApplication() {
                   </Typography>
                 </Box>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="HalalIncome"
                       label="আপনার পরিবারের উপার্জন ১০০% হালাল কি?"
@@ -1034,7 +1033,7 @@ export default function EditAdmissionApplication() {
                       options={yesNoOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="ParentsPrayer"
                       label="পিতা-মাতা নিয়মিত ৫ ওয়াক্ত নামাজ পড়েন কি?"
@@ -1042,7 +1041,7 @@ export default function EditAdmissionApplication() {
                       options={yesNoOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="Addiction"
                       label="পরিবারের কোন সদস্য মাদক/নেশায় আক্রান্ত?"
@@ -1050,7 +1049,7 @@ export default function EditAdmissionApplication() {
                       options={yesNoOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="TV"
                       label="বাসায় টেলিভিশন আছে কি?"
@@ -1058,7 +1057,7 @@ export default function EditAdmissionApplication() {
                       options={yesNoOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="QuranRecitation"
                       label="বাসায় নিয়মিত কুরআন তিলাওয়াত করা হয়?"
@@ -1066,7 +1065,7 @@ export default function EditAdmissionApplication() {
                       options={yesNoSometimesOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="Purdah"
                       label="পরিবারের সদস্যরা পর্দা পালন করে কি?"
@@ -1097,7 +1096,7 @@ export default function EditAdmissionApplication() {
                   </Typography>
                 </Box>
                 <Grid container spacing={3}>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <CraftInput
                       fullWidth
                       label="দৈনিক কত সময় মোবাইল ব্যবহার করে?"
@@ -1106,7 +1105,7 @@ export default function EditAdmissionApplication() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="GeneralBehavior"
                       label="সন্তানের আচরণ কেমন?"
@@ -1114,7 +1113,7 @@ export default function EditAdmissionApplication() {
                       options={behaviorGeneralOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="Obedience"
                       label="পিতা-মাতার কথা শোনে?"
@@ -1122,7 +1121,7 @@ export default function EditAdmissionApplication() {
                       options={obedienceOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="ElderBehavior"
                       label="বড়দের সাথে আচরণ?"
@@ -1130,7 +1129,7 @@ export default function EditAdmissionApplication() {
                       options={behaviorGeneralOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="YoungerBehavior"
                       label="ছোটদের সাথে আচরণ?"
@@ -1138,7 +1137,7 @@ export default function EditAdmissionApplication() {
                       options={behaviorGeneralOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="LyingStubbornness"
                       label="মিথ্যা বলে বা জেদ করে?"
@@ -1146,7 +1145,7 @@ export default function EditAdmissionApplication() {
                       options={frequencyOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="StudyInterest"
                       label="পড়ালেখায় আগ্রহ?"
@@ -1154,7 +1153,7 @@ export default function EditAdmissionApplication() {
                       options={interestOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="ReligiousInterest"
                       label="ধর্মীয় কাজে আগ্রহ?"
@@ -1162,7 +1161,7 @@ export default function EditAdmissionApplication() {
                       options={interestOptions}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <CraftRadioGroup
                       name="AngerControl"
                       label="রাগ নিয়ন্ত্রণ?"
@@ -1206,25 +1205,25 @@ export default function EditAdmissionApplication() {
                     <strong>বাধ্যতামূলক</strong>।
                   </Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <CraftCheckbox name="photographs" label="ছবি" />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <CraftCheckbox
                         name="birthCertificate"
                         label="জন্ম নিবন্ধন সনদ"
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <CraftCheckbox name="markSheet" label="মার্কশিট" />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <CraftCheckbox
                         name="transferCertificate"
                         label="ট্রান্সফার সার্টিফিকেট"
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <CraftCheckbox
                         name="characterCertificate"
                         label="চরিত্র সনদপত্র"
