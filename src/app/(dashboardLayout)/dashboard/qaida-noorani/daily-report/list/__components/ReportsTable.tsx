@@ -79,7 +79,7 @@ export default function ReportsTable({
                 <Box sx={{ p: 4, textAlign: "center" }}>
                     <LinearProgress />
                     <Typography variant="h6" color="textSecondary" sx={{ mt: 2 }}>
-                        Loading reports...
+                        Loading...
                     </Typography>
                 </Box>
             ) : isError ? (

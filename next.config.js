@@ -2,7 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // output: 'standalone', // enable only for Docker build (requires admin on Windows)
+  // Enable standalone only for Docker/Linux build (requires admin on Windows, causes EPERM)
+  ...(process.env.STANDALONE === 'true' ? { output: 'standalone' } : {}),
   images: {
     remotePatterns: [
       {

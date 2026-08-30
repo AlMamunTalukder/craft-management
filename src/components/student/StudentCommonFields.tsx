@@ -10,6 +10,10 @@ import { Person } from "@mui/icons-material";
 /**
  * Shared student fields - used by StudentForm, OnlineApplication edit, EnrollmentForm
  * Centralizes category and common student info to avoid duplication
+ *
+ * SINGLE IMPORT POINT for all student-related components.
+ * All pages should import from @/components/student/StudentCommonFields
+ * or @/components/student/*
  */
 export const StudentCategoryField = () => (
   <Grid size={{ xs: 12, md: 3 }}>
@@ -41,3 +45,11 @@ export const StudentInfoFields = () => (
     </Grid>
   </>
 );
+
+// Re-exports - Single place to import everything (for reduce code & optimized)
+// Usage: import { StudentDetailsView, admissionToFormValues } from "@/components/student/StudentCommonFields";
+export * from "./studentFieldMappers";
+export * from "./fieldMapTable";
+export * from "./StudentFormSections";
+export * from "./StudentDetailsView";
+export * from "./StudentFormWrapper";

@@ -3,6 +3,24 @@
 import { CssVarsProvider, extendTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ReactNode } from "react";
+import { Noto_Sans_Bengali, Hind_Siliguri, Roboto } from "next/font/google";
+
+const notoSansBengali = Noto_Sans_Bengali({
+  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["bengali", "latin"],
+  display: "swap",
+});
+const hindSiliguri = Hind_Siliguri({
+  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["bengali", "latin"],
+  display: "swap",
+});
+const roboto = Roboto({
+  weight: ["300", "400", "500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+});
+const banglaFontFamily = `${notoSansBengali.style.fontFamily}, ${hindSiliguri.style.fontFamily}, ${roboto.style.fontFamily}, "Inter", "Helvetica", "Arial", sans-serif`;
 
 const theme = extendTheme({
   colorSchemeSelector: "data",
@@ -21,7 +39,7 @@ const theme = extendTheme({
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: banglaFontFamily,
   },
 });
 

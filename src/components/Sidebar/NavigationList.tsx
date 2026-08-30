@@ -141,8 +141,8 @@ export const NavigationList = ({
                 lineHeight: 1.2,
               }}
             >
-              {item.title.length > 10
-                ? `${item.title.substring(0, 10)}...`
+              {item.title.length > 7
+                ? `${item.title.substring(0, 7)}...`
                 : item.title}
             </Typography>
           ) : null}

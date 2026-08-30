@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Bangla font - FORCED globally via next/font variables from layout.tsx (single source) */
+html, body, * , *::before, *::after {
+  font-family: var(--font-bangla), var(--font-bangla-secondary), "Roboto", "Inter", sans-serif !important;
+  font-variant-ligatures: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+/* Force MUI everywhere - tables, chips, tabs, cards, dialogs, edit form labels */
+.MuiTypography-root, .MuiInputBase-input, .MuiButton-root, .MuiChip-root, .MuiChip-label, .MuiTableCell-root, .MuiTableCell-head, .MuiTab-root, .MuiListItemText-primary, .MuiListItemText-secondary, .MuiCardContent-root, .MuiCardHeader-title, .MuiCardHeader-subheader, .MuiDialogTitle-root, .MuiDialogContent-root, .MuiMenuItem-root, .MuiFormLabel-root, .MuiInputLabel-root, .MuiSelect-select, .MuiOutlinedInput-input {
+  font-family: var(--font-bangla), var(--font-bangla-secondary), sans-serif !important;
+}
+
 /* body {
   background: var(--background);
   color: var(--foreground);

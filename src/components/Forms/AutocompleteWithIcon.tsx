@@ -156,7 +156,17 @@ const CraftIntAutoCompleteWithIcon = ({
           getOptionLabel={getOptionLabel}
           disableClearable={disableClearable}
           readOnly={readOnly}
-          value={field.value !== undefined ? field.value : (multiple ? [] : null)}
+          value={
+            field.value !== undefined
+              ? multiple && !Array.isArray(field.value)
+                ? field.value
+                  ? [field.value]
+                  : []
+                : field.value
+              : multiple
+                ? []
+                : null
+          }
           renderOption={renderOption}
           disabled={disabled || readOnly}
           isOptionEqualToValue={isOptionEqualToValue || defaultIsOptionEqualToValue}
@@ -177,8 +187,9 @@ const CraftIntAutoCompleteWithIcon = ({
           onClose={onClose}
           renderTags={
             renderTags ||
-            ((value: readonly any[], getTagProps) =>
-              value.map((option: any, index: number) => {
+            ((value: readonly any[], getTagProps) => {
+              if (!Array.isArray(value)) return null;
+              return value.map((option: any, index: number) => {
                 const tagProps = getTagProps({ index });
                 const { key, ...restTagProps } = tagProps;
                 return (
@@ -194,7 +205,8 @@ const CraftIntAutoCompleteWithIcon = ({
                     }}
                   />
                 );
-              }))
+              });
+            })
           }
           onChange={(event, newValue) => {
             field.onChange(newValue);

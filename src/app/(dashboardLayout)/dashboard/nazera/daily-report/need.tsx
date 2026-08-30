@@ -240,8 +240,8 @@
 //       }
 //     })
 
-//     return { totalPages, totalMistakes, totalDuaHadith }
-//   }
+//     return { totalPages, totalMistakes, totalDuaHadith } 
+//   } 
 
 //   if (isLoading) {
 //     return (

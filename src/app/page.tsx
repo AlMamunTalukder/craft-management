@@ -414,119 +414,11 @@ const LoginDashboard = () => {
                 </Typography>
               </Fade>
 
-              <Fade in timeout={1200}>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontSize: {
-                      xs: "0.85rem",
-                      sm: "1rem",
-                      md: "1.2rem",
-                      lg: "1.4rem",
-                    },
-                    color: "rgba(255,255,255,0.85)",
-                    fontWeight: 500,
-                    mb: { xs: 2, sm: 3 },
-                    maxWidth: "700px",
-                    mx: "auto",
-                    px: { xs: 2, sm: 0 },
-                  }}
-                >
-                  Empowering Education Through Innovation & Excellence
-                </Typography>
-              </Fade>
-
-              <Fade in timeout={1400}>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={{ xs: 1, sm: 2 }}
-                  justifyContent="center"
-                  alignItems="center"
-                  flexWrap="wrap"
-                  gap={1}
-                >
-                  <Chip
-                    icon={<EmojiEvents sx={{ fontSize: { xs: 16, sm: 20 } }} />}
-                    label="Best Institute 2025"
-                    sx={{
-                      bgcolor: "rgba(79,1,135,0.2)",
-                      color: "white",
-                      backdropFilter: "blur(10px)",
-                      fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                      py: { xs: 1.5, sm: 2.5 },
-                      border: "1px solid rgba(79,1,135,0.3)",
-                      "&:hover": {
-                        bgcolor: "rgba(79,1,135,0.4)",
-                        transform: "scale(1.05)",
-                        transition: "all 0.3s",
-                      },
-                    }}
-                  />
-                  <Chip
-                    icon={<TrendingUp sx={{ fontSize: { xs: 16, sm: 20 } }} />}
-                    label="ISO 21001:2018 Certified"
-                    sx={{
-                      bgcolor: "rgba(79,1,135,0.2)",
-                      color: "white",
-                      backdropFilter: "blur(10px)",
-                      fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                      border: "1px solid rgba(79,1,135,0.3)",
-                    }}
-                  />
-                  <Chip
-                    icon={<Security sx={{ fontSize: { xs: 16, sm: 20 } }} />}
-                    label="ISO 27001 Certified"
-                    sx={{
-                      bgcolor: "rgba(79,1,135,0.2)",
-                      color: "white",
-                      backdropFilter: "blur(10px)",
-                      fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                      border: "1px solid rgba(79,1,135,0.3)",
-                    }}
-                  />
-                </Stack>
-              </Fade>
             </Box>
 
             {/* Role Selection Cards */}
             <Box id="role-section">
-              <Fade in timeout={800}>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    fontSize: {
-                      xs: "1.3rem",
-                      sm: "1.8rem",
-                      md: "2.2rem",
-                      lg: "2.8rem",
-                    },
-                    textAlign: "center",
-                    color: "white",
-                    fontWeight: 700,
-                    mb: { xs: 3, sm: 4, md: 5 },
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: { xs: 1, sm: 2 },
-                  }}
-                >
-                  <AutoAwesome
-                    sx={{
-                      fontSize: { xs: 20, sm: 28, md: 40 },
-                      color: "#4F0187",
-                      animation: "glowPulse 2s infinite",
-                    }}
-                  />
-                  Select Your Portal
-                  <AutoAwesome
-                    sx={{
-                      fontSize: { xs: 20, sm: 28, md: 40 },
-                      color: "#4F0187",
-                      animation: "glowPulse 2s infinite 0.5s",
-                    }}
-                  />
-                </Typography>
-              </Fade>
+            
 
               <Grid
                 container
@@ -730,114 +622,7 @@ const LoginDashboard = () => {
             </Box>
 
             {/* Stats Section */}
-            <Box
-              sx={{
-                mt: { xs: 4, sm: 5, md: 6, lg: 8 },
-                pt: { xs: 2, sm: 3, md: 4 },
-                borderTop: "1px solid rgba(79,1,135,0.3)",
-              }}
-            >
-              <Fade in timeout={1500}>
-                <Box>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      textAlign: "center",
-                      color: "rgba(255,255,255,0.6)",
-                      mb: { xs: 2, sm: 3, md: 4 },
-                      fontSize: { xs: "0.85rem", sm: "1rem", md: "1.1rem" },
-                    }}
-                  >
-                    Craft International Institute By The Numbers
-                  </Typography>
-                  <Grid
-                    container
-                    spacing={{ xs: 1.5, sm: 2, md: 3 }}
-                    justifyContent="center"
-                  >
-                    {[
-                      {
-                        icon: <School />,
-                        label: "Students Enrolled",
-                        value: "5,000+",
-                        color: "#FF3366",
-                      },
-                      {
-                        icon: <MenuBook />,
-                        label: "Expert Faculty",
-                        value: "250+",
-                        color: "#06B6D4",
-                      },
-                      {
-                        icon: <Architecture />,
-                        label: "Courses",
-                        value: "50+",
-                        color: "#7C3AED",
-                      },
-                      {
-                        icon: <Handshake />,
-                        label: "Placement Rate",
-                        value: "95%",
-                        color: "#10B981",
-                      },
-                      {
-                        icon: <Celebration />,
-                        label: "Years of Excellence",
-                        value: "15+",
-                        color: "#F59E0B",
-                      },
-                    ].map((stat, idx) => (
-                      <Grid item xs={6} sm={4} md={2.4} key={idx}>
-                        <Box
-                          sx={{ textAlign: "center", px: { xs: 0.5, sm: 1 } }}
-                        >
-                          <Avatar
-                            sx={{
-                              bgcolor: alpha(stat.color, 0.2),
-                              color: stat.color,
-                              width: { xs: 45, sm: 55, md: 60 },
-                              height: { xs: 45, sm: 55, md: 60 },
-                              mx: "auto",
-                              mb: { xs: 0.5, sm: 1 },
-                            }}
-                          >
-                            {stat.icon}
-                          </Avatar>
-                          <Typography
-                            variant="h4"
-                            sx={{
-                              color: "white",
-                              fontWeight: 800,
-                              fontSize: {
-                                xs: "1rem",
-                                sm: "1.3rem",
-                                md: "1.8rem",
-                                lg: "2rem",
-                              },
-                            }}
-                          >
-                            {stat.value}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: "rgba(255,255,255,0.6)",
-                              fontSize: {
-                                xs: "0.65rem",
-                                sm: "0.7rem",
-                                md: "0.8rem",
-                              },
-                            }}
-                          >
-                            {stat.label}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
-              </Fade>
-            </Box>
+            
           </>
         ) : (
           /* Login Form Section */
@@ -1232,30 +1017,17 @@ const LoginDashboard = () => {
                               <LoginIcon
                                 sx={{ mr: 1, fontSize: { xs: 18, sm: 20 } }}
                               />
-                              Access{" "}
+                              Login{" "}
                               {selectedRole
                                 ? roleConfig[selectedRole].label
                                 : "Your"}{" "}
                               Portal
-                              <ArrowForward
-                                sx={{ ml: 1, fontSize: { xs: 16, sm: 18 } }}
-                              />
+                              
                             </>
                           )}
                         </Button>
 
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            textAlign: "center",
-                            color: "#4F0187",
-                            mt: 1,
-                            fontSize: { xs: "0.65rem", sm: "0.7rem" },
-                          }}
-                        >
-                          © {new Date().getFullYear()} Craft International
-                          Institute. All rights reserved.
-                        </Typography>
+                        
                       </Box>
                     </CraftForm>
                   </Box>

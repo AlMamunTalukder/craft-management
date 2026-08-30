@@ -1,9 +1,22 @@
 import { createTheme } from "@mui/material"
-import { Roboto } from "next/font/google"
+import { Roboto, Noto_Sans_Bengali, Hind_Siliguri } from "next/font/google"
 export const roboto = Roboto({
     weight: ["300", "400", "500", "700"],
     subsets: ["latin"],
+    display: "swap",
 })
+export const notoSansBengali = Noto_Sans_Bengali({
+    weight: ["300", "400", "500", "600", "700"],
+    subsets: ["bengali", "latin"],
+    display: "swap",
+})
+export const hindSiliguri = Hind_Siliguri({
+    weight: ["300", "400", "500", "600", "700"],
+    subsets: ["bengali", "latin"],
+    display: "swap",
+})
+// Combined font for Bangla + English - Bangla fonts first for proper rendering
+const banglaFontFamily = `${notoSansBengali.style.fontFamily}, ${hindSiliguri.style.fontFamily}, ${roboto.style.fontFamily}, sans-serif`
 
 export const customTheme = createTheme({
     palette: {
@@ -43,7 +56,7 @@ export const customTheme = createTheme({
         },
     },
     typography: {
-        fontFamily: roboto.style.fontFamily,
+        fontFamily: banglaFontFamily,
         h4: {
             fontWeight: 600,
         },

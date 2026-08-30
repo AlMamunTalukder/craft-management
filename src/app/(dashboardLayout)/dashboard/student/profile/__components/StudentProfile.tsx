@@ -30,7 +30,7 @@ import {
 import { useEffect, useState } from "react";
 import PaymentHistory from "./PaymentHistory";
 import ReceiptHistory from "./ReceiptHistory";
-import StudentOverview from "./StudentOverview";
+import { StudentDetailsView } from "@/components/student/StudentDetailsView";
 import { getStatusColor } from "./Utils";
 import DueStudentFee from "./DueStudentFee";
 import PaidStudentFee from "./PaidStudentFee";
@@ -231,7 +231,8 @@ const StudentProfile = ({ params }: PageProps) => {
           </Tabs>
         </Box>
         <TabPanel value={tabValue} index={0}>
-          <StudentOverview student={singleStudent?.data} />
+          {/* Single source of truth - same design as AdmissionDetailModal */}
+          <StudentDetailsView data={singleStudent?.data} mode="student" />
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
