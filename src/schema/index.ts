@@ -15,7 +15,12 @@ export enum StudentStatus {
 
 export enum StudentType {
   RESIDENTIAL = 'Residential',
-  DAY = 'Non-residential',
+  NON_RESIDENTIAL = 'Non-Residential',
+  DAY = 'Non-Residential',
+  DAY_CARE = 'Day Care',
+  NON_RESIDENTIAL_ONE_MEAL = 'Non-Residential One Meal',
+  RESIDENTIAL_NO_MEAL = 'Residential No Meal',
+  DAY_CARE_ONE_MEAL = 'Day Care One Meal',
   EMPTY = ''
 }
 

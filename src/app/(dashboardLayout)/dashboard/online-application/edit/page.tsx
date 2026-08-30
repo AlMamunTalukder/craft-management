@@ -14,6 +14,7 @@ import CraftSwitch from "@/components/Forms/switch";
 import FileUploadWithIcon from "@/components/Forms/Upload";
 import { bloodGroups, genderOptions } from "@/options";
 import { STUDENT_CATEGORIES } from "@/constant/studentCategory";
+import { StudentCategoryField } from "@/components/student/StudentCommonFields";
 import {
   angerOptions,
   behaviorGeneralOptions,
@@ -599,16 +600,7 @@ export default function EditAdmissionApplication() {
                   </Typography>
                 </Box>
                 <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, md: 3 }}>
-                    <CraftSelect
-                      fullWidth
-                      label="একাডেমিক ক্যাটাগরি"
-                      name="category"
-                      items={STUDENT_CATEGORIES.map((c) => c.value)}
-                      size="small"
-                      required
-                    />
-                  </Grid>
+                  <StudentCategoryField />
                   <Grid size={{ xs: 12, md: 3 }}>
                     <CraftInput
                       fullWidth

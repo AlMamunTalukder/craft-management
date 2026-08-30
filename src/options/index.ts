@@ -121,14 +121,14 @@ export const classes = ["Class 1", "Class 2", "Class 3"];
 export const sections = ["Section A", "Section B", "Section C"];
 export const activeSections = ["2023", "2024", "2025"];
 export const status = ["Active", "Inactive", "Graduated"];
-export const studentType = ["Residential", "Day"];
+export const studentType = ["Residential", "Non-Residential", "Day Care", "Non-Residential One Meal", "Residential No Meal", "Day Care One Meal"];
 
 export const batches = ["Batch 1", "Batch 2", "Batch 3"];
 
 export const genders = ["Male", "Female", "Other"];
 
 export const staffTypes = ["Teacher", "Staff", "Other"];
-export const residenceTypes = ["Residential", "Non-residential"];
+export const residenceTypes = ["Residential", "Non-Residential", "Day Care"];
 export const languages = ["English", "Bangla"];
 export const subjects = [
   "Mathematics",
