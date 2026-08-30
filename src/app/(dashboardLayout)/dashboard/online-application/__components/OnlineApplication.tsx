@@ -196,9 +196,9 @@ const mapApplicationToFormData = (app: any): Record<string, any> => {
     LyingStubbornness: behavior.lyingStubbornness || "",
     ReligiousInterest: behavior.religiousInterest || "",
 
-    // Academic
+    // Academic - UPDATED: previousClass (DB field is previousClass, not prevClass)
     PrevSchool: academic.previousSchool || academic.prevSchool || "",
-    PrevClass: academic.prevClass || "",
+    PrevClass: academic.previousClass || academic.prevClass || "",
     GPA: academic.gpa || academic.GPA || "",
 
     // Documents
