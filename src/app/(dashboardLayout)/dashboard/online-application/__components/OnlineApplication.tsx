@@ -12,10 +12,16 @@ import {
   useGetAllAdmissionApplicationsQuery,
   useUpdateAdmissionApplicationMutation,
 } from "@/redux/api/admissionApplication";
+import { useLazyGetStudentByApplicationIdQuery, useLazyGetAllStudentsQuery } from "@/redux/api/studentApi";
+import { useCreateEnrollmentMutation } from "@/redux/api/enrollmentApi";
+import { admissionToFormValues } from "@/components/student/studentFieldMappers";
+import { useAcademicOption } from "@/hooks/useAcademicOption";
+import toast from "react-hot-toast";
 import { AdmissionApplicationListProps, ApplicationRow } from "@/types/apply";
 import { formatDate, formatShortDate } from "@/utils/formateDate";
 import { generatePDFFromData } from "@/utils/pdfGenerator";
 import {
+  AccountBalanceWallet,
   CalendarToday,
   Cancel,
   CheckCircle,
@@ -375,6 +381,10 @@ export default function AdmissionApplicationList({
     useUpdateAdmissionApplicationMutation();
   const [deleteAdmissionApplication, { isLoading: isDeleting }] =
     useDeleteAdmissionApplicationMutation();
+  const [fetchStudentByAppId] = useLazyGetStudentByApplicationIdQuery();
+  const [fetchStudentsBySearch] = useLazyGetAllStudentsQuery();
+  const [createEnrollment] = useCreateEnrollmentMutation();
+  const { classOptions } = useAcademicOption();
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(isMobile ? 5 : 10);
@@ -449,17 +459,332 @@ export default function AdmissionApplicationList({
 
   const totalCount = data?.meta?.total ?? tableData.length;
 
-  const handleView = useCallback((row: ApplicationRow) => {
-    setModalLoading(true);
-    setSelectedApplication((row as any).original);
-    setModalOpen(true);
-    setTimeout(() => setModalLoading(false), 500);
-  }, []);
+  // Auto-create missing student (OA-0180 legacy) then redirect direct to payment tab — fulfills requested onClick direct payment
+  const autoEnrollAndPay = useCallback(
+    async (orig: any, appId: string) => {
+      try {
+        Swal.fire({ title: "Creating student & generating fees...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        const formData: any = admissionToFormValues(orig, classOptions);
+        const classArr: any[] = formData.classNameArray?.length
+          ? formData.classNameArray.map((c: any) => c.value || c)
+          : formData.className
+            ? [formData.className]
+            : orig?.studentInfo?.class
+              ? [orig.studentInfo.class]
+              : [];
+        const validClassArr = classArr.filter(Boolean);
+        if (!validClassArr.length) {
+          Swal.close();
+          toast.error("Class not found for this application");
+          router.push(`/dashboard/enrollments?applicationId=${appId}`);
+          return;
+        }
+        const finalSubmitData: any = {
+          studentName: formData.studentName || formData.name || orig?.studentInfo?.nameEnglish || "",
+          nameBangla: formData.studentNameBangla || formData.nameBangla || orig?.studentInfo?.nameBangla || "",
+          studentPhoto: formData.studentPhoto || "",
+          mobileNo: formData.mobileNo || formData.fatherMobile || orig?.parentInfo?.father?.mobile || "",
+          rollNumber: formData.rollNumber || "",
+          birthDate: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : orig?.studentInfo?.dateOfBirth ? new Date(orig.studentInfo.dateOfBirth).toISOString() : "",
+          birthRegistrationNo: formData.nidBirth || formData.birthRegistrationNo || orig?.studentInfo?.nidBirth || "",
+          bloodGroup: formData.bloodGroup || orig?.studentInfo?.bloodGroup || "",
+          nationality: formData.nationality || orig?.studentInfo?.nationality || "Bangladeshi",
+          className: validClassArr,
+          section: formData.section || "",
+          roll: formData.rollNumber || "",
+          session: formData.session || orig?.studentInfo?.session || String(new Date().getFullYear()),
+          group: formData.group || "",
+          category: formData.category || orig?.category || "Residential",
+          studentDepartment: formData.studentDepartment || orig?.studentInfo?.department || "hifz",
+          fatherName: formData.fatherName || orig?.parentInfo?.father?.nameEnglish || "",
+          fatherNameBangla: formData.fatherNameBangla || orig?.parentInfo?.father?.nameBangla || "",
+          fatherMobile: formData.fatherMobile || orig?.parentInfo?.father?.mobile || "",
+          fatherNid: formData.fatherNid || "",
+          fatherProfession: formData.fatherProfession || orig?.parentInfo?.father?.profession || "",
+          fatherIncome: Number(formData.fatherIncome) || 0,
+          fatherWhatsapp: formData.fatherWhatsapp || orig?.parentInfo?.father?.whatsapp || "",
+          fatherEducation: formData.fatherEducation || "",
+          motherName: formData.motherName || orig?.parentInfo?.mother?.nameEnglish || "",
+          motherNameBangla: formData.motherNameBangla || orig?.parentInfo?.mother?.nameBangla || "",
+          motherMobile: formData.motherMobile || orig?.parentInfo?.mother?.mobile || "",
+          motherNid: formData.motherNid || "",
+          motherProfession: formData.motherProfession || orig?.parentInfo?.mother?.profession || "",
+          motherIncome: Number(formData.motherIncome) || 0,
+          motherWhatsapp: formData.motherWhatsapp || orig?.parentInfo?.mother?.whatsapp || "",
+          motherEducation: formData.motherEducation || "",
+          guardianName: formData.guardianName || orig?.parentInfo?.guardian?.nameEnglish || "",
+          guardianRelation: formData.guardianRelation || orig?.parentInfo?.guardian?.relation || "",
+          guardianMobile: formData.guardianMobile || orig?.parentInfo?.guardian?.mobile || "",
+          guardianWhatsapp: formData.guardianWhatsapp || "",
+          guardianProfession: formData.guardianProfession || "",
+          guardianVillage: formData.guardianVillage || formData.guardianAddress || orig?.parentInfo?.guardian?.address || "",
+          presentAddress: {
+            village: formData.village || orig?.address?.present?.village || "",
+            postOffice: formData.postOffice || orig?.address?.present?.postOffice || "",
+            postCode: formData.postCode || orig?.address?.present?.postCode || "",
+            policeStation: formData.policeStation || orig?.address?.present?.policeStation || "",
+            district: formData.district || orig?.address?.present?.district || "",
+          },
+          permanentAddress: {
+            village: formData.permVillage || orig?.address?.permanent?.village || "",
+            postOffice: formData.permPostOffice || orig?.address?.permanent?.postOffice || "",
+            postCode: formData.permPostCode || orig?.address?.permanent?.postCode || "",
+            policeStation: formData.permPoliceStation || orig?.address?.permanent?.policeStation || "",
+            district: formData.permDistrict || orig?.address?.permanent?.district || "",
+          },
+          previousSchool: { institution: formData.formerInstitution || orig?.academicInfo?.previousSchool || "", address: formData.formerVillage || "" },
+          documents: {
+            birthCertificate: Boolean(formData.birthCertificate),
+            transferCertificate: Boolean(formData.transferCertificate),
+            characterCertificate: Boolean(formData.characterCertificate),
+            markSheet: Boolean(formData.markSheet),
+            photographs: Boolean(formData.photographs),
+          },
+          termsAccepted: Boolean(formData.termsAccepted),
+          familyEnvironment: formData.familyEnvironment,
+          behaviorSkills: formData.behaviorSkills,
+        };
+        const res: any = await createEnrollment({ data: finalSubmitData, applicationId: appId }).unwrap();
+        Swal.close();
+        if (res?.success) {
+          const sid = res?.data?.student?._id || res?.data?._id || res?.data?.enrollment?.student;
+          toast.success(res?.message || "Student created, fees ready");
+          if (sid) {
+            router.push(`/dashboard/student/profile/${sid}?tab=3`);
+            return;
+          }
+        }
+        throw new Error(res?.message || "Enrollment failed");
+      } catch (e: any) {
+        Swal.close();
+        console.error("autoEnroll failed", e);
+        toast.error(e?.data?.message || e?.message || "Failed to auto-create, opening form");
+        router.push(`/dashboard/enrollments?applicationId=${appId}`);
+      }
+    },
+    [createEnrollment, classOptions, router],
+  );
+
+  const handleView = useCallback(
+    async (row: ApplicationRow) => {
+      // For enrolled -> navigate to student profile instead of modal
+      if (type === "enrolled") {
+        const appId = (row as any).applicationId || (row as any).original?.applicationId;
+        const orig: any = (row as any).original || row;
+        if (!appId) {
+          Swal.fire("Error", "Application ID not found", "error");
+          return;
+        }
+        Swal.fire({
+          title: "Loading student profile...",
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
+        let studentId: string | null = null;
+        let foundStudent: any = null;
+        try {
+          // Primary: direct by-application endpoint
+          const res: any = await fetchStudentByAppId({ applicationId: appId }).unwrap();
+          // new endpoint returns { data: student } ; old array shape also handled
+          const student = res?.data || res;
+          const actual = Array.isArray(student) ? student[0] : Array.isArray(res?.data?.data) ? res.data.data[0] : student;
+          // if array shape from old /student?applicationId
+          const candidate = actual && Array.isArray(actual) ? actual[0] : actual;
+          const single = (candidate && candidate._id) ? candidate : (res?.data?._id ? res.data : null);
+          if (single?._id) {
+            foundStudent = single;
+            studentId = single._id;
+          } else if (res?.data?._id) {
+            foundStudent = res.data;
+            studentId = res.data._id;
+          } else if (Array.isArray(res?.data) && res.data[0]?._id) {
+            foundStudent = res.data[0];
+            studentId = foundStudent._id;
+          }
+        } catch (err: any) {
+          // 404 -> will try fallback below
+          console.warn("by-application lookup failed, will try fallback", err?.data?.message);
+        }
+
+        // Fallback: search by name / fatherMobile if primary failed
+        if (!studentId) {
+          try {
+            const searchName = orig?.studentInfo?.nameBangla || row.nameBangla || orig?.studentInfo?.nameEnglish || row.nameEnglish || "";
+            const fatherMobile = orig?.parentInfo?.father?.mobile || row.fatherMobile || "";
+            const queries: string[] = [];
+            if (searchName) queries.push(searchName);
+            if (fatherMobile) queries.push(fatherMobile);
+            for (const q of queries) {
+              if (!q) continue;
+              const sRes: any = await fetchStudentsBySearch({ searchTerm: q, limit: 10 } as any).unwrap();
+              const list: any[] = sRes?.data || sRes?.data?.data || sRes?.data?.students || [];
+              const arr = Array.isArray(list) ? list : [];
+              if (arr.length === 0) continue;
+              // Try exact match on bangla/english + father mobile
+              let match = arr.find((s: any) =>
+                (s.nameBangla && s.nameBangla === (orig?.studentInfo?.nameBangla || row.nameBangla)) ||
+                (s.name && s.name === (orig?.studentInfo?.nameEnglish || row.nameEnglish))
+              );
+              // secondary: match father mobile
+              if (!match && fatherMobile) {
+                match = arr.find((s: any) => s.parentInfo?.father?.mobile === fatherMobile || s.mobile === fatherMobile);
+              }
+              if (!match) match = arr[0];
+              if (match?._id) {
+                foundStudent = match;
+                studentId = match._id;
+                break;
+              }
+            }
+          } catch (fallbackErr) {
+            console.warn("fallback search failed", fallbackErr);
+          }
+        }
+
+        Swal.close();
+        if (studentId) {
+          // Optional: show toast if we used fallback
+          if (foundStudent && foundStudent.applicationId !== appId) {
+            // still navigate but we found via fallback
+            console.log("Navigating via fallback match", { appId, found: foundStudent.applicationId });
+          }
+          router.push(`/dashboard/student/profile/${studentId}`);
+          return;
+        }
+
+        // Final: No student found — show helpful dialog with PAYMENT button to solve pblm
+        const fallbackName = (orig?.studentInfo?.nameBangla || row.nameBangla || orig?.studentInfo?.nameEnglish || row.nameEnglish) || "";
+        Swal.fire({
+          title: "Student record not found",
+          html: `<div style="text-align:left; font-size:14px; line-height:1.7">
+            <p>No enrolled student linked to <b>${appId}</b> was found.</p>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 12px; margin:10px 0">
+              <b style="color:#065f46">💡 Fix in one click:</b> Click <b>💳 Pay Admission Fee</b> below — it will open enrollment with this application pre-filled, create the Student, auto-generate Due Fees (Admission + Monthly etc.) and take you to payment.
+            </div>
+            <p style="margin:8px 0 4px"><b>Other options:</b></p>
+            <ul style="margin:0 0 8px 18px; padding:0">
+              <li>Check <b>Student List</b> → search by name <b>${fallbackName}</b></li>
+              <li>Legacy data / manual enrollment → applicationId mismatch.</li>
+            </ul>
+          </div>`,
+          icon: "warning",
+          showCancelButton: true,
+          showDenyButton: true,
+          confirmButtonText: "💳 Pay Admission Fee",
+          denyButtonText: "View Application",
+          cancelButtonText: "Go to Student List",
+          confirmButtonColor: "#667eea",
+          denyButtonColor: "#7c3aed",
+          cancelButtonColor: "#0ea5e9",
+          showCloseButton: true,
+          didOpen: () => {
+            const btn = (Swal as any).getConfirmButton?.();
+            if (btn) {
+              btn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+              btn.style.border = "none";
+              btn.style.boxShadow = "0 6px 16px rgba(102,126,234,0.35)";
+              btn.style.fontWeight = "800";
+              btn.style.borderRadius = "8px";
+              btn.style.padding = "10px 24px";
+            }
+          },
+        }).then((res) => {
+          if (res.isConfirmed) {
+            // Direct payment as requested: auto-create student then onClick redirect to profile?tab=3  (same as setOpenSuccessModal=>sid=>router.push)
+            autoEnrollAndPay(orig, appId);
+          } else if (res.isDenied) {
+            setModalLoading(true);
+            setSelectedApplication(orig);
+            setModalOpen(true);
+            setTimeout(() => setModalLoading(false), 500);
+          } else if (res.dismiss === Swal.DismissReason.cancel) {
+            const name = encodeURIComponent(fallbackName);
+            router.push(`/dashboard/student/list?search=${name}`);
+          }
+        });
+        return;
+      }
+
+      // Default behavior for pending/approved/rejected -> show modal
+      setModalLoading(true);
+      setSelectedApplication((row as any).original);
+      setModalOpen(true);
+      setTimeout(() => setModalLoading(false), 500);
+    },
+    [type, router, fetchStudentByAppId, fetchStudentsBySearch, autoEnrollAndPay],
+  );
 
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setTimeout(() => setSelectedApplication(null), 300);
   }, []);
+
+  // Pay Now for enrolled — same lookup as handleView but goes to ?tab=3 (Due Fees) for easy payment
+  const handlePayNow = useCallback(
+    async (row: ApplicationRow) => {
+      const appId = (row as any).applicationId || (row as any).original?.applicationId;
+      const orig: any = (row as any).original || row;
+      if (!appId) {
+        Swal.fire("Error", "Application ID not found", "error");
+        return;
+      }
+      Swal.fire({ title: "Loading payment...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      let studentId: string | null = null;
+      try {
+        const res: any = await fetchStudentByAppId({ applicationId: appId }).unwrap();
+        const student = res?.data || res;
+        const single = Array.isArray(student) ? student[0] : (student?._id ? student : null);
+        if (single?._id) studentId = single._id;
+        else if (Array.isArray(res?.data) && res.data[0]?._id) studentId = res.data[0]._id;
+      } catch {}
+      if (!studentId) {
+        try {
+          const searchName = orig?.studentInfo?.nameBangla || row.nameBangla || orig?.studentInfo?.nameEnglish || row.nameEnglish || "";
+          const fatherMobile = orig?.parentInfo?.father?.mobile || row.fatherMobile || "";
+          const queries = [searchName, fatherMobile].filter(Boolean) as string[];
+          for (const q of queries) {
+            const sRes: any = await fetchStudentsBySearch({ searchTerm: q, limit: 10 } as any).unwrap();
+            const list: any[] = sRes?.data || sRes?.data?.data || [];
+            const arr = Array.isArray(list) ? list : [];
+            if (!arr.length) continue;
+            let match = arr.find((s: any) => (s.nameBangla && s.nameBangla === (orig?.studentInfo?.nameBangla || row.nameBangla)) || (s.name && s.name === (orig?.studentInfo?.nameEnglish || row.nameEnglish)));
+            if (!match && fatherMobile) match = arr.find((s: any) => s.parentInfo?.father?.mobile === fatherMobile || s.mobile === fatherMobile);
+            if (!match) match = arr[0];
+            if (match?._id) { studentId = match._id; break; }
+          }
+        } catch {}
+      }
+      Swal.close();
+      if (studentId) {
+        // Direct payment as requested: setOpenSuccessModal=>sid=>profile?tab=3
+        router.push(`/dashboard/student/profile/${studentId}?tab=3`);
+        return;
+      }
+      // If still not found, auto-create student & go directly to payment (one-click Pay Admission Fee)
+      Swal.fire({
+        title: "No student yet — create & pay?",
+        html: `<div style="text-align:left">No student found for <b>${appId}</b>. Click <b>Pay Admission Fee</b> to auto-create student, generate fees & pay.</div>`,
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonText: "💳 Pay Admission Fee",
+        confirmButtonColor: "#667eea",
+        didOpen: () => {
+          const btn = (Swal as any).getConfirmButton?.();
+          if (btn) {
+            btn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+            btn.style.border = "none";
+            btn.style.boxShadow = "0 6px 16px rgba(102,126,234,0.35)";
+            btn.style.fontWeight = "800";
+          }
+        },
+      }).then((r) => {
+        if (r.isConfirmed) autoEnrollAndPay(orig, appId);
+      });
+    },
+    [router, fetchStudentByAppId, fetchStudentsBySearch, autoEnrollAndPay],
+  );
 
   const handleEdit = useCallback(
     (row: ApplicationRow) => {
@@ -741,12 +1066,13 @@ export default function AdmissionApplicationList({
   }, [isMobile, isTablet, classFilterOptions]);
 
   const rowActions: RowAction[] = useMemo(() => {
+    const isEnrolled = type === "enrolled";
     const baseActions: RowAction[] = [
       {
-        label: "View",
+        label: isEnrolled ? "View Profile" : "View",
         icon: <Visibility fontSize="small" />,
         onClick: handleView,
-        tooltip: "View details",
+        tooltip: isEnrolled ? "View student profile" : "View details",
         color: "info",
         inMenu: isMobile,
         alwaysShow: !isMobile,
@@ -852,7 +1178,19 @@ export default function AdmissionApplicationList({
         },
       ];
     } else {
-      return [...baseActions];
+      // enrolled: View Profile + dedicated Pay Now (gradient style in dialog, but row action for quick payment)
+      return [
+        ...baseActions,
+        {
+          label: "Pay Now",
+          icon: <AccountBalanceWallet fontSize="small" />,
+          onClick: handlePayNow,
+          tooltip: "Pay admission & due fees",
+          color: "success",
+          inMenu: false,
+          alwaysShow: true,
+        },
+      ];
     }
   }, [
     type,
@@ -867,6 +1205,7 @@ export default function AdmissionApplicationList({
     handleRestore,
     handleEnroll,
     handleDownloadPDF,
+    handlePayNow,
   ]);
 
   const getHeaderBanner = () => {
@@ -1000,7 +1339,7 @@ export default function AdmissionApplicationList({
     <>
       <Box sx={{ mb: 3 }}>{getHeaderBanner()}</Box>
 
-      <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, height: "100%", width: "100%" }}>
+      <Box sx={{ p: { xs: 1, sm: 2, md: 0 }, height: "100%", width: "100%" }}>
         <CraftTable
           title={
             type === "pending"

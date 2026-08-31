@@ -1,74 +1,70 @@
 import { NavigationItem } from "@/types/common";
 import {
-  AccountBalanceWallet,
-  AccountTree,
-  AddCircle,
-  AdminPanelSettings,
-  Analytics,
-  Assessment,
-  AttachMoney,
-  AutoDelete,
-  AutoStories,
-  Badge,
-  Calculate,
-  CalendarMonth,
-  Campaign,
-  Category,
-  CheckCircle,
-  Class,
-  ClassOutlined,
-  CloudSync,
-  CollectionsBookmark,
-  CreditCard,
-  Dashboard,
-  Description,
-  DeveloperBoard,
-  DoneAllSharp,
-  EditNote,
-  EventBusy,
-  FactCheck,
-  Feedback,
-  FormatListBulleted,
-  Group,
-  HowToReg,
-  ImportContacts,
-  Inventory2,
-  LibraryAdd,
-  LibraryBooks,
-  ListAlt,
-  NotificationAdd,
-  Payment,
-  PendingActions,
-  PeopleAlt,
-  PersonAdd,
-  PlaylistAddCheck,
-  PostAdd,
+  LayoutDashboard,
+  Globe,
+  LayoutList,
+  GraduationCap,
+  BookOpen,
+  FilePlus,
+  CalendarDays,
+  NotebookPen,
+  UserCheck,
+  Clock,
+  CircleCheck,
+  RotateCcw,
+  BarChart3,
+  PiggyBank,
+  ClipboardCheck,
+  ClipboardList,
+  Library,
+  FileText,
+  Target,
+  ListChecks,
+  BookMarked,
+  Bookmark,
+  Award,
+  BadgeCheck,
+  Users,
+  UserPlus,
+  List,
   Receipt,
-  ReceiptLong,
-  Restaurant,
-  Restore,
-  Savings,
-  School as SchoolIcon,
-  SchoolOutlined,
-  Settings,
-  Storage,
-  Subject,
-  TrackChanges,
-  TrendingDown,
+  IdCard,
+  CalendarX,
+  Megaphone,
+  LayoutGrid,
+  BellPlus,
+  MessageSquare,
+  Utensils,
+  ListOrdered,
+  PlusCircle,
+  CreditCard,
+  Tag,
+  Calculator,
+  CheckCheck,
   TrendingUp,
-  ViewList,
-  VpnKey,
-  Web,
-  WorkspacePremium,
-} from "@mui/icons-material";
+  TrendingDown,
+  Wallet,
+  GitBranch,
+  DollarSign,
+  ShieldCheck,
+  Settings,
+  Database,
+  KeyRound,
+  Trash2,
+  Cloud,
+  School,
+  Building2,
+  ScrollText,
+  Contact,
+} from "lucide-react";
 import { ColorfulIcon } from "./ColorfulIcon";
 
 export const navigationItems: NavigationItem[] = [
   {
     title: "Dashboard",
     icon: (
-      <ColorfulIcon color="#4285F4">
-        <Dashboard />
+      <ColorfulIcon color="#6366f1">
+        <LayoutDashboard size={17} />
       </ColorfulIcon>
     ),
     path: "/dashboard",
@@ -85,8 +81,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Website",
     icon: (
-      <ColorfulIcon color="#2a52be">
-        <Web />
+      <ColorfulIcon color="#0ea5e9">
+        <Globe size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin"],
@@ -94,8 +90,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Sections",
         icon: (
-          <ColorfulIcon color="#2a52be">
-            <ViewList />
+          <ColorfulIcon color="#0ea5e9" size={28}>
+            <LayoutList size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/classes/section/list",
@@ -104,8 +100,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Classes",
         icon: (
-          <ColorfulIcon color="#2a52be">
-            <Class />
+          <ColorfulIcon color="#0ea5e9" size={28}>
+            <GraduationCap size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/classes/class",
@@ -114,8 +110,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Subjects",
         icon: (
-          <ColorfulIcon color="#2a52be">
-            <Subject />
+          <ColorfulIcon color="#0ea5e9" size={28}>
+            <BookOpen size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/subject",
@@ -125,8 +121,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "New Report",
         icon: (
-          <ColorfulIcon color="#2a52be">
-            <PostAdd />
+          <ColorfulIcon color="#0ea5e9" size={28}>
+            <FilePlus size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/classes/report/new",
@@ -135,8 +131,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Class Routine",
         icon: (
-          <ColorfulIcon color="#2a52be">
-            <CalendarMonth />
+          <ColorfulIcon color="#0ea5e9" size={28}>
+            <CalendarDays size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/class-routine",
@@ -148,8 +144,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Admissions",
     icon: (
-      <ColorfulIcon color="#5D4037">
-        <EditNote />
+      <ColorfulIcon color="#f59e0b">
+        <NotebookPen size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "teacher"],
@@ -157,8 +153,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "All Enrollments",
         icon: (
-          <ColorfulIcon color="#5D4037">
-            <HowToReg />
+          <ColorfulIcon color="#f59e0b" size={28}>
+            <UserCheck size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/enrollments/list",
@@ -167,8 +163,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Pending Applications",
         icon: (
-          <ColorfulIcon color="#5D4037">
-            <PendingActions />
+          <ColorfulIcon color="#f59e0b" size={28}>
+            <Clock size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/online-application/pending",
@@ -177,8 +173,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Approved Applications",
         icon: (
-          <ColorfulIcon color="#5D4037">
-            <CheckCircle />
+          <ColorfulIcon color="#f59e0b" size={28}>
+            <CircleCheck size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/online-application/approved",
@@ -187,8 +183,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Enrolled Applications",
         icon: (
-          <ColorfulIcon color="#5D4037">
-            <HowToReg />
+          <ColorfulIcon color="#f59e0b" size={28}>
+            <UserCheck size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/online-application/enrolled",
@@ -197,8 +193,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Rejected Applications",
         icon: (
-          <ColorfulIcon color="#5D4037">
-            <Restore />
+          <ColorfulIcon color="#f59e0b" size={28}>
+            <RotateCcw size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/online-application/rejected",
@@ -207,8 +203,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Admission Analytics",
         icon: (
-          <ColorfulIcon color="#5D4037">
-            <Analytics />
+          <ColorfulIcon color="#f59e0b" size={28}>
+            <BarChart3 size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/admission-analytics",
@@ -220,8 +216,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Discount Student",
     icon: (
-      <ColorfulIcon color="#5D4037">
-        <Savings />
+      <ColorfulIcon color="#10b981">
+        <PiggyBank size={17} />
       </ColorfulIcon>
     ),
     path: "/dashboard/student/discount",
@@ -230,8 +226,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Academic",
     icon: (
-      <ColorfulIcon color="#0F9D58">
-        <SchoolIcon />
+      <ColorfulIcon color="#8b5cf6">
+        <GraduationCap size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "teacher"],
@@ -239,8 +235,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Sections",
         icon: (
-          <ColorfulIcon color="#0F9D58">
-            <ViewList />
+          <ColorfulIcon color="#8b5cf6" size={28}>
+            <LayoutList size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/classes/section/list",
@@ -249,8 +245,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Classes",
         icon: (
-          <ColorfulIcon color="#0F9D58">
-            <Class />
+          <ColorfulIcon color="#8b5cf6" size={28}>
+            <GraduationCap size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/classes/class",
@@ -259,8 +255,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Subjects",
         icon: (
-          <ColorfulIcon color="#0F9D58">
-            <Subject />
+          <ColorfulIcon color="#8b5cf6" size={28}>
+            <BookOpen size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/subject",
@@ -269,8 +265,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Class Reports",
         icon: (
-          <ColorfulIcon color="#0F9D58">
-            <Analytics />
+          <ColorfulIcon color="#8b5cf6" size={28}>
+            <BarChart3 size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/classes/report/list",
@@ -279,8 +275,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "New Report",
         icon: (
-          <ColorfulIcon color="#0F9D58">
-            <PostAdd />
+          <ColorfulIcon color="#8b5cf6" size={28}>
+            <FilePlus size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/classes/report/new",
@@ -289,8 +285,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Class Routine",
         icon: (
-          <ColorfulIcon color="#0F9D58">
-            <CalendarMonth />
+          <ColorfulIcon color="#8b5cf6" size={28}>
+            <CalendarDays size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/class-routine",
@@ -302,8 +298,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Exam & Results",
     icon: (
-      <ColorfulIcon color="#7B1FA2">
-        <FactCheck />
+      <ColorfulIcon color="#ec4899">
+        <ClipboardCheck size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "teacher"],
@@ -311,8 +307,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Exams",
         icon: (
-          <ColorfulIcon color="#7B1FA2">
-            <FactCheck />
+          <ColorfulIcon color="#ec4899" size={28}>
+            <ClipboardCheck size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/exam",
@@ -321,8 +317,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Enter Marks",
         icon: (
-          <ColorfulIcon color="#7B1FA2">
-            <EditNote />
+          <ColorfulIcon color="#ec4899" size={28}>
+            <NotebookPen size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/exam/marks",
@@ -331,8 +327,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Results",
         icon: (
-          <ColorfulIcon color="#7B1FA2">
-            <Assessment />
+          <ColorfulIcon color="#ec4899" size={28}>
+            <ClipboardList size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/exam/result",
@@ -344,8 +340,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Hifz Program",
     icon: (
-      <ColorfulIcon color="#9C27B0">
-        <AutoStories />
+      <ColorfulIcon color="#a855f7">
+        <BookOpen size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "teacher"],
@@ -353,8 +349,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Classes",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <ClassOutlined />
+          <ColorfulIcon color="#a855f7" size={28}>
+            <GraduationCap size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/hifz/class/list",
@@ -363,8 +359,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Hifz Subjects",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <LibraryBooks />
+          <ColorfulIcon color="#a855f7" size={28}>
+            <Library size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/hifz/subject/list",
@@ -373,8 +369,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Soboki Daily Report Add",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <PostAdd />
+          <ColorfulIcon color="#a855f7" size={28}>
+            <FilePlus size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/hifz/daily-report/soboki/add",
@@ -383,8 +379,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Soboki Daily Report List",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <Description />
+          <ColorfulIcon color="#a855f7" size={28}>
+            <FileText size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/hifz/daily-report/soboki/list",
@@ -393,8 +389,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Sunani Daily Report Add",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <PostAdd />
+          <ColorfulIcon color="#a855f7" size={28}>
+            <FilePlus size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/hifz/daily-report/sunani/add",
@@ -403,8 +399,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Sunani Daily Report List",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <Description />
+          <ColorfulIcon color="#a855f7" size={28}>
+            <FileText size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/hifz/daily-report/sunani/list",
@@ -413,8 +409,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Weekly Target List",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <TrackChanges />
+          <ColorfulIcon color="#a855f7" size={28}>
+            <Target size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/hifz/weeklytarget/list",
@@ -423,8 +419,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Weekly Target Add",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <PlaylistAddCheck />
+          <ColorfulIcon color="#a855f7" size={28}>
+            <ListChecks size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/hifz/weeklytarget/add",
@@ -435,8 +431,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Ampara",
     icon: (
-      <ColorfulIcon color="#2E7D32">
-        <ImportContacts />
+      <ColorfulIcon color="#059669">
+        <BookMarked size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "teacher"],
@@ -444,8 +440,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Daily Report List",
         icon: (
-          <ColorfulIcon color="#2E7D32">
-            <Description />
+          <ColorfulIcon color="#059669" size={28}>
+            <FileText size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/ampara/daily-report/list",
@@ -454,8 +450,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Daily Report Add",
         icon: (
-          <ColorfulIcon color="#2E7D32">
-            <PostAdd />
+          <ColorfulIcon color="#059669" size={28}>
+            <FilePlus size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/ampara/daily-report/add",
@@ -464,8 +460,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Weekly Report List",
         icon: (
-          <ColorfulIcon color="#2E7D32">
-            <Assessment />
+          <ColorfulIcon color="#059669" size={28}>
+            <BarChart3 size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/ampara/weekly-report/list",
@@ -474,8 +470,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Weekly Report Add",
         icon: (
-          <ColorfulIcon color="#2E7D32">
-            <LibraryAdd />
+          <ColorfulIcon color="#059669" size={28}>
+            <PlusCircle size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/ampara/weekly-report/add",
@@ -486,8 +482,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Nazera",
     icon: (
-      <ColorfulIcon color="#FF6B35">
-        <ImportContacts />
+      <ColorfulIcon color="#f97316">
+        <BookMarked size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "teacher"],
@@ -495,8 +491,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Daily Report List",
         icon: (
-          <ColorfulIcon color="#FF6B35">
-            <Description />
+          <ColorfulIcon color="#f97316" size={28}>
+            <FileText size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/nazera/daily-report/list",
@@ -505,8 +501,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Daily Report Add",
         icon: (
-          <ColorfulIcon color="#FF6B35">
-            <PostAdd />
+          <ColorfulIcon color="#f97316" size={28}>
+            <FilePlus size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/nazera/daily-report/add",
@@ -515,8 +511,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Weekly Report List",
         icon: (
-          <ColorfulIcon color="#FF6B35">
-            <Assessment />
+          <ColorfulIcon color="#f97316" size={28}>
+            <BarChart3 size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/nazera/weekly-report/list",
@@ -525,8 +521,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Weekly Report Add",
         icon: (
-          <ColorfulIcon color="#FF6B35">
-            <LibraryAdd />
+          <ColorfulIcon color="#f97316" size={28}>
+            <PlusCircle size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/nazera/weekly-report/add",
@@ -537,8 +533,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Qaida",
     icon: (
-      <ColorfulIcon color="#00ACC1">
-        <CollectionsBookmark />
+      <ColorfulIcon color="#06b6d4">
+        <Bookmark size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "teacher"],
@@ -546,8 +542,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Daily Report List",
         icon: (
-          <ColorfulIcon color="#00ACC1">
-            <Description />
+          <ColorfulIcon color="#06b6d4" size={28}>
+            <FileText size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/qaida-noorani/daily-report/list",
@@ -556,8 +552,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Daily Report Add",
         icon: (
-          <ColorfulIcon color="#00ACC1">
-            <PostAdd />
+          <ColorfulIcon color="#06b6d4" size={28}>
+            <FilePlus size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/qaida-noorani/daily-report/add",
@@ -566,8 +562,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Weekly Report Add",
         icon: (
-          <ColorfulIcon color="#00ACC1">
-            <PlaylistAddCheck />
+          <ColorfulIcon color="#06b6d4" size={28}>
+            <ListChecks size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/qaida-noorani/weekly-report/add",
@@ -576,8 +572,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Weekly Report List",
         icon: (
-          <ColorfulIcon color="#00ACC1">
-            <TrackChanges />
+          <ColorfulIcon color="#06b6d4" size={28}>
+            <Target size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/qaida-noorani/weekly-report/list",
@@ -588,8 +584,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Certificates & ID Cards",
     icon: (
-      <ColorfulIcon color="#B71C1C">
-        <WorkspacePremium />
+      <ColorfulIcon color="#dc2626">
+        <Award size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin"],
@@ -597,8 +593,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Certificates",
         icon: (
-          <ColorfulIcon color="#B71C1C">
-            <WorkspacePremium />
+          <ColorfulIcon color="#dc2626" size={28}>
+            <Award size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/certificates",
@@ -607,8 +603,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "ID Cards",
         icon: (
-          <ColorfulIcon color="#B71C1C">
-            <Badge />
+          <ColorfulIcon color="#dc2626" size={28}>
+            <BadgeCheck size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/id-cards",
@@ -620,8 +616,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "People",
     icon: (
-      <ColorfulIcon color="#DB4437">
-        <Group />
+      <ColorfulIcon color="#3b82f6">
+        <Users size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "teacher"],
@@ -629,8 +625,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Teachers",
         icon: (
-          <ColorfulIcon color="#FF5722">
-            <SchoolOutlined />
+          <ColorfulIcon color="#2563eb">
+            <GraduationCap size={15} />
           </ColorfulIcon>
         ),
         children: [
@@ -638,8 +634,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/teacher/new",
             title: "Add Teacher",
             icon: (
-              <ColorfulIcon color="#FF5722">
-                <PersonAdd />
+              <ColorfulIcon color="#2563eb" size={28}>
+                <UserPlus size={15} />
               </ColorfulIcon>
             ),
             roles: [
@@ -654,8 +650,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/teacher/list",
             title: "Teachers List",
             icon: (
-              <ColorfulIcon color="#FF5722">
-                <FormatListBulleted />
+              <ColorfulIcon color="#2563eb" size={28}>
+                <List size={15} />
               </ColorfulIcon>
             ),
             roles: [
@@ -670,8 +666,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/teacher/daily-report/list",
             title: "Daily Reports",
             icon: (
-              <ColorfulIcon color="#FF5722">
-                <ReceiptLong />
+              <ColorfulIcon color="#2563eb" size={28}>
+                <Receipt size={15} />
               </ColorfulIcon>
             ),
             roles: [
@@ -687,8 +683,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Staff",
         icon: (
-          <ColorfulIcon color="#7B1FA2">
-            <Badge />
+          <ColorfulIcon color="#7c3aed">
+            <Contact size={15} />
           </ColorfulIcon>
         ),
         children: [
@@ -696,8 +692,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/staff/add",
             title: "Add Staff",
             icon: (
-              <ColorfulIcon color="#7B1FA2">
-                <PersonAdd />
+              <ColorfulIcon color="#7c3aed" size={28}>
+                <UserPlus size={15} />
               </ColorfulIcon>
             ),
             roles: [
@@ -712,8 +708,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/staff/list",
             title: "Staff List",
             icon: (
-              <ColorfulIcon color="#7B1FA2">
-                <FormatListBulleted />
+              <ColorfulIcon color="#7c3aed" size={28}>
+                <List size={15} />
               </ColorfulIcon>
             ),
             roles: [
@@ -729,8 +725,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Students",
         icon: (
-          <ColorfulIcon color="#1976D2">
-            <PeopleAlt />
+          <ColorfulIcon color="#0ea5e9">
+            <Users size={15} />
           </ColorfulIcon>
         ),
         children: [
@@ -738,8 +734,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/student/list",
             title: "Students List",
             icon: (
-              <ColorfulIcon color="#1976D2">
-                <FormatListBulleted />
+              <ColorfulIcon color="#0ea5e9" size={28}>
+                <List size={15} />
               </ColorfulIcon>
             ),
             roles: [
@@ -758,8 +754,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "HR Management",
     icon: (
-      <ColorfulIcon color="#00838F">
-        <PeopleAlt />
+      <ColorfulIcon color="#0e7490">
+        <Users size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin"],
@@ -767,8 +763,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Leaves",
         icon: (
-          <ColorfulIcon color="#00838F">
-            <EventBusy />
+          <ColorfulIcon color="#0e7490" size={28}>
+            <CalendarX size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/leaves",
@@ -777,8 +773,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Payslips",
         icon: (
-          <ColorfulIcon color="#00838F">
-            <ReceiptLong />
+          <ColorfulIcon color="#0e7490" size={28}>
+            <Receipt size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/payslips",
@@ -789,8 +785,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Assets & Inventory",
     icon: (
-      <ColorfulIcon color="#455A64">
-        <Inventory2 />
+      <ColorfulIcon color="#475569">
+        <Building2 size={17} />
       </ColorfulIcon>
     ),
     path: "/dashboard/assets",
@@ -800,8 +796,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Communications",
     icon: (
-      <ColorfulIcon color="#7B1FA2">
-        <Campaign />
+      <ColorfulIcon color="#7c3aed">
+        <Megaphone size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin"],
@@ -809,8 +805,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Notice Board",
         icon: (
-          <ColorfulIcon color="#7B1FA2">
-            <DeveloperBoard />
+          <ColorfulIcon color="#7c3aed" size={28}>
+            <LayoutGrid size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/notice-board",
@@ -819,8 +815,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Notifications",
         icon: (
-          <ColorfulIcon color="#7B1FA2">
-            <NotificationAdd />
+          <ColorfulIcon color="#7c3aed" size={28}>
+            <BellPlus size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/notification",
@@ -829,8 +825,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Feedback",
         icon: (
-          <ColorfulIcon color="#7B1FA2">
-            <Feedback />
+          <ColorfulIcon color="#7c3aed" size={28}>
+            <MessageSquare size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/feedback",
@@ -842,8 +838,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Meal Management",
     icon: (
-      <ColorfulIcon color="#E91E63">
-        <Restaurant />
+      <ColorfulIcon color="#e11d48">
+        <Utensils size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin"],
@@ -852,8 +848,8 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/daily-meal-report",
         title: "Meal Reports",
         icon: (
-          <ColorfulIcon color="#E91E63">
-            <ListAlt />
+          <ColorfulIcon color="#e11d48" size={28}>
+            <ListOrdered size={15} />
           </ColorfulIcon>
         ),
         roles: ["admin", "teacher", "student", "super_admin", "class_teacher"],
@@ -862,8 +858,8 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/daily-meal-report/add",
         title: "Add Meal Report",
         icon: (
-          <ColorfulIcon color="#E91E63">
-            <AddCircle />
+          <ColorfulIcon color="#e11d48" size={28}>
+            <PlusCircle size={15} />
           </ColorfulIcon>
         ),
         roles: ["admin", "teacher", "student", "super_admin", "class_teacher"],
@@ -871,7 +867,7 @@ export const navigationItems: NavigationItem[] = [
       {
         path: "/dashboard/fees/meal-balance",
         title: " Meal Balance",
-        icon: <ColorfulIcon color="#E91E63"><Restaurant /></ColorfulIcon>,
+        icon: <ColorfulIcon color="#e11d48" size={28}><Utensils size={15} /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
     ],
@@ -880,8 +876,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Fees Management",
     icon: (
-      <ColorfulIcon color="#009688">
-        <Payment />
+      <ColorfulIcon color="#0d9488">
+        <CreditCard size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "accountant"],
@@ -889,31 +885,31 @@ export const navigationItems: NavigationItem[] = [
       {
         path: "/dashboard/fees/list",
         title: "All Fees",
-        icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
+        icon: <ColorfulIcon color="#0d9488" size={28}><Tag size={15} /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/summary",
         title: "Fee Summary",
-        icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
+        icon: <ColorfulIcon color="#0d9488" size={28}><ScrollText size={15} /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/category",
         title: "Fee Categories",
-        icon: <ColorfulIcon color="#009688"><Category /></ColorfulIcon>,
+        icon: <ColorfulIcon color="#0d9488" size={28}><Tag size={15} /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/fee-collection",
         title: "Fee Collection",
-        icon: <ColorfulIcon color="#009688"><Payment /></ColorfulIcon>,
+        icon: <ColorfulIcon color="#0d9488" size={28}><Wallet size={15} /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/fees/generate",
         title: "Generate Fees",
-        icon: <ColorfulIcon color="#FF9800"><Calculate /></ColorfulIcon>,
+        icon: <ColorfulIcon color="#f59e0b" size={28}><Calculator size={15} /></ColorfulIcon>,
         roles: ["admin", "super_admin", "accountant"],
       },
 
@@ -922,8 +918,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "Accounting",
     icon: (
-      <ColorfulIcon color="#2E7D32">
-        <DoneAllSharp />
+      <ColorfulIcon color="#16a34a">
+        <CheckCheck size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin", "accountant"],
@@ -931,8 +927,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Income",
         icon: (
-          <ColorfulIcon color="#2E7D32">
-            <TrendingUp />
+          <ColorfulIcon color="#16a34a" size={28}>
+            <TrendingUp size={15} />
           </ColorfulIcon>
         ),
         children: [
@@ -940,8 +936,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/accounting/residantial/list",
             title: "Residential ",
             icon: (
-              <ColorfulIcon color="#2E7D32">
-                <Category />
+              <ColorfulIcon color="#16a34a" size={28}>
+                <Tag size={15} />
               </ColorfulIcon>
             ),
             roles: ["admin", "super_admin"],
@@ -950,8 +946,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/accounting/income",
             title: "Income Records",
             icon: (
-              <ColorfulIcon color="#2E7D32">
-                <AccountBalanceWallet />
+              <ColorfulIcon color="#16a34a" size={28}>
+                <Wallet size={15} />
               </ColorfulIcon>
             ),
             roles: ["admin", "super_admin"],
@@ -960,8 +956,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/accounting/income/category",
             title: "Income Categories",
             icon: (
-              <ColorfulIcon color="#2E7D32">
-                <Category />
+              <ColorfulIcon color="#16a34a" size={28}>
+                <Tag size={15} />
               </ColorfulIcon>
             ),
             roles: ["admin", "super_admin"],
@@ -971,8 +967,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Expenses",
         icon: (
-          <ColorfulIcon color="#D32F2F">
-            <TrendingDown />
+          <ColorfulIcon color="#dc2626" size={28}>
+            <TrendingDown size={15} />
           </ColorfulIcon>
         ),
         children: [
@@ -980,8 +976,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/accounting/expense",
             title: "Expense Records",
             icon: (
-              <ColorfulIcon color="#D32F2F">
-                <Receipt />
+              <ColorfulIcon color="#dc2626" size={28}>
+                <Receipt size={15} />
               </ColorfulIcon>
             ),
             roles: ["admin", "super_admin"],
@@ -990,8 +986,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/accounting/salary-expense",
             title: "Salary",
             icon: (
-              <ColorfulIcon color="#D32F2F">
-                <Receipt />
+              <ColorfulIcon color="#dc2626" size={28}>
+                <Receipt size={15} />
               </ColorfulIcon>
             ),
             roles: ["admin", "super_admin"],
@@ -1000,8 +996,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/accounting/residantial",
             title: "Residential",
             icon: (
-              <ColorfulIcon color="#D32F2F">
-                <Receipt />
+              <ColorfulIcon color="#dc2626" size={28}>
+                <Receipt size={15} />
               </ColorfulIcon>
             ),
             roles: ["admin", "super_admin"],
@@ -1010,8 +1006,8 @@ export const navigationItems: NavigationItem[] = [
             path: "/dashboard/accounting/expense/category",
             title: "Expense Categories",
             icon: (
-              <ColorfulIcon color="#D32F2F">
-                <Category />
+              <ColorfulIcon color="#dc2626" size={28}>
+                <Tag size={15} />
               </ColorfulIcon>
             ),
             roles: ["admin", "super_admin"],
@@ -1022,8 +1018,8 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/accounting/total-expense-category",
         title: "Income & Expense Summary",
         icon: (
-          <ColorfulIcon color="#ED6C02">
-            <AccountTree />
+          <ColorfulIcon color="#f59e0b" size={28}>
+            <GitBranch size={15} />
           </ColorfulIcon>
         ),
         roles: ["admin", "super_admin"],
@@ -1032,8 +1028,8 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/accounting/investments",
         title: "Investments",
         icon: (
-          <ColorfulIcon color="#0288D1">
-            <Savings />
+          <ColorfulIcon color="#0288d1" size={28}>
+            <PiggyBank size={15} />
           </ColorfulIcon>
         ),
         roles: ["admin", "super_admin"],
@@ -1042,8 +1038,8 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/accounting/loan",
         title: "Loans",
         icon: (
-          <ColorfulIcon color="#9C27B0">
-            <CreditCard />
+          <ColorfulIcon color="#7c3aed" size={28}>
+            <CreditCard size={15} />
           </ColorfulIcon>
         ),
         roles: ["admin", "super_admin"],
@@ -1052,8 +1048,8 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/accounting/salary",
         title: "Salary Management",
         icon: (
-          <ColorfulIcon color="#1565C0">
-            <AttachMoney />
+          <ColorfulIcon color="#2563eb" size={28}>
+            <DollarSign size={15} />
           </ColorfulIcon>
         ),
         roles: ["admin", "super_admin"],
@@ -1062,8 +1058,8 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/accounting/fees",
         title: "Student Fees ",
         icon: (
-          <ColorfulIcon color="#2E7D32">
-            <Category />
+          <ColorfulIcon color="#16a34a" size={28}>
+            <Tag size={15} />
           </ColorfulIcon>
         ),
         roles: ["admin", "super_admin"],
@@ -1072,8 +1068,8 @@ export const navigationItems: NavigationItem[] = [
         path: "/dashboard/accounting/fee-collection",
         title: "Fee Collections",
         icon: (
-          <ColorfulIcon color="#00796B">
-            <Calculate />
+          <ColorfulIcon color="#0f766e" size={28}>
+            <Calculator size={15} />
           </ColorfulIcon>
         ),
         roles: ["admin", "super_admin"],
@@ -1084,8 +1080,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "User Management",
     icon: (
-      <ColorfulIcon color="#546E7A">
-        <AdminPanelSettings />
+      <ColorfulIcon color="#64748b">
+        <ShieldCheck size={17} />
       </ColorfulIcon>
     ),
     path: "/dashboard/user-management",
@@ -1094,8 +1090,8 @@ export const navigationItems: NavigationItem[] = [
   {
     title: "System",
     icon: (
-      <ColorfulIcon color="#37474F">
-        <Settings />
+      <ColorfulIcon color="#334155">
+        <Settings size={17} />
       </ColorfulIcon>
     ),
     roles: ["admin", "super_admin"],
@@ -1103,8 +1099,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Database",
         icon: (
-          <ColorfulIcon color="#37474F">
-            <Storage />
+          <ColorfulIcon color="#334155" size={28}>
+            <Database size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/database-backup",
@@ -1113,8 +1109,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Security",
         icon: (
-          <ColorfulIcon color="#37474F">
-            <VpnKey />
+          <ColorfulIcon color="#334155" size={28}>
+            <KeyRound size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/security",
@@ -1123,8 +1119,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Trash",
         icon: (
-          <ColorfulIcon color="#37474F">
-            <AutoDelete />
+          <ColorfulIcon color="#334155" size={28}>
+            <Trash2 size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/trash",
@@ -1133,8 +1129,8 @@ export const navigationItems: NavigationItem[] = [
       {
         title: "Backup",
         icon: (
-          <ColorfulIcon color="#37474F">
-            <CloudSync />
+          <ColorfulIcon color="#334155" size={28}>
+            <Cloud size={15} />
           </ColorfulIcon>
         ),
         path: "/dashboard/backup",

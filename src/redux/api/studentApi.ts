@@ -11,10 +11,18 @@ export const studentApi = baseApi.injectEndpoints({
       invalidatesTags: ["student"],
     }),
     getAllStudents: build.query({
-      query: ({ limit, page, searchTerm, className, studentDepartment }) => ({
+      query: ({ limit, page, searchTerm, className, studentDepartment, applicationId }) => ({
         url: "/student",
         method: "GET",
-        params: { page, limit, searchTerm, className, studentDepartment },
+        params: { page, limit, searchTerm, className, studentDepartment, applicationId },
+      }),
+      providesTags: ["student"],
+    }),
+
+    getStudentByApplicationId: build.query({
+      query: ({ applicationId }) => ({
+        url: `/student/by-application/${encodeURIComponent(applicationId)}`,
+        method: "GET",
       }),
       providesTags: ["student"],
     }),
@@ -49,6 +57,9 @@ export const studentApi = baseApi.injectEndpoints({
 export const {
   useCreateStudentsMutation,
   useGetAllStudentsQuery,
+  useLazyGetAllStudentsQuery,
+  useGetStudentByApplicationIdQuery,
+  useLazyGetStudentByApplicationIdQuery,
   useGetSingleStudentQuery,
   useUpdateStudentMutation,
   useDeleteStudentMutation,

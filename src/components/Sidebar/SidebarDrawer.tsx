@@ -1,9 +1,10 @@
+"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Drawer, List } from "@mui/material";
+import { Drawer, List, useTheme } from "@mui/material";
 import { DRAWER_WIDTH, COLLAPSED_DRAWER_WIDTH } from "./constants";
-import { theme } from "@/lib/Theme/Theme";
 
 export const SidebarDrawer = ({ variant, open, mobileOpen, onClose, children }:any) => {
+  const theme = useTheme();
   const width = variant === "temporary" ? "100%" : (open ? DRAWER_WIDTH : COLLAPSED_DRAWER_WIDTH);
   return (
     <Drawer

@@ -1,18 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+
 import {
-  Box,
-  Typography,
-  CardContent,
-  Avatar,
-  IconButton,
-  CircularProgress,
-  LinearProgress,
-  alpha,
-  useTheme,
-} from "@mui/material";
-import { MoreVert } from "@mui/icons-material";
-import { GlassCard } from "@/style/customStyle";
+  MoreVertical,
+  LoaderCircle,
+} from "lucide-react";
 
 export const AccountingCard = ({
   title,
@@ -24,129 +16,165 @@ export const AccountingCard = ({
   loading = false,
   onClick,
 }: any) => {
-  const theme = useTheme();
+  const colorMap: Record<string, string> = {
+    "#2e7d32": "text-emerald-600",
+    "#d32f2f": "text-red-600",
+    "#0288d1": "text-sky-600",
+    "#1976d2": "text-blue-600",
+    "#ed6c02": "text-orange-600",
+    "#9c27b0": "text-purple-600",
+  };
+
+  const bgMap: Record<string, string> = {
+    "#2e7d32": "bg-emerald-500/[0.10]",
+    "#d32f2f": "bg-red-500/[0.10]",
+    "#0288d1": "bg-sky-500/[0.10]",
+    "#1976d2": "bg-blue-500/[0.10]",
+    "#ed6c02": "bg-orange-500/[0.10]",
+    "#9c27b0": "bg-purple-500/[0.10]",
+  };
+
+  const borderMap: Record<string, string> = {
+    "#2e7d32": "border-emerald-500/20",
+    "#d32f2f": "border-red-500/20",
+    "#0288d1": "border-sky-500/20",
+    "#1976d2": "border-blue-500/20",
+    "#ed6c02": "border-orange-500/20",
+    "#9c27b0": "border-purple-500/20",
+  };
+
+  const shadowMap: Record<string, string> = {
+    "#2e7d32": "shadow-emerald-500/10",
+    "#d32f2f": "shadow-red-500/10",
+    "#0288d1": "shadow-sky-500/10",
+    "#1976d2": "shadow-blue-500/10",
+    "#ed6c02": "shadow-orange-500/10",
+    "#9c27b0": "shadow-purple-500/10",
+  };
+
+  const textColor =
+    colorMap[color] || "text-purple-600";
+
+  const iconBg =
+    bgMap[color] || "bg-purple-500/[0.10]";
+
+  const borderColor =
+    borderMap[color] || "border-purple-500/20";
+
+  const shadowColor =
+    shadowMap[color] || "shadow-purple-500/10";
 
   return (
-    <GlassCard
+    <div
       onClick={onClick}
-      sx={{
-        height: "100%",
-        transition: "all 0.3s ease",
-        background: `linear-gradient(135deg, ${alpha(color, 0.15)} 0%, ${alpha(color, 0.05)} 100%)`,
-        border: `1px solid ${alpha(color, 0.2)}`,
-        cursor: onClick ? "pointer" : "default",
-        "&:hover": {
-          transform: { xs: "translateY(-2px)", sm: "translateY(-5px)" },
-          boxShadow: `0 8px 16px -4px ${alpha(color, 0.25)}`,
-        },
-      }}
+      className={`
+        group relative h-full overflow-hidden
+        rounded-2xl sm:rounded-3xl
+        border ${borderColor}
+        bg-white/90
+        backdrop-blur-xl
+        shadow-lg ${shadowColor}
+        ${onClick ? "cursor-pointer" : "cursor-default"}
+      `}
     >
-      <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 3 }, position: "relative" }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: { xs: 1, sm: 2 },
-          }}
-        >
+      {/* Top accent */}
+      <div
+        className="absolute left-0 top-0 h-1 w-full opacity-80"
+        style={{
+          background: `linear-gradient(90deg, ${color}, transparent)`,
+        }}
+      />
+
+      {/* Decorative background */}
+      <div
+        className="absolute -right-12 -top-12 h-32 w-32 rounded-full blur-3xl opacity-30"
+        style={{
+          backgroundColor: color,
+        }}
+      />
+
+      <div className="relative p-4 sm:p-5 md:p-6">
+        {/* Header */}
+        <div className="mb-4 flex items-start justify-between sm:mb-5">
           {loading ? (
-            <CircularProgress size={32} />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 sm:h-13 sm:w-13">
+              <LoaderCircle className="h-5 w-5 text-gray-400" />
+            </div>
           ) : (
-            <Avatar
-              sx={{
-                bgcolor: alpha(color, 0.1),
-                color,
-                width: { xs: 40, sm: 48, md: 54 },
-                height: { xs: 40, sm: 48, md: 54 },
-                boxShadow: `0 4px 8px ${alpha(color, 0.2)}`,
-              }}
+            <div
+              className={`
+                flex h-11 w-11 items-center justify-center
+                rounded-xl sm:h-13 sm:w-13 sm:rounded-2xl
+                ${iconBg}
+                ${textColor}
+                border ${borderColor}
+                shadow-sm
+              `}
             >
-              {icon}
-            </Avatar>
+              <div className="h-5 w-5 sm:h-6 sm:w-6">
+                {icon}
+              </div>
+            </div>
           )}
-          <IconButton size="small" sx={{ color: "text.secondary", p: 0.5 }}>
-            <MoreVert fontSize="small" />
-          </IconButton>
-        </Box>
+
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="
+              rounded-lg p-1.5
+              text-gray-400
+              hover:bg-gray-100
+              hover:text-gray-700
+            "
+            aria-label="More options"
+          >
+            <MoreVertical className="h-5 w-5" />
+          </button>
+        </div>
 
         {loading ? (
-          <Box sx={{ mb: 1 }}>
-            <Box
-              sx={{
-                width: "70%",
-                height: { xs: 24, sm: 28, md: 32 },
-                bgcolor: alpha(theme.palette.text.primary, 0.1),
-                borderRadius: 1,
-                mb: 0.5,
-              }}
-            />
-            <Box
-              sx={{
-                width: "50%",
-                height: { xs: 16, sm: 18, md: 20 },
-                bgcolor: alpha(theme.palette.text.primary, 0.1),
-                borderRadius: 1,
-              }}
-            />
-          </Box>
+          <div className="space-y-3">
+            <div className="h-8 w-3/4 rounded-lg bg-gray-100" />
+            <div className="h-4 w-1/2 rounded-md bg-gray-100" />
+            <div className="mt-5 h-2 w-full rounded-full bg-gray-100" />
+          </div>
         ) : (
           <>
-            <Typography
-              variant="h4"
-              component="div"
-              sx={{
-                fontWeight: 800,
-                mb: 0.5,
-                fontSize: { xs: "1.25rem", sm: "1.5rem", md: "2rem" },
-              }}
+            {/* Value */}
+            <div
+              className="
+                truncate
+                text-2xl font-extrabold tracking-tight
+                text-gray-900
+                sm:text-3xl
+                md:text-[2rem]
+              "
             >
               {value}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                mb: { xs: 1, sm: 2 },
-                fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.9rem" },
-              }}
-            >
+            </div>
+
+            {/* Title */}
+            <div className="mt-1 text-xs font-medium text-gray-500 sm:text-sm">
               {title}
-            </Typography>
+            </div>
+
+            {/* Bottom information */}
+            {subValue && (
+              <div className="mt-5 flex items-center gap-2 border-t border-gray-100 pt-4">
+                <span
+                  className={`text-xs font-bold sm:text-sm ${textColor}`}
+                >
+                  {subValue}
+                </span>
+
+                <span className="text-[11px] text-gray-400 sm:text-xs">
+                  {subTitle}
+                </span>
+              </div>
+            )}
           </>
         )}
-
-        {subValue && !loading && (
-          <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
-            <Typography
-              variant="body2"
-              sx={{
-                color,
-                fontWeight: 600,
-                mr: 1,
-                fontSize: { xs: "0.7rem", sm: "0.8rem" },
-              }}
-            >
-              {subValue}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
-            >
-              {subTitle}
-            </Typography>
-          </Box>
-        )}
-
-        {loading && (
-          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-            <Box sx={{ width: "100%" }}>
-              <LinearProgress color="primary" />
-            </Box>
-          </Box>
-        )}
-      </CardContent>
-    </GlassCard>
+      </div>
+    </div>
   );
 };

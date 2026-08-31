@@ -1,17 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+
 import {
-  Box,
-  Typography,
-  CardContent,
-  Chip,
-  CircularProgress,
-  alpha,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
-import { Balance } from "@mui/icons-material";
-import { GlassCard } from "@/style/customStyle";
+  Scale,
+  CheckCircle2,
+  XCircle,
+  LoaderCircle,
+} from "lucide-react";
 
 export const EquationCheck = ({
   assets,
@@ -20,167 +15,133 @@ export const EquationCheck = ({
   isValid,
   loading = false,
 }: any) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   return (
-    <GlassCard
-      sx={{
-        mb: { xs: 2, sm: 3 },
-        background: isValid
-          ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.03)} 100%)`
-          : `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.03)} 100%)`,
-        border: `1px solid ${
+    <div
+      className={`
+        relative overflow-hidden
+        rounded-2xl sm:rounded-3xl
+        border
+        ${
           isValid
-            ? alpha(theme.palette.success.main, 0.2)
-            : alpha(theme.palette.error.main, 0.2)
-        }`,
-      }}
+            ? "border-emerald-200/70 bg-emerald-50/50"
+            : "border-red-200/70 bg-red-50/50"
+        }
+        shadow-sm
+      `}
     >
-      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+      {/* Top gradient */}
+      <div
+        className={`
+          absolute left-0 top-0 h-1 w-full
+          ${
+            isValid
+              ? "bg-gradient-to-r from-emerald-500 to-transparent"
+              : "bg-gradient-to-r from-red-500 to-transparent"
+          }
+        `}
+      />
+
+      <div className="p-4 sm:p-5 md:p-6">
         {/* Header */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            mb: { xs: 1.5, sm: 2 },
-            flexWrap: "wrap",
-            gap: 1,
-          }}
-        >
-          <Balance
-            sx={{
-              mr: 1,
-              color: isValid ? "success.main" : "error.main",
-              fontSize: { xs: 20, sm: 24 },
-            }}
-          />
-          <Typography
-            variant={isMobile ? "subtitle1" : "h6"}
-            component="div"
-            sx={{ fontWeight: 700, flexGrow: 1 }}
+        <div className="mb-4 flex flex-wrap items-center gap-3 sm:mb-5">
+          <div
+            className={`
+              flex h-10 w-10 items-center justify-center rounded-xl
+              ${
+                isValid
+                  ? "bg-emerald-500/10 text-emerald-600"
+                  : "bg-red-500/10 text-red-600"
+              }
+            `}
           >
-            Accounting Equation Check
-          </Typography>
+            <Scale className="h-5 w-5" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-bold text-gray-900 sm:text-base md:text-lg">
+              Accounting Equation Check
+            </h3>
+          </div>
+
           {!loading && (
-            <Chip
-              label={isValid ? "Balanced" : "Not Balanced"}
-              color={isValid ? "success" : "error"}
-              size="small"
-              sx={{
-                fontWeight: 600,
-                fontSize: { xs: "0.7rem", sm: "0.75rem" },
-              }}
-            />
+            <div
+              className={`
+                flex items-center gap-1.5 rounded-full
+                px-2.5 py-1 text-[10px] font-bold
+                sm:px-3 sm:py-1.5 sm:text-xs
+                ${
+                  isValid
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-red-100 text-red-700"
+                }
+              `}
+            >
+              {isValid ? (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5" />
+              )}
+
+              {isValid ? "Balanced" : "Not Balanced"}
+            </div>
           )}
-        </Box>
+        </div>
 
         {loading ? (
-          <Box>
-            <Box
-              sx={{
-                width: "80%",
-                height: 20,
-                bgcolor: alpha(theme.palette.text.primary, 0.1),
-                borderRadius: 1,
-                mb: 2,
-              }}
-            />
-            <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-              <CircularProgress size={30} />
-            </Box>
-          </Box>
+          <div className="flex items-center justify-center py-6">
+            <LoaderCircle className="h-7 w-7 text-gray-400" />
+          </div>
         ) : (
           <>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                mb: { xs: 1.5, sm: 2 },
-                fontSize: { xs: "0.78rem", sm: "0.875rem" },
-              }}
-            >
+            <p className="mb-5 text-xs leading-relaxed text-gray-500 sm:text-sm">
               The fundamental accounting equation:{" "}
-              <strong>Assets = Liabilities + Equity</strong>
-            </Typography>
+              <strong className="text-gray-700">
+                Assets = Liabilities + Equity
+              </strong>
+            </p>
 
-            {/* Equation Values — responsive sizes */}
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: { xs: 0.5, sm: 1 },
-                py: { xs: 1, sm: 0 },
-              }}
+            {/* Equation */}
+            <div
+              className="
+                flex flex-wrap items-center justify-center
+                gap-2 rounded-2xl
+                border border-white/80
+                bg-white/70
+                px-3 py-4
+                shadow-sm
+                sm:gap-3 sm:px-5 sm:py-5
+              "
             >
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  color: "primary.main",
-                  fontSize: { xs: "1.1rem", sm: "1.25rem", md: "1.5rem" },
-                }}
-              >
+              <span className="text-lg font-extrabold text-blue-600 sm:text-2xl">
                 ৳{assets?.toLocaleString()}
-              </Typography>
-              <Typography
-                sx={{
-                  mx: { xs: 0.5, sm: 1 },
-                  fontWeight: 700,
-                  fontSize: { xs: "1.1rem", sm: "1.25rem", md: "1.5rem" },
-                }}
-              >
+              </span>
+
+              <span className="text-lg font-bold text-gray-400 sm:text-2xl">
                 =
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  color: "warning.main",
-                  fontSize: { xs: "1.1rem", sm: "1.25rem", md: "1.5rem" },
-                }}
-              >
+              </span>
+
+              <span className="text-lg font-extrabold text-orange-600 sm:text-2xl">
                 ৳{liabilities?.toLocaleString()}
-              </Typography>
-              <Typography
-                sx={{
-                  mx: { xs: 0.5, sm: 1 },
-                  fontWeight: 700,
-                  fontSize: { xs: "1.1rem", sm: "1.25rem", md: "1.5rem" },
-                }}
-              >
+              </span>
+
+              <span className="text-lg font-bold text-gray-400 sm:text-2xl">
                 +
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  color: "secondary.main",
-                  fontSize: { xs: "1.1rem", sm: "1.25rem", md: "1.5rem" },
-                }}
-              >
+              </span>
+
+              <span className="text-lg font-extrabold text-purple-600 sm:text-2xl">
                 ৳{equity?.toLocaleString()}
-              </Typography>
-            </Box>
+              </span>
+            </div>
 
             {!isValid && (
-              <Typography
-                variant="caption"
-                color="error"
-                sx={{
-                  mt: 2,
-                  display: "block",
-                  textAlign: "center",
-                  fontWeight: 600,
-                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                }}
-              >
+              <p className="mt-4 text-center text-xs font-semibold text-red-600">
                 There is a discrepancy in the accounting equation that needs
                 attention.
-              </Typography>
+              </p>
             )}
           </>
         )}
-      </CardContent>
-    </GlassCard>
+      </div>
+    </div>
   );
 };

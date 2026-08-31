@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Bangla font - FORCED globally via next/font variables from layout.tsx (single source) */
 html, body, * , *::before, *::after {

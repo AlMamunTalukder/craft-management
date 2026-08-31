@@ -12,7 +12,7 @@ import {
   useUpdateEnrollmentMutation,
 } from "@/redux/api/enrollmentApi";
 import { useGetAllAdmissionApplicationsQuery } from "@/redux/api/admissionApplication";
-import { Assignment, Check, FileCopy, Payment, Save, School } from "@mui/icons-material";
+import { Assignment, Check, FileCopy, Payment, Save, School, Celebration, AccountBalanceWallet, Visibility, ArrowForward } from "@mui/icons-material";
 import {
   alpha,
   Avatar,
@@ -86,6 +86,7 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [openPrintModal, setOpenPrintModal] = useState(false);
   const [enrolledStudentData, setEnrolledStudentData] = useState<any>(null);
+  const [submittedInfo, setSubmittedInfo] = useState<any>(null);
   const [isApplicationLoading, setIsApplicationLoading] = useState(false);
 
   const { classOptions } = useAcademicOption();
@@ -271,6 +272,13 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
         behaviorSkills: submitData.behaviorSkills,
       };
 
+      // Keep submitted names for success popup (actual student name — not reused legacy student)
+      setSubmittedInfo({
+        studentName: finalSubmitData.studentName,
+        nameBangla: finalSubmitData.nameBangla,
+        category: finalSubmitData.category,
+        className: classNameArray.join(", "),
+      });
       let res;
       if (id) res = await updateEnrollment({ id, data: finalSubmitData }).unwrap();
       else res = await createEnrollment({ data: finalSubmitData, applicationId }).unwrap();
@@ -299,17 +307,34 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
   }
 
   return (
-    <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.5), minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: "#f6f7fb", minHeight: "100vh" }}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, background: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Box display="flex" alignItems="center" sx={{ width: "100%", flex: 1 }}>
-            <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 56, height: 56, boxShadow: "0 2px 10px rgba(0,0,0,0.1)" }}><School sx={{ color: "#fff", fontSize: 32 }} /></Avatar>
-            <Box ml={2} display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%", flex: 1 }}>
-              <Typography variant="h5" sx={{ fontWeight: "bold", color: "text.primary" }}>Student Enrollment</Typography>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.5, md: 3 },
+            mb: 3,
+            borderRadius: 3,
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+            position: "relative",
+            overflow: "hidden",
+            "&::after": { content: '""', position: "absolute", top: -40, right: -40, width: 160, height: 160, borderRadius: "50%", bgcolor: alpha("#fff", 0.08) },
+          }}
+        >
+          <Box display="flex" alignItems="center" sx={{ width: "100%", flex: 1, position: "relative", zIndex: 1 }}>
+            <Avatar sx={{ bgcolor: alpha("#fff", 0.22), width: 56, height: 56, border: `2px solid ${alpha("#fff", 0.3)}` }}><School sx={{ color: "#fff", fontSize: 30 }} /></Avatar>
+            <Box ml={2} display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%", flex: 1, flexWrap: "wrap", gap: 1 }}>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>Student Enrollment</Typography>
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>Fill related fields step-by-step • Category & Class drive automatic fee generation</Typography>
+              </Box>
               {admissionApplications?.data?.[0] && (
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
-                  {admissionApplications.data[0].studentInfo?.nameEnglish || admissionApplications.data[0].studentInfo?.nameBangla || "Student Name"}
-                </Typography>
+                <Chip
+                  icon={<Celebration sx={{ color: "#fff !important" }} />}
+                  label={admissionApplications.data[0].studentInfo?.nameEnglish || admissionApplications.data[0].studentInfo?.nameBangla || "Selected"}
+                  sx={{ bgcolor: alpha("#fff", 0.18), color: "#fff", fontWeight: 700, border: `1px solid ${alpha("#fff",0.25)}` }}
+                />
               )}
             </Box>
           </Box>
@@ -333,18 +358,82 @@ const EnrollmentForm = ({ applicationId, admissionApplications }: any) => {
         </Paper>
       </Container>
 
-      <Dialog open={openSuccessModal} onClose={() => {}} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2, textAlign: "center" } }}>
-        <DialogContent sx={{ py: 4 }}>
-          <Avatar sx={{ bgcolor: "success.main", width: 64, height: 64, margin: "0 auto 16px" }}><Check sx={{ fontSize: 40, color: "#fff" }} /></Avatar>
-          <Typography variant="h5" fontWeight="bold" gutterBottom>Enrollment Successful!</Typography>
-          <Typography variant="body2" color="text.secondary">Student has been enrolled successfully for the session {new Date().getFullYear()}.</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Name: <strong>{enrolledStudentData?.studentName}</strong></Typography>
+      <Dialog open={openSuccessModal} onClose={() => {}} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, overflow: "hidden", p: 0 } }}>
+        <Box sx={{ background: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", p: 3, textAlign: "center", color: "white" }}>
+          <Avatar sx={{ bgcolor: alpha("#fff", 0.22), width: 72, height: 72, margin: "0 auto 12px", border: `3px solid ${alpha("#fff",0.4)}` }}><Celebration sx={{ fontSize: 38, color: "#fff" }} /></Avatar>
+          <Typography variant="h5" fontWeight={800}>Enrollment Successful! 🎉</Typography>
+          <Typography variant="body2" sx={{ opacity: 0.95, mt: 0.5 }}>Session {new Date().getFullYear()} • Fees auto-generated for this student</Typography>
+        </Box>
+        <DialogContent sx={{ py: 3, textAlign: "center" }}>
+          {(() => {
+            // Prioritize actual submitted name (Talukder) over any reused legacy student
+            const st = enrolledStudentData?.student || enrolledStudentData?.data?.student || enrolledStudentData;
+            const actualNameBangla = submittedInfo?.nameBangla || st?.nameBangla || "";
+            const actualNameEn = submittedInfo?.studentName || st?.name || "";
+            const displayName = actualNameBangla || actualNameEn || "Student";
+            const displaySecond = actualNameBangla && actualNameEn && actualNameBangla !== actualNameEn ? actualNameEn : "";
+            const sId = st?.studentId || st?.studentCode || "—";
+            const sClass = submittedInfo?.className || (Array.isArray(st?.className) ? st.className.map((c: any) => c?.className || c).join(", ") : st?.class || st?.className?.className || "—");
+            const sCat = submittedInfo?.category || st?.category || st?.studentType || "Residential";
+            return (
+              <>
+                <Chip icon={<Check sx={{ fontSize: 16 }} />} label={displayName} color="success" sx={{ fontWeight: 700, px: 1.5, py: 1, fontSize: "0.95rem" }} />
+                {displaySecond && <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{displaySecond}</Typography>}
+                {applicationId && <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>Application {applicationId} • {displayName}</Typography>}
+                <Box sx={{ display: "flex", gap: 1, mt: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
+                  <Chip label={`ID: ${sId}`} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+                  <Chip label={`Class: ${sClass}`} size="small" color="primary" variant="outlined" />
+                  <Chip label={sCat} size="small" color="secondary" variant="outlined" />
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, lineHeight: 1.6 }}>
+                  Due fees are now ready. Collect payment instantly without visiting <b>/fees/generate</b>.
+                </Typography>
+                <Paper elevation={0} sx={{ mt: 2, p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.06), border: `1px dashed ${alpha(theme.palette.info.main, 0.2)}`, textAlign: "left" }}>
+                  <Typography variant="caption" fontWeight={700} color="info.main" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Visibility sx={{ fontSize: 14 }} /> Where to find payment if you skip now?
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, lineHeight: 1.5 }}>
+                    Go to <b>Dashboard → Student List</b> → search by <b>Name / ID ({sId})</b> → click <b>Eye (View)</b> → open <b>Due Fees</b> tab (tab=3) → <b>Pay Now</b>.
+                  </Typography>
+                </Paper>
+              </>
+            );
+          })()}
         </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", gap: 2, pb: 3, flexDirection: "column" }}>
-          <Box sx={{ display: "flex", gap: 2, width: "100%", justifyContent: "center", flexWrap: "wrap" }}>
-            <Button variant="outlined" onClick={() => { setOpenSuccessModal(false); const sid = enrolledStudentData?.data?.student?._id || enrolledStudentData?.data?._id || enrolledStudentData?._id; router.push(`/dashboard/student/profile/${sid}?tab=3`); }} startIcon={<Payment />} sx={{ borderRadius: 2, px: 3 }}>Pay Now</Button>
+        <DialogActions sx={{ justifyContent: "center", gap: 1.5, pb: 3, px: 3, flexDirection: "column" }}>
+          <Box sx={{ display: "flex", gap: 1.5, width: "100%", flexWrap: "wrap" }}>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => { setOpenSuccessModal(false); const sid = enrolledStudentData?.data?.student?._id || enrolledStudentData?.data?._id || enrolledStudentData?._id; router.push(`/dashboard/student/profile/${sid}?tab=3`); }}
+              startIcon={<AccountBalanceWallet />}
+              endIcon={<ArrowForward />}
+              sx={{
+                flex: 1,
+                minWidth: 160,
+                py: 1.4,
+                borderRadius: 2,
+                fontWeight: 800,
+                textTransform: "none",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                "&:hover": { background: "linear-gradient(135deg, #5a6fd6 0%, #6a3fb5 100%)" },
+                boxShadow: "0 6px 16px rgba(102,126,234,0.35)",
+              }}
+            >
+              Pay Now
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => { setOpenSuccessModal(false); const sid = enrolledStudentData?.data?.student?._id || enrolledStudentData?.data?._id || enrolledStudentData?._id; if (sid) router.push(`/dashboard/student/profile/${sid}`); }}
+              startIcon={<Visibility />}
+              sx={{ borderRadius: 2, fontWeight: 600, textTransform: "none", minWidth: 130 }}
+            >
+              View Profile
+            </Button>
           </Box>
-          <Button variant="text" onClick={() => { setOpenSuccessModal(false); setOpenPrintModal(false); router.push(`/dashboard/student/list`); }}>Close & Go to List</Button>
+          <Button variant="text" size="small" onClick={() => { setOpenSuccessModal(false); setOpenPrintModal(false); router.push(`/dashboard/student/list`); }} sx={{ textTransform: "none" }}>
+            Close & Go to Student List →
+          </Button>
         </DialogActions>
       </Dialog>
 

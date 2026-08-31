@@ -596,54 +596,53 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
     : processedData.length;
 
   return (
-    <Fade in={true} timeout={500}>
+    <Fade in={true} timeout={300}>
       <GradientCard
         className={className}
         sx={{
           height,
           overflow: "hidden",
-          borderRadius,
-          background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
-          backdropFilter: "blur(10px)",
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+          borderRadius: 10,
           ...cardSx,
         }}
-        elevation={elevation}
+        elevation={0}
       >
-        {/* Enhanced Toolbar */}
+        {/* Modern Toolbar */}
         {showToolbar && (
           <Box
             sx={{
-              p: 3,
-              borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              px: 3,
+              py: 2.5,
+              borderBottom: `1px solid #f1f5f9`,
               display: "flex",
               flexDirection: { xs: "column", md: "row" },
               gap: 2,
               alignItems: { md: "center" },
               justifyContent: "space-between",
-              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
+              backgroundColor: "#ffffff",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
               {title && (
-                <Box>
+                <Box sx={{ minWidth: 0 }}>
                   <Typography
-                    variant="h5"
-                    fontWeight="bold"
+                    variant="h6"
+                    fontWeight={700}
                     sx={{
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                      backgroundClip: "text",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
+                      color: "#0f172a",
+                      fontSize: "1.05rem",
+                      letterSpacing: "-0.01em",
+                      lineHeight: 1.3,
                     }}
+                    noWrap
                   >
                     {title}
                   </Typography>
                   {subtitle && (
                     <Typography
                       variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 0.5 }}
+                      sx={{ mt: 0.25, color: "#64748b", fontSize: "0.8125rem", lineHeight: 1.4 }}
+                      noWrap
                     >
                       {subtitle}
                     </Typography>
@@ -701,20 +700,23 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                             .length
                         }
                         color="primary"
+                        sx={{ "& .MuiBadge-badge": { fontSize: "0.65rem", minWidth: 16, height: 16 } }}
                       >
-                        <FilterList />
+                        <FilterList sx={{ fontSize: 18 }} />
                       </Badge>
                     }
                     onClick={(e) => setFilterAnchor(e.currentTarget)}
                     sx={{
                       borderRadius: "10px",
-                      borderColor: alpha(theme.palette.primary.main, 0.2),
+                      borderColor: "#e2e8f0",
+                      color: "#475569",
+                      fontWeight: 500,
+                      fontSize: "0.8125rem",
+                      textTransform: "none",
+                      backgroundColor: "#ffffff",
                       "&:hover": {
-                        borderColor: theme.palette.primary.main,
-                        backgroundColor: alpha(
-                          theme.palette.primary.main,
-                          0.04,
-                        ),
+                        borderColor: "#cbd5e1",
+                        backgroundColor: "#f8fafc",
                       },
                     }}
                   >
@@ -727,11 +729,20 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                 <Button
                   size="small"
                   variant="outlined"
-                  startIcon={<ViewColumn />}
+                  startIcon={<ViewColumn sx={{ fontSize: 18 }} />}
                   onClick={(e) => setColumnMenuAnchor(e.currentTarget)}
                   sx={{
                     borderRadius: "10px",
-                    borderColor: alpha(theme.palette.primary.main, 0.2),
+                    borderColor: "#e2e8f0",
+                    color: "#475569",
+                    fontWeight: 500,
+                    fontSize: "0.8125rem",
+                    textTransform: "none",
+                    backgroundColor: "#ffffff",
+                    "&:hover": {
+                      borderColor: "#cbd5e1",
+                      backgroundColor: "#f8fafc",
+                    },
                   }}
                 >
                   Columns
@@ -739,27 +750,28 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
               </Tooltip>
 
               {onAdd && (
-                <Tooltip title="Add new">
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={onAdd}
-                    sx={{
-                      borderRadius: "10px",
-                      px: 2,
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                      boxShadow: `0 4px 15px ${alpha(theme.palette.primary.main, 0.3)}`,
-                      "&:hover": {
-                        transform: "translateY(-1px)",
-                        boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
-                      },
-                      transition: "all 0.2s ease-in-out",
-                    }}
-                  >
-                    Add New
-                  </Button>
-                </Tooltip>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<Add sx={{ fontSize: 18 }} />}
+                  onClick={onAdd}
+                  disableElevation
+                  sx={{
+                    borderRadius: "10px",
+                    px: 2.2,
+                    py: 0.7,
+                    fontWeight: 600,
+                    fontSize: "0.8125rem",
+                    textTransform: "none",
+                    backgroundColor: "#0f172a",
+                    color: "#ffffff",
+                    "&:hover": {
+                      backgroundColor: "#1e293b",
+                    },
+                  }}
+                >
+                  Add New
+                </Button>
               )}
 
               <Box sx={{ display: "flex", gap: 0.5 }}>
@@ -791,32 +803,34 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
           </Box>
         )}
 
-        {/* Enhanced Bulk actions */}
+        {/* Modern Bulk actions */}
         {selectable && selectedRows.length > 0 && (
           <Zoom in={selectedRows.length > 0}>
             <Paper
               sx={{
-                p: 2,
-                pl: 3,
-                m: 2,
+                py: 1.5,
+                px: 2,
+                mx: 2,
+                mt: 2,
                 borderRadius: "12px",
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                backgroundColor: "#f8fafc",
+                border: `1px solid #e2e8f0`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                backdropFilter: "blur(10px)",
+                gap: 2,
               }}
-              elevation={2}
+              elevation={0}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <CheckCircle color="primary" />
-                <Typography variant="body1" fontWeight="600">
-                  {selectedRows.length} item{selectedRows.length > 1 ? "s" : ""}{" "}
-                  selected
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 28, height: 28, borderRadius: "50%", bgcolor: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CheckCircle sx={{ fontSize: 16, color: "#fff" }} />
+                </Box>
+                <Typography variant="body2" fontWeight={600} sx={{ color: "#0f172a", fontSize: "0.875rem" }}>
+                  {selectedRows.length} selected
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 {bulkActions.map((action, index) => (
                   <Button
                     key={index}
@@ -834,11 +848,15 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                     }
                     sx={{
                       borderRadius: "8px",
-                      borderColor: alpha(theme.palette.primary.main, 0.3),
-                      color: "text.primary",
+                      borderColor: "#e2e8f0",
+                      color: "#334155",
+                      fontWeight: 500,
+                      fontSize: "0.8125rem",
+                      textTransform: "none",
+                      backgroundColor: "#ffffff",
                       "&:hover": {
-                        borderColor: theme.palette.primary.main,
-                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        borderColor: "#cbd5e1",
+                        backgroundColor: "#f1f5f9",
                       },
                     }}
                   >
@@ -850,19 +868,19 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
           </Zoom>
         )}
 
-        {/* Enhanced Table with Primary Header */}
-        <TableContainer sx={{ maxHeight, overflow: "auto" }}>
-          <Table stickyHeader={stickyHeader} size={dense ? "small" : "medium"}>
+        {/* Modern Table */}
+        <TableContainer sx={{ maxHeight, overflow: "auto", "&::-webkit-scrollbar": { height: 6, width: 6 }, "&::-webkit-scrollbar-thumb": { backgroundColor: "#e2e8f0", borderRadius: 999 } }}>
+          <Table stickyHeader={stickyHeader} size={dense ? "small" : "medium"} sx={{ borderCollapse: "separate", borderSpacing: 0 }}>
             <StyledTableHead>
               <TableRow>
                 {showRowNumbers && (
                   <TableCell
                     align="center"
                     sx={{
-                      backgroundColor: "primary.main",
-                      color: "primary.contrastText",
-                      fontWeight: "bold",
-                      width: 60,
+                      width: 48,
+                      color: "#94a3b8",
+                      fontWeight: 600,
+                      fontSize: "0.7rem",
                     }}
                   >
                     {rowNumberHeader}
@@ -872,8 +890,7 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                   <TableCell
                     padding="checkbox"
                     sx={{
-                      width: 60,
-                      backgroundColor: "primary.main",
+                      width: 48,
                     }}
                   >
                     <Checkbox
@@ -886,14 +903,16 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                         selectedRows.length === paginatedData.length
                       }
                       onChange={handleSelectAll}
+                      size="small"
                       sx={{
-                        color: alpha(theme.palette.primary.contrastText, 0.7),
+                        color: "#cbd5e1",
                         "&.Mui-checked": {
-                          color: theme.palette.primary.contrastText,
+                          color: "#0f172a",
                         },
                         "&.MuiCheckbox-indeterminate": {
-                          color: theme.palette.primary.contrastText,
+                          color: "#0f172a",
                         },
+                        padding: 0.5,
                       }}
                     />
                   </TableCell>
@@ -910,13 +929,11 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                           sortColumn === column.id ? sortDirection : false
                         }
                         sx={{
-                          backgroundColor: "primary.main",
-                          color: "primary.contrastText",
                           cursor: column.sortable ? "pointer" : "default",
-                          transition: "all 0.2s ease-in-out",
+                          userSelect: "none",
                           "&:hover": column.sortable
                             ? {
-                              backgroundColor: theme.palette.primary.dark,
+                              color: "#0f172a",
                             }
                             : {},
                         }}
@@ -926,7 +943,7 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 1,
+                            gap: 0.75,
                             justifyContent:
                               column.align === "right"
                                 ? "flex-end"
@@ -935,29 +952,27 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                                   : "flex-start",
                           }}
                         >
-                          {column.sortable && (
-                            <Sort
-                              fontSize="small"
-                              sx={{
-                                opacity: sortColumn === column.id ? 1 : 0.6,
-                                color: "inherit",
-                              }}
-                            />
-                          )}
-                          {column.label}
-                          {column.sortable &&
-                            sortColumn === column.id &&
-                            (sortDirection === "asc" ? (
-                              <ArrowUpward
-                                fontSize="small"
-                                sx={{ color: "inherit" }}
-                              />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: "0.75rem",
+                              letterSpacing: "0.04em",
+                              textTransform: "uppercase",
+                              color: sortColumn === column.id ? "#0f172a" : "#475569",
+                            }}
+                          >
+                            {column.label}
+                          </Typography>
+                          {column.sortable && sortColumn === column.id ? (
+                            sortDirection === "asc" ? (
+                              <ArrowUpward sx={{ fontSize: 14, color: "#0f172a" }} />
                             ) : (
-                              <ArrowDownward
-                                fontSize="small"
-                                sx={{ color: "inherit" }}
-                              />
-                            ))}
+                              <ArrowDownward sx={{ fontSize: 14, color: "#0f172a" }} />
+                            )
+                          ) : column.sortable ? (
+                            <Sort sx={{ fontSize: 14, color: "#cbd5e1" }} />
+                          ) : null}
                         </Box>
                       </TableCell>
                     ),
@@ -965,11 +980,14 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
 
                 {rowActions.length > 0 && (
                   <TableCell
-                    align="center"
+                    align="right"
                     sx={{
                       width: actionColumnWidth,
-                      backgroundColor: "primary.main",
-                      color: "primary.contrastText",
+                      color: "#475569",
+                      fontWeight: 600,
+                      fontSize: "0.75rem",
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
                     }}
                   >
                     {actionMenuLabel}
@@ -990,37 +1008,40 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                       (rowActions.length > 0 ? 1 : 0)
                     }
                     align="center"
-                    sx={{ py: 8 }}
+                    sx={{ py: 6, borderBottom: "none" }}
                   >
                     <Box
                       sx={{
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
-                        gap: 2,
+                        gap: 1.5,
+                        py: 2,
                       }}
                     >
                       <Box
                         sx={{
-                          width: 80,
-                          height: 80,
-                          borderRadius: "50%",
-                          backgroundColor: alpha(
-                            theme.palette.primary.main,
-                            0.1,
-                          ),
+                          width: 56,
+                          height: 56,
+                          borderRadius: "12px",
+                          backgroundColor: "#f1f5f9",
+                          border: "1px solid #e2e8f0",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                         }}
                       >
-                        <Info color="primary" sx={{ fontSize: 40 }} />
+                        <Info sx={{ fontSize: 24, color: "#94a3b8" }} />
                       </Box>
-                      <Typography variant="h6" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: "#0f172a", fontWeight: 600, fontSize: "0.875rem" }}>
                         {emptyStateMessage}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "#64748b", fontSize: "0.8125rem" }}>
+                        Try adjusting search or filters
                       </Typography>
                       {(searchTerm || Object.keys(filters).length > 0) && (
                         <Button
+                          size="small"
                           variant="outlined"
                           onClick={handleClearFilters}
                           sx={{
@@ -1043,31 +1064,32 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                     sx={{
                       backgroundColor:
                         striped && index % 2 === 1
-                          ? alpha(theme.palette.primary.main, 0.02)
-                          : "inherit",
+                          ? "#f8fafc"
+                          : "#ffffff",
                     }}
                   >
                     {showRowNumbers && (
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ color: "#94a3b8", fontSize: "0.8125rem" }}>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          fontWeight="500"
+                          sx={{ color: "#64748b", fontSize: "0.8125rem", fontWeight: 500 }}
                         >
                           {pageState * rowsPerPageState + index + 1}
                         </Typography>
                       </TableCell>
                     )}
                     {selectable && (
-                      <TableCell padding="checkbox">
+                      <TableCell padding="checkbox" sx={{ py: 0 }}>
                         <Checkbox
+                          size="small"
                           checked={selectedRows.includes(row[idField])}
                           onChange={() => handleSelectRow(row[idField])}
                           sx={{
-                            color: alpha(theme.palette.primary.main, 0.6),
+                            color: "#cbd5e1",
                             "&.Mui-checked": {
-                              color: theme.palette.primary.main,
+                              color: "#0f172a",
                             },
+                            padding: 0.5,
                           }}
                         />
                       </TableCell>
@@ -1089,11 +1111,11 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
                     )}
 
                     {rowActions.length > 0 && (
-                      <TableCell align="center" sx={{ py: dense ? 1 : 2 }}>
+                      <TableCell align="right" sx={{ py: dense ? 1 : 1.2, pr: 2 }}>
                         <Box
                           sx={{
                             display: "flex",
-                            justifyContent: "center",
+                            justifyContent: "flex-end",
                             gap: 0.5,
                           }}
                         >
@@ -1208,28 +1230,45 @@ const CraftTable: React.FC<EnhancedTableProps> = ({
           </Table>
         </TableContainer>
 
-        {/* Enhanced Pagination */}
+        {/* Modern Pagination */}
         {pagination && (
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25, 50, 100]}
-            component="div"
-            count={serverSideSorting ? totalRowCount : processedData.length}
-            rowsPerPage={rowsPerPageState}
-            page={pageState}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            sx={{
-              "& .MuiTablePagination-toolbar": {
-                pl: 3,
-                pr: 2,
-                py: 2,
-              },
-              "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows":
-              {
-                fontWeight: 500,
-              },
-            }}
-          />
+          <Box sx={{ borderTop: "1px solid #f1f5f9", backgroundColor: "#ffffff" }}>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25, 50, 100]}
+              component="div"
+              count={serverSideSorting ? totalRowCount : processedData.length}
+              rowsPerPage={rowsPerPageState}
+              page={pageState}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{
+                "& .MuiTablePagination-toolbar": {
+                  px: 2.5,
+                  py: 1,
+                  minHeight: 52,
+                  gap: 1,
+                },
+                "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                  fontWeight: 500,
+                  color: "#64748b",
+                  fontSize: "0.8125rem",
+                },
+                "& .MuiTablePagination-select": {
+                  fontSize: "0.8125rem",
+                  fontWeight: 500,
+                },
+                "& .MuiIconButton-root": {
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  backgroundColor: "#ffffff",
+                  width: 32,
+                  height: 32,
+                  "&:hover": { backgroundColor: "#f8fafc", borderColor: "#cbd5e1" },
+                  "&.Mui-disabled": { borderColor: "#f1f5f9", backgroundColor: "#f8fafc" },
+                },
+              }}
+            />
+          </Box>
         )}
 
         {/* Enhanced Filter menu */}

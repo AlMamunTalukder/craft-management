@@ -13,6 +13,15 @@ export const feesApi = baseApi.injectEndpoints({
       invalidatesTags: ["fees", "students"],
     }),
 
+    generateSingleStudentFees: build.mutation({
+      query: ({ studentId, month, year }: { studentId: string; month?: number; year?: number }) => ({
+        url: `/fees/generate/${studentId}`,
+        method: "POST",
+        data: { month, year },
+      }),
+      invalidatesTags: ["fees", "students", "student"],
+    }),
+
     generateMealBalance: build.mutation({
       query: ({ month, year, mealRate }) => ({
         url: "/meal-fee/generate-all",
@@ -140,7 +149,32 @@ export const feesApi = baseApi.injectEndpoints({
         method: "POST",
         data: data,
       }),
-      invalidatesTags: ["fees", "students", "Student", "Payment"],
+      invalidatesTags: ["fees", "students", "Student", "Payment", "feeAdjustment"],
+    }),
+
+    getStudentAdjustments: build.query({
+      query: ({ studentId, academicYear }) => ({
+        url: `/fee-adjustments/student/${studentId}`,
+        method: "GET",
+        params: { academicYear },
+      }),
+      providesTags: ["feeAdjustment"],
+    }),
+
+    deleteFeeAdjustment: build.mutation({
+      query: (id) => ({
+        url: `/fee-adjustments/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["feeAdjustment", "fees", "students", "Student", "Payment"],
+    }),
+
+    getFeeReport: build.query({
+      query: ({ studentId, academicYear }) => ({
+        url: `/fee-adjustments/report/${studentId}/${academicYear}`,
+        method: "GET",
+      }),
+      providesTags: ["feeAdjustment"],
     }),
 
   }),
@@ -148,6 +182,7 @@ export const feesApi = baseApi.injectEndpoints({
 
 export const {
   useGenerateFeesMutation,
+  useGenerateSingleStudentFeesMutation,
   useApplyFeeAdjustmentMutation,
   useGenerateMealBalanceMutation,
   useGetFeeGenerationStatusQuery,
@@ -160,5 +195,8 @@ export const {
   usePayFeeMutation,
   useCreateFeeMutation,
   useGetClassWiseFeeSummaryQuery,
-  useApplyBulkAdjustmentsMutation
+  useApplyBulkAdjustmentsMutation,
+  useGetStudentAdjustmentsQuery,
+  useDeleteFeeAdjustmentMutation,
+  useGetFeeReportQuery,
 } = feesApi;
