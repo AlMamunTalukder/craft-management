@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import {
@@ -53,7 +53,7 @@ interface Student {
 const STUDENTS_DATA: Student[] = [
     {
         id: "1",
-        name: "আহমেদ হোসেন",
+        name: "à¦†à¦¹à¦®à§‡à¦¦ à¦¹à§‹à¦¸à§‡à¦¨",
         class: "Six",
         totalGiven: 15000,
         totalCost: 12500,
@@ -63,7 +63,7 @@ const STUDENTS_DATA: Student[] = [
     },
     {
         id: "2",
-        name: "ফাতিমা বেগম",
+        name: "à¦«à¦¾à¦¤à¦¿à¦®à¦¾ à¦¬à§‡à¦—à¦®",
         class: "Five",
         totalGiven: 12000,
         totalCost: 11000,
@@ -73,7 +73,7 @@ const STUDENTS_DATA: Student[] = [
     },
     {
         id: "3",
-        name: "মোহাম্মদ করিম",
+        name: "à¦®à§‹à¦¹à¦¾à¦®à§à¦®à¦¦ à¦•à¦°à¦¿à¦®",
         class: "Four",
         totalGiven: 18000,
         totalCost: 16000,
@@ -83,7 +83,7 @@ const STUDENTS_DATA: Student[] = [
     },
     {
         id: "4",
-        name: "সালমা খাতুন",
+        name: "à¦¸à¦¾à¦²à¦®à¦¾ à¦–à¦¾à¦¤à§à¦¨",
         class: "Three",
         totalGiven: 10000,
         totalCost: 11500,
@@ -93,7 +93,7 @@ const STUDENTS_DATA: Student[] = [
     },
     {
         id: "5",
-        name: "রহিম আহমেদ",
+        name: "à¦°à¦¹à¦¿à¦® à¦†à¦¹à¦®à§‡à¦¦",
         class: "Two",
         totalGiven: 14000,
         totalCost: 13000,
@@ -103,7 +103,7 @@ const STUDENTS_DATA: Student[] = [
     },
     {
         id: "6",
-        name: "নাজমা আক্তার",
+        name: "à¦¨à¦¾à¦œà¦®à¦¾ à¦†à¦•à§à¦¤à¦¾à¦°",
         class: "Hifz",
         totalGiven: 16000,
         totalCost: 14500,
@@ -160,7 +160,7 @@ export default function MealListPage() {
                     <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, color: "#333" }}>
                         Student Meal Accounting
                     </Typography>
-                    <Link href="/dashboard/accounting/residantial/add" style={{ textDecoration: "none" }}>
+                    <Link href="/dashboard/accounting/residential/add" style={{ textDecoration: "none" }}>
                         <Button
                             variant="contained"
                             startIcon={<AddIcon />}
@@ -196,7 +196,7 @@ export default function MealListPage() {
                                             Total Balance
                                         </Typography>
                                         <Typography variant="h5" sx={{ fontWeight: 700, color: totalBalance >= 0 ? "#10b981" : "#ef4444" }}>
-                                            ৳{Math.abs(totalBalance).toLocaleString()}
+                                            à§³{Math.abs(totalBalance).toLocaleString()}
                                         </Typography>
                                     </Box>
                                     {totalBalance >= 0 ? (
@@ -398,10 +398,10 @@ export default function MealListPage() {
                                         />
                                     </TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 600, color: "#10b981" }}>
-                                        ৳{student.totalGiven.toLocaleString()}
+                                        à§³{student.totalGiven.toLocaleString()}
                                     </TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 600, color: "#ef4444" }}>
-                                        ৳{student.totalCost.toLocaleString()}
+                                        à§³{student.totalCost.toLocaleString()}
                                     </TableCell>
                                     <TableCell align="right">
                                         <Typography
@@ -411,7 +411,7 @@ export default function MealListPage() {
                                                 fontSize: "1rem",
                                             }}
                                         >
-                                            ৳{Math.abs(student.balance).toLocaleString()}
+                                            à§³{Math.abs(student.balance).toLocaleString()}
                                         </Typography>
                                     </TableCell>
                                     <TableCell align="center">

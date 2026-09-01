@@ -925,6 +925,16 @@ export const navigationItems: NavigationItem[] = [
     roles: ["admin", "super_admin", "accountant"],
     children: [
       {
+        title: "Overview",
+        icon: (
+          <ColorfulIcon color="#16a34a" size={28}>
+            <BarChart3 size={15} />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/accounting",
+        roles: ["admin", "super_admin", "accountant"],
+      },
+      {
         title: "Income",
         icon: (
           <ColorfulIcon color="#16a34a" size={28}>
@@ -933,16 +943,6 @@ export const navigationItems: NavigationItem[] = [
         ),
         children: [
           {
-            path: "/dashboard/accounting/residantial/list",
-            title: "Residential ",
-            icon: (
-              <ColorfulIcon color="#16a34a" size={28}>
-                <Tag size={15} />
-              </ColorfulIcon>
-            ),
-            roles: ["admin", "super_admin"],
-          },
-          {
             path: "/dashboard/accounting/income",
             title: "Income Records",
             icon: (
@@ -950,7 +950,7 @@ export const navigationItems: NavigationItem[] = [
                 <Wallet size={15} />
               </ColorfulIcon>
             ),
-            roles: ["admin", "super_admin"],
+            roles: ["admin", "super_admin", "accountant"],
           },
           {
             path: "/dashboard/accounting/income/category",
@@ -960,7 +960,7 @@ export const navigationItems: NavigationItem[] = [
                 <Tag size={15} />
               </ColorfulIcon>
             ),
-            roles: ["admin", "super_admin"],
+            roles: ["admin", "super_admin", "accountant"],
           },
         ],
       },
@@ -980,27 +980,7 @@ export const navigationItems: NavigationItem[] = [
                 <Receipt size={15} />
               </ColorfulIcon>
             ),
-            roles: ["admin", "super_admin"],
-          },
-          {
-            path: "/dashboard/accounting/salary-expense",
-            title: "Salary",
-            icon: (
-              <ColorfulIcon color="#dc2626" size={28}>
-                <Receipt size={15} />
-              </ColorfulIcon>
-            ),
-            roles: ["admin", "super_admin"],
-          },
-          {
-            path: "/dashboard/accounting/residantial",
-            title: "Residential",
-            icon: (
-              <ColorfulIcon color="#dc2626" size={28}>
-                <Receipt size={15} />
-              </ColorfulIcon>
-            ),
-            roles: ["admin", "super_admin"],
+            roles: ["admin", "super_admin", "accountant"],
           },
           {
             path: "/dashboard/accounting/expense/category",
@@ -1010,29 +990,109 @@ export const navigationItems: NavigationItem[] = [
                 <Tag size={15} />
               </ColorfulIcon>
             ),
-            roles: ["admin", "super_admin"],
+            roles: ["admin", "super_admin", "accountant"],
           },
         ],
       },
       {
-        path: "/dashboard/accounting/total-expense-category",
-        title: "Income & Expense Summary",
+        title: "Residential",
         icon: (
-          <ColorfulIcon color="#f59e0b" size={28}>
-            <GitBranch size={15} />
+          <ColorfulIcon color="#0ea5e9" size={28}>
+            <Building2 size={15} />
           </ColorfulIcon>
         ),
-        roles: ["admin", "super_admin"],
+        path: "/dashboard/accounting/residential",
+        roles: ["admin", "super_admin", "accountant"],
       },
       {
-        path: "/dashboard/accounting/investments",
-        title: "Investments",
+        title: "Fees & Collection",
         icon: (
-          <ColorfulIcon color="#0288d1" size={28}>
-            <PiggyBank size={15} />
+          <ColorfulIcon color="#0d9488" size={28}>
+            <CreditCard size={15} />
           </ColorfulIcon>
         ),
-        roles: ["admin", "super_admin"],
+        children: [
+          {
+            path: "/dashboard/accounting/fees",
+            title: "Student Fees",
+            icon: (
+              <ColorfulIcon color="#16a34a" size={28}>
+                <Tag size={15} />
+              </ColorfulIcon>
+            ),
+            roles: ["admin", "super_admin", "accountant"],
+          },
+          {
+            path: "/dashboard/accounting/fee-collection",
+            title: "Fee Collection",
+            icon: (
+              <ColorfulIcon color="#0f766e" size={28}>
+                <Calculator size={15} />
+              </ColorfulIcon>
+            ),
+            roles: ["admin", "super_admin", "accountant"],
+          },
+          {
+            path: "/dashboard/accounting/invoice",
+            title: "Invoices",
+            icon: (
+              <ColorfulIcon color="#0d9488" size={28}>
+                <Receipt size={15} />
+              </ColorfulIcon>
+            ),
+            roles: ["admin", "super_admin", "accountant"],
+          },
+        ],
+      },
+      {
+        title: "Payroll",
+        icon: (
+          <ColorfulIcon color="#2563eb" size={28}>
+            <DollarSign size={15} />
+          </ColorfulIcon>
+        ),
+        children: [
+          {
+            path: "/dashboard/accounting/salary",
+            title: "Salary Structure",
+            icon: (
+              <ColorfulIcon color="#2563eb" size={28}>
+                <Wallet size={15} />
+              </ColorfulIcon>
+            ),
+            roles: ["admin", "super_admin", "accountant"],
+          },
+          {
+            path: "/dashboard/accounting/salary-expense",
+            title: "Payslips",
+            icon: (
+              <ColorfulIcon color="#dc2626" size={28}>
+                <Receipt size={15} />
+              </ColorfulIcon>
+            ),
+            roles: ["admin", "super_admin", "accountant"],
+          },
+        ],
+      },
+      {
+        title: "Receivable",
+        icon: (
+          <ColorfulIcon color="#16a34a" size={28}>
+            <Wallet size={15} />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/accounting/receivable",
+        roles: ["admin", "super_admin", "accountant"],
+      },
+      {
+        title: "Assets",
+        icon: (
+          <ColorfulIcon color="#475569" size={28}>
+            <Building2 size={15} />
+          </ColorfulIcon>
+        ),
+        path: "/dashboard/assets",
+        roles: ["admin", "super_admin", "accountant"],
       },
       {
         path: "/dashboard/accounting/loan",
@@ -1042,37 +1102,27 @@ export const navigationItems: NavigationItem[] = [
             <CreditCard size={15} />
           </ColorfulIcon>
         ),
-        roles: ["admin", "super_admin"],
+        roles: ["admin", "super_admin", "accountant"],
       },
       {
-        path: "/dashboard/accounting/salary",
-        title: "Salary Management",
+        path: "/dashboard/accounting/investments",
+        title: "Investments",
         icon: (
-          <ColorfulIcon color="#2563eb" size={28}>
-            <DollarSign size={15} />
+          <ColorfulIcon color="#0288d1" size={28}>
+            <PiggyBank size={15} />
           </ColorfulIcon>
         ),
-        roles: ["admin", "super_admin"],
+        roles: ["admin", "super_admin", "accountant"],
       },
       {
-        path: "/dashboard/accounting/fees",
-        title: "Student Fees ",
+        path: "/dashboard/accounting/total-expense-category",
+        title: "Reports",
         icon: (
-          <ColorfulIcon color="#16a34a" size={28}>
-            <Tag size={15} />
+          <ColorfulIcon color="#f59e0b" size={28}>
+            <GitBranch size={15} />
           </ColorfulIcon>
         ),
-        roles: ["admin", "super_admin"],
-      },
-      {
-        path: "/dashboard/accounting/fee-collection",
-        title: "Fee Collections",
-        icon: (
-          <ColorfulIcon color="#0f766e" size={28}>
-            <Calculator size={15} />
-          </ColorfulIcon>
-        ),
-        roles: ["admin", "super_admin"],
+        roles: ["admin", "super_admin", "accountant"],
       },
     ],
   },

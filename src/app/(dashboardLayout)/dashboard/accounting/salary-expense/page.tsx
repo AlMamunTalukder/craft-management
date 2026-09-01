@@ -43,7 +43,6 @@ const isResidentialExpense = (expense: any) => {
   const category = getExpenseCategoryName(expense);
   return (
     category.includes("residential") ||
-    category.includes("residantial") ||
     category.includes("hostel") ||
     category.includes("boarding")
   );

@@ -78,6 +78,9 @@ const CategoryAutoComplete: React.FC<MultiSelectProps> = ({
                             label={label}
                             placeholder={placeholder}
                             disabled={disabled}
+                            size="small"
+                            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "#f8fafc", fontSize: "0.875rem" } }}
+                            InputLabelProps={{ sx: { fontSize: "0.875rem" } }}
                             InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (

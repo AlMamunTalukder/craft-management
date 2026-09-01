@@ -63,7 +63,7 @@ const theme = extendTheme({
 
 export default function ThemeRegistry({ children }: { children: ReactNode }) {
   return (
-    <CssVarsProvider theme={theme} defaultMode="system" modeStorageKey="app-theme" disableTransitionOnChange={false}>
+    <CssVarsProvider theme={theme} defaultMode="light" modeStorageKey="app-theme" disableTransitionOnChange={false}>
       <CssBaseline enableColorScheme />
       {children}
     </CssVarsProvider>
