@@ -162,7 +162,7 @@ export default function IncomeManagement() {
       prevTotal = totalIncome;
     });
     return rows;
-  }, [incomeRecords]);
+  }, [incomeRecords, feesRecords]);
 
   // Filters: yearly, custom months, search
   const filteredRows = useMemo(() => {
@@ -205,7 +205,7 @@ export default function IncomeManagement() {
       r = r.filter((x) => x.monthName.toLowerCase().includes(searchView.toLowerCase()));
     }
     return r.reverse(); // latest first
-  }, [monthlyData, selectedYear, viewMode, searchView]);
+  }, [monthlyData, selectedYear, viewMode, searchView, customFrom, customTo]);
 
   const isFeesLoading = feesLoading;
   const years = useMemo(() => Array.from(new Set(monthlyData.map((x) => x.year))).sort().reverse(), [monthlyData]);
