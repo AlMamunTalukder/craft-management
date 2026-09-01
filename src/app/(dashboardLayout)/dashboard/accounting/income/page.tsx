@@ -98,14 +98,39 @@ export default function IncomeManagement() {
       cur.items.push({ ...inc, _source: "other", _date: d });
       map.set(key, cur);
     });
-    // Merge Paid Student Fees as income (from profile Paid tab: fees where status=paid + paidAmount)
+    // Merge Paid Student Fees as income - use fee.month + academicYear (live fees have month:August/September but paymentDate may be null/now)
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     feesRecords.forEach((fee: any) => {
       const paid = Number(fee.paidAmount || 0);
       if (paid <= 0) return;
       if (fee.status !== "paid" && fee.status !== "partial") return;
-      const d = fee.paymentDate ? new Date(fee.paymentDate) : fee.updatedAt ? new Date(fee.updatedAt) : null;
-      if (!d || isNaN(d.getTime())) return;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      let key: string | null = null;
+      let d: Date | null = null;
+      const mIdx = monthNames.findIndex((m) => m.toLowerCase() === String(fee.month || "").toLowerCase());
+      if (mIdx !== -1) {
+        let year = new Date().getFullYear();
+        if (fee.academicYear) {
+          const y = String(fee.academicYear).split("-")[0];
+          const ny = Number(y);
+          if (!isNaN(ny) && ny > 2000) year = ny;
+          else if (fee.paymentDate) year = new Date(fee.paymentDate).getFullYear();
+          else if (fee.updatedAt) year = new Date(fee.updatedAt).getFullYear();
+        } else if (fee.paymentDate) year = new Date(fee.paymentDate).getFullYear();
+        else if (fee.updatedAt) year = new Date(fee.updatedAt).getFullYear();
+        // If fee.month is August/September and academicYear is 2024, use 2024-08/09; if current year is 2026, still use 2024 to show previous months
+        // Try to infer year from paymentDate if available and differs, else use academicYear
+        if (fee.paymentDate) {
+          const py = new Date(fee.paymentDate).getFullYear();
+          if (py !== year && Math.abs(py - year) <= 2) year = py;
+        }
+        key = `${year}-${String(mIdx + 1).padStart(2, "0")}`;
+        d = new Date(year, mIdx, 1);
+      } else {
+        d = fee.paymentDate ? new Date(fee.paymentDate) : fee.updatedAt ? new Date(fee.updatedAt) : null;
+        if (!d || isNaN(d.getTime())) return;
+        key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      }
+      if (!key || !d) return;
       const cur = map.get(key) || { income: 0, count: 0, items: [] };
       cur.income += paid;
       cur.count += 1;

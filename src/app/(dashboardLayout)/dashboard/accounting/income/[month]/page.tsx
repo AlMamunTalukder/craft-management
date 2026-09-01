@@ -49,15 +49,38 @@ export default function IncomeMonthDetailsPage() {
         ? (feesData as any).data
         : [];
 
-  // Merge paid fees as incomes
+  // Merge paid fees as incomes - use fee.month (live has August/September month string, paymentDate may be null)
   const allIncomes = useMemo(() => {
     const list: any[] = [...incomes];
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     feesRecords.forEach((fee: any) => {
       const paid = Number(fee.paidAmount || 0);
       if (paid <= 0) return;
       if (fee.status !== "paid" && fee.status !== "partial") return;
-      const d = fee.paymentDate ? new Date(fee.paymentDate) : fee.updatedAt ? new Date(fee.updatedAt) : null;
-      if (!d || isNaN(d.getTime())) return;
+      let d: Date | null = null;
+      const mIdx = monthNames.findIndex((m) => m.toLowerCase() === String(fee.month || "").toLowerCase());
+      if (mIdx !== -1) {
+        let year = new Date().getFullYear();
+        if (fee.academicYear) {
+          const y = String(fee.academicYear).split("-")[0];
+          const ny = Number(y);
+          if (!isNaN(ny) && ny > 2000) year = ny;
+          else if (fee.paymentDate) year = new Date(fee.paymentDate).getFullYear();
+        } else if (fee.paymentDate) year = new Date(fee.paymentDate).getFullYear();
+        if (fee.paymentDate) {
+          const py = new Date(fee.paymentDate).getFullYear();
+          if (py !== year && Math.abs(py - year) <= 2) year = py;
+        } else if (fee.updatedAt) {
+          const uy = new Date(fee.updatedAt).getFullYear();
+          if (uy !== year && Math.abs(uy - new Date().getFullYear()) <= 1) {
+            // keep academicYear, not updatedAt, to show previous months correctly
+          }
+        }
+        d = new Date(year, mIdx, 1);
+      } else {
+        d = fee.paymentDate ? new Date(fee.paymentDate) : fee.updatedAt ? new Date(fee.updatedAt) : null;
+        if (!d || isNaN(d.getTime())) return;
+      }
       list.push({ ...fee, _id: fee._id + "_fee", totalAmount: paid, incomeDate: d, createdAt: d, category: { name: fee.feeType || "Student Fee" }, paymentMethod: fee.paymentMethod, status: fee.status, note: `Student Fee - ${fee.month || ""}`, _source: "student_fee" });
     });
     return list;
