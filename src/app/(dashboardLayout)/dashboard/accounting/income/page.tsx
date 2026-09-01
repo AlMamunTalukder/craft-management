@@ -419,7 +419,7 @@ export default function IncomeManagement() {
         idField="id"
       />
 
-      <AddIncomeModal open={open} onClose={() => setOpen(false)} id={null as any} />
+      <AddIncomeModal open={open} onClose={() => setOpen(false)} id={undefined} />
 
       {/* Receipt Dialog - Must show previous month surplus */}
       <Dialog open={receiptOpen} onClose={() => setReceiptOpen(false)} maxWidth="sm" fullWidth>

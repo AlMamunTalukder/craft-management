@@ -60,7 +60,7 @@ interface IncomeItem {
 export default function AddIncomeModal({ id, open, onClose }: { open: boolean; onClose: () => void; id?: string }) {
   const [createIncome] = useCreateIncomeMutation();
   const [updateIncome] = useUpdateIncomeMutation();
-  const { data: singleIncome, isLoading: singleIncomeLoading } = useGetSingleIncomeQuery(id);
+  const { data: singleIncome, isLoading: singleIncomeLoading } = useGetSingleIncomeQuery(id as string, { skip: !id });
 
   const [incomeItems, setIncomeItems] = useState<IncomeItem[]>([{ id: 1, source: "", amount: "" }]);
   const [referenceNo, setReferenceNo] = useState("");
